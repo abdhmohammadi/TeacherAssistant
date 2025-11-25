@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" 
+width="64" height="64" viewBox="0 0 64 64" 
+fill="none" stroke='#888888' stroke-width="5.33" stroke-linecap="round" stroke-linejoin="round" 
+class="lucide lucide-id-card-icon lucide-id-card">
+  <path d="M42.67 26.67h5.33"/>
+  <path d="M42.67 37.33h5.33"/>
+  <path d="M16.45 40a8 8 0 0 1 15.1 0"/>
+  <circle cx="24" cy="29.33" r="5.33"/>
+  <rect x="5.33" y="13.33" width="53.33" height="37.33" rx="5.33"/>
+</svg>

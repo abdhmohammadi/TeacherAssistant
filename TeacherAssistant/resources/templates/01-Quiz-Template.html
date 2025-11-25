@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1.0">
+    
+    <title>Classroom level informal exam template</title>
+    
+    <style>
+        table 
+        {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td 
+        {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<!--
+padding: 
+    Shorthand property to set values for the thickness of the padding area. 
+    If left is omitted, it is the same as right. 
+    If bottom is omitted it is the same as top,
+    if right is omitted it is the same as top.
+    The value may not be negative.
+    (Edge 12, Firefox 1, Safari 1, Chrome 1, IE 4, Opera 3)
+-->
+<body style="direction:-- direction --; font-family:-- font-family --;">
+
+<!-- Header Table -->
+<table>
+    <tr>
+        <td style="border-top:none; border-left:none;border-right:none; vertical-align: top; text-align:-- Text Alignment --; width:-- 2.42 Inches --; padding:5px">-- Stu-Name --</td>
+        <td style="border-top:none; border-left:none;border-right:none;width: -- 2.42 Inches --; text-align: -- Text Alignment --;">-- Book-Grade --</td>
+        <td style="border-top:none; border-left:none;border-right:none;text-align:-- Text Alignment --; vertical-align: top;max-width: -- 2.42 Inches --; width:-- 2.42 Inches --; padding:5px" >-- Date --</td>
+    </tr>
+</table>
+
+<!-- Subsequent Rows Table -->
+<table>
+<!-- NEW CONTENT -->
+<!-- Don not remove above line, that is used as a template to replace new content -->
+    <tr>
+        <td style="border-bottom:none; border-left:none;border-right:none; width: -- 0.54 Inches --; max-width: -- 0.54 Inches --;"></td>
+        <td style="border-bottom:none; border-left:none;border-right:none;width: auto;text-align:-- Text Alignment --;"></td>
+        <td style="border-bottom:none; border-left:none;border-right:none;width: -- 0.54 Inches --; max-width: -- 0.54 Inches --;">-- SUM --</td>
+    </tr>
+
+</table>
+
+
+<script>
+    // Persian digits mapping
+    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+
+    // Check if element is RTL
+    function isRTL(element) {
+      return getComputedStyle(element).direction === 'rtl';
+    }
+
+    // Convert digits in RTL elements
+    function convertRTLDigits(node) {
+      if (node.nodeType === Node.TEXT_NODE && isRTL(node.parentElement)) {
+        node.nodeValue = node.nodeValue.replace(/\d/g, match => 
+          persianDigits[parseInt(match)]
+        );
+      }
+    }
+
+    // Process all nodes
+    function convertDigitsInRTLElements() {
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+      );
+
+      let node;
+      while ((node = walker.nextNode())) {
+        convertRTLDigits(node);
+      }
+    }
+
+    // Initial conversion
+    convertDigitsInRTLElements();
+
+    // Optional: MutationObserver for dynamic content
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const walker = document.createTreeWalker(
+              node,
+              NodeFilter.SHOW_TEXT,
+              null,
+              false
+            );
+            let textNode;
+            while ((textNode = walker.nextNode())) {
+              convertRTLDigits(textNode);
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+</script>
+</body>
+</html>

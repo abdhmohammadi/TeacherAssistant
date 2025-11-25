@@ -1,0 +1,64 @@
+
+abdh/
+├── TeacherAssistant/                # Main application folder
+│   ├── __init__.py
+│   ├── main.py
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── database_tools.py
+│   │   ├── font_tools.py
+│   │   ├── helpers.py
+│   │   ├── image_tools.py
+│   │   └── ThemeManager.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── # all data layer models come here
+│   ├── view_models/
+│   │   ├── __init__.py
+│   │   └── # View Models (Intermediary between View and Model)
+│   ├── views/
+│   │   ├── __init__.py
+│   │   └──  # Views (UI Layer)
+│   └── resources/
+│       ├── fonts/
+│       │     ├── SegoeIcons.py
+│       │     └── SegoeIcons.ttf
+│       ├── icons/
+│       │     ├── book-coffe.png (application icon)
+│       │     ├── logo-coffe1.png
+│       │     └── logo-coffe2.png
+│       ├── images/
+│       │     └── background.png
+│       ├── styles/
+│       │     ├── chrome-semi-dark/
+│       │     │       ├── global.qss
+│       │     │       └── classes.qss
+│       │     └── light/
+│       │             ├── global.qss
+│       │             └── classes.qss
+│       └── templates/
+│             ├── 01-Quiz-config.json
+│             ├── 01-Quiz-Template.html
+│             ├── 02-Formal-Exam-config.json
+│             └── 02-Formal-Exam-Template.html
+├── PySideAbdhUI/                   # Customized GUI folder
+│   ├── __init__.py
+│   ├── popup.py
+│   ├── style_sheets.py
+│   ├── TableWidget.py
+│   ├── Window.py
+│   └── styles/
+│       ├── default-dark.qss
+│       └── default-light.qss
+├── pyinstaller/                    # PyInstaller folder
+│   ├── build/
+│   ├── dist/
+│   └── spec/
+│       └── TeacherAssistant.spec
+├── requirements.txt
+└── README.md
+
+Create an editor app that:
+1) upload image from file or from QTextEdit or QLabel
+2) manipulate image(resize, rotate, flip, modify alpha, unhance quility and ...)
+3) save on disk or replace  with old image in QTextEdit or QLabel

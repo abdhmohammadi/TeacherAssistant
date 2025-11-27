@@ -28,7 +28,7 @@
 </head>
 <body>
   <header>
-    <h1>Documentation Manager</h1>
+    <h1>Documentation Manager for TeacherAssistant App</h1>
     <div class="controls">
       <input id="search" type="search" placeholder="Search docs (title or content)..." />
       <button id="newDoc" title="Create new document">New</button>
@@ -65,8 +65,10 @@
   <script>
     // Static registry here - update if you add docs
     const DOCS = [
+      {title:'Home', file:'home.html', desc:'Main documentation hub', tags:['main','home']},
       {title:'Developer Notes', file:'developer-guideline.html', desc:'Developer comments for each page', tags:['dev','notes']},
-      {title:'User Manual', file:'user_manual.html', desc:'End-user manual and quickstart', tags:['user','manual']},
+      {title:'Version History', file:'version-history.html', desc:'Version history and changelog', tags:['version','history']},
+      {title:'User Manual', file:'user-manual.html', desc:'End-user manual and quickstart', tags:['user','manual']},
       {title:'README', file:'../README.md', desc:'Project README', tags:['project','readme']},
       {title:'LICENSE', file:'../LICENSE', desc:'Project license file', tags:['legal']}
     ];

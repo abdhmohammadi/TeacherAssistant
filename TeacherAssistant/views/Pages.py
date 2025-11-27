@@ -1894,9 +1894,24 @@ class StudentListPage(QWidget):
 
         self.initUI()
     
-    
     def initUI(self):
+        """
+        Layout structure:
+        --------------------------------------------------------------------------
+        root QWidget
+            └── QVBoxLayout (main_layout)
+                |
+                └── QWidget (header widget)
+                   ├── QHBoxLayout (header_layout)
+                   |   ├── QLabel (page_title)
+                   |   ├── QLineEdit (search_input)
+                   |   ├── QComboBox (class_filter_combo)
+                   |   └── QPushButton (hamburger_btn)
+                   |
+                   └── QTableWidget (tableWidget)  
+        """
         self.search_index = 0
+        self._multi_select_enabled = False
         self.setContentsMargins(10,0,10,10)
         main_layout = QVBoxLayout(self)
         
@@ -2050,7 +2065,27 @@ class StudentListPage(QWidget):
         menu = QMenu(btn)
                 
         btn.setMenu(menu)
+        # Multi-selection toggle (checkable). If tableWidget hasn't been created yet,
+        # store desired state in self._multi_select_enabled and apply later when table exists.
+        if not hasattr(self, '_multi_select_enabled'):
+            self._multi_select_enabled = False
 
+        action_multi = QAction(icon=QIcon(f'{state.application_path}\\resources\\icons\\svg\\layers.svg'),
+                               text='Enable multi-selection', parent=menu)
+        action_multi.setCheckable(True)
+        action_multi.setChecked(self._multi_select_enabled)
+        action_multi.setToolTip('Toggle multi-row selection in the students list')
+
+        def _toggle_multi(checked):
+            # remember desired state
+            self._multi_select_enabled = checked
+            # apply if table widget exists
+            if hasattr(self, 'tableWidget') and self.tableWidget is not None:
+                mode = QAbstractItemView.SelectionMode.MultiSelection if checked else QAbstractItemView.SelectionMode.SingleSelection
+                self.tableWidget.setSelectionMode(mode)
+
+        action_multi.triggered.connect(_toggle_multi)
+        
         action4 = QAction(icon= QIcon(f'{state.application_path}\\resources\\icons\\svg\\id-card.svg'), text='Add new student', parent= menu)
         action4.triggered.connect(self.open_personal_info_dialog)
         menu.addAction(action4)
@@ -2061,7 +2096,11 @@ class StudentListPage(QWidget):
         menu.addAction(action5)
 
         menu.addSeparator()
-        
+
+        menu.addAction(action_multi)
+
+        menu.addSeparator()
+
         action0 = QAction(icon= QIcon(f'{state.application_path}\\resources\\icons\\svg\\drafting-compass.svg'), text='Set Edu-Item to group', parent= menu)
 
         action0.triggered.connect(lambda _, option='all': self.send_edu_items(option))
@@ -2073,7 +2112,7 @@ class StudentListPage(QWidget):
         menu.addAction(action1)
         
         menu.addSeparator()
-
+        
         action3 = QAction(icon= QIcon(f'{state.application_path}\\resources\\icons\\svg\\users-selected.svg'), text='group selected students', parent=menu)
 
         action3.triggered.connect(lambda _, model= group_model:self.show_group_dialog(model,'selected-list'))

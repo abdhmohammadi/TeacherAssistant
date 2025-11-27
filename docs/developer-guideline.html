@@ -70,6 +70,95 @@
       <li>Privacy: sensitive fields should be masked/controlled by permissions.</li>
     </ul>
   </section>
+  <section>
+      <h2>Student List class (<code>StudentListPage</code>)</h2>
+      <p>
+        <strong>File:</strong> <code>TeacherAssistant/views/Pages.py</code><br>
+        <strong>Class:</strong> <code>StudentListPage(QWidget)</code>
+      </p>
+      <ul>
+        <li><strong>Purpose:</strong> Central page for managing and viewing all students. Supports searching, filtering by group, importing/exporting, and quick actions for each student.</li>
+        <li><strong>Main Widgets:</strong>
+          <ul>
+            <li>Header: Title, search box, group filter combo, options menu (☰)</li>
+            <li><code>QTableWidget</code>: Displays students with columns for photo, info, address/contact, and last behavioral note</li>
+          </ul>
+        </li>
+        <li><strong>Data Flow:</strong>
+          <ul>
+            <li>Loads group list from <code>groups</code> table for filtering</li>
+            <li>Loads student data (with last behavioral note) from <code>personal_info</code> and <code>observed_behaviours</code> tables</li>
+            <li>Supports CSV import (with strict column mapping)</li>
+          </ul>
+        </li>
+        <li><strong>Key Features:</strong>
+          <ul>
+            <li>Search students by any visible field (search box highlights and scrolls to match)</li>
+            <li>Filter by group (combo box, dynamically loaded)</li>
+            <li>Import students from CSV (shows format warning, supports "don't show again" option)</li>
+            <li>Quick actions per student (menu button in each row): assign edu-item, view learning progress, edit personal info, write behavioral note, remove from group/database</li>
+            <li>Bulk/group actions from header menu: add student, import CSV, assign edu-item to group/selected, group students, manage groups</li>
+          </ul>
+        </li>
+        <li><strong>Integration Points:</strong>
+          <ul>
+            <li>Uses <code>viewModels.ClassroomGroupViewModel</code> for group data</li>
+            <li>Uses <code>Widgets.EduItemWidget</code> and <code>Widgets.ObservedBehaviourWidget</code> for custom row and dialog UIs</li>
+            <li>Uses <code>PopupNotifier</code> for user feedback</li>
+            <li>Relies on <code>settings_manager</code> for persistent options (e.g., CSV warning)</li>
+          </ul>
+        </li>
+        <li><strong>Behavioral Notes:</strong>
+          <ul>
+            <li>Behavioral notes are shown in the last column, with scrollable area for long notes</li>
+            <li>Adding/editing notes opens a dialog with <code>QTextEdit</code> for input</li>
+          </ul>
+        </li>
+        <li><strong>Photo Handling:</strong>
+          <ul>
+            <li>Photos are stored as bytea in DB, converted to <code>QPixmap</code> for display</li>
+            <li>Photo box is fixed size (80x110 px), "No Photo" shown if missing</li>
+          </ul>
+        </li>
+        <li><strong>Best Practices & Notes:</strong>
+          <ul>
+            <li>All DB access via <code>TeacherAssistant.db_connection.cursor()</code></li>
+            <li>UI updates (e.g., table refresh) are done after DB changes</li>
+            <li>Column mapping for CSV import is case-sensitive and must match exactly</li>
+            <li>Group management dialogs are modular and reusable</li>
+            <li>All destructive actions (delete student, remove from DB) require confirmation</li>
+          </ul>
+        </li>
+        <li><strong>Extensibility:</strong>
+          <ul>
+            <li>To add new columns: update <code>load_students</code> and table header setup</li>
+            <li>To add new actions: extend <code>create_menu_btn</code> for per-student actions, or <code>create_more_option_menu</code> for bulk actions</li>
+            <li>To support new import formats: update <code>load_from_csv</code> and mapping logic</li>
+          </ul>
+        </li>
+        <li><strong>Potential Issues:</strong>
+          <ul>
+            <li>Large student lists may impact performance; consider pagination or lazy loading if needed</li>
+            <li>CSV import is strict; user errors in column names will silently skip columns</li>
+            <li>Photo scaling ignores aspect ratio (may distort images)</li>
+          </ul>
+        </li>
+        <li><strong>Testing:</strong>
+          <ul>
+            <li>Test with/without photos, with/without behavioral notes</li>
+            <li>Test CSV import with correct and incorrect headers</li>
+            <li>Test group assignment and removal flows</li>
+          </ul>
+        </li>
+      </ul>
+      <p class="meta">Last updated: Nov 2025</p>
+      <pre>
+  # Example: Adding a new column to the student table
+  # 1. Update self.tableWidget.setColumnCount and setHorizontalHeaderLabels
+  # 2. Update load_students to fetch and display the new data
+  # 3. Update CSV import mapping if needed
+      </pre>
+    </section>
 
   <section>
     <h2>Student Detail / Profile</h2>

@@ -38,6 +38,7 @@
 
   <div class="wrap">
     <aside class="list" id="docList" aria-label="Documentation list">
+      
       <!-- dynamically populated -->
     </aside>
 
@@ -59,17 +60,16 @@
   </div>
 
   <footer>
-    <div class="meta">Managed files: developer-guideline.html, user_manual.html, README.md, LICENSE — adjust list below if you add docs.</div>
+    <div class="meta">Managed files: developer-guideline.html, user-manual.html, LICENSE</div>
   </footer>
 
   <script>
     // Static registry here - update if you add docs
     const DOCS = [
-      {title:'Home', file:'home.html', desc:'Main documentation hub', tags:['main','home']},
+      {title:'Home', file:'home.html', desc:'Main documentation hub', tags:[]},
       {title:'Developer Notes', file:'developer-guideline.html', desc:'Developer comments for each page', tags:['dev','notes']},
       {title:'Version History', file:'version-history.html', desc:'Version history and changelog', tags:['version','history']},
       {title:'User Manual', file:'user-manual.html', desc:'End-user manual and quickstart', tags:['user','manual']},
-      {title:'README', file:'../README.md', desc:'Project README', tags:['project','readme']},
       {title:'LICENSE', file:'../LICENSE', desc:'Project license file', tags:['legal']}
     ];
 
@@ -103,12 +103,25 @@
             <button data-file="${d.file}" class="download ghost">Download</button>
             <button data-file="${d.file}" class="edit ghost">Edit</button>
           </div>`;
+
+        if(d.title === 'Home')
+        {
+          el.innerHTML = `<strong>${d.title}</strong>
+          <div class="meta">${d.desc}</div>
+          <div>${(d.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+          <div class="actions">
+            <button data-file="${d.file}" class="open">Open</button>
+            <button data-file="${d.file}" class="previewBtn ghost">Preview</button>
+          </div>`;
+        }
+       
         docList.appendChild(el);
       });
       attachButtons();
     }
 
-    function attachButtons(){
+    function attachButtons()
+    {
       docList.querySelectorAll('button.open').forEach(b=>{
         b.onclick = ()=>{ window.open(b.dataset.file,'_blank'); };
       });
@@ -190,4 +203,3 @@
   </script>
 </body>
 </html>
-```// filepath:

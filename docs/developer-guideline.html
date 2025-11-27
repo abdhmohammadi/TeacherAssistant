@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TeacherAssistant — Developer Notes</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Segoe UI, Roboto, Arial, sans-serif; line-height:1.5; margin:24px; color:#111 }
+    h1,h2 { color:#0b5; }
+    section { margin-bottom:18px; border-left:4px solid #eee; padding-left:12px }
+    .meta { color:#666; font-size:0.9em }
+    ul { margin:8px 0 12px 20px }
+    .todo { color:#b33 }
+    pre { background:#f7f7f7; padding:8px; border-radius:4px; overflow:auto }
+  </style>
+</head>
+<body>
+  <h1>TeacherAssistant — Developer Notes</h1>
+  <p class="meta">Purpose: short developer-facing notes describing each primary UI page, its responsibilities, key widgets, expected data flow, and integration points.</p>
+
+  <section>
+    <h2>Main Window / Dashboard</h2>
+    <p>Role: central navigation hub and summary area. Provides quick access to recent resources, student alerts, and active tasks.</p>
+    <ul>
+      <li>Key widgets: menu bar, navigation pane, quick-actions toolbar, summary cards.</li>
+      <li>Data sources: app settings, recent activity cache, notification store.</li>
+      <li>Actions: open resource manager, open student list, start new test, open settings.</li>
+      <li>Notes: keep dashboard updates lightweight (cached summaries). Avoid heavy DB queries on load.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Resource Manager / Library</h2>
+    <p>Role: browse, filter and organize educational resources (PDF, images, HTML, LaTeX).</p>
+    <ul>
+      <li>Key widgets: resource tree/list, search box, filter chips, import/export actions.</li>
+      <li>Data flow: loads metadata from resources DB/JSON; preview requests open editor or viewer.</li>
+      <li>Edge cases: large PDFs — use streaming preview; corrupted files — show validation error and allow re-import.</li>
+      <li>TODO: add tagging and bulk-rename operations.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Resource Editor / Viewer</h2>
+    <p>Role: create and edit resource content. Supports multiple content types and embedded media.</p>
+    <ul>
+      <li>Modes: Edit (rich/markup), Preview (rendered HTML/PDF/image), Export (to file/PDF).</li>
+      <li>Supported content: plain text, HTML, Markdown (if present), LaTeX snippets, images, embedded PDFs.</li>
+      <li>Saving: metadata + binary storage model. Autosave optional — configurable in settings.</li>
+      <li>Notes: isolate processing (LaTeX compile, PDF rendering) into background tasks to keep UI responsive.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Test / Quiz Builder</h2>
+    <p>Role: assemble quizzes and formal exams from resources and question bank.</p>
+    <ul>
+      <li>Key widgets: question palette, layout templates (quiz/exam), numbering/mode controls, export formats (PDF/HTML).</li>
+      <li>Data: questions may reference resource attachments; store exam templates separately.</li>
+      <li>Important: ensure export preserves RTL/LTR layout and math rendering (LaTeX).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Student List</h2>
+    <p>Role: list of students with quick actions and filters.</p>
+    <ul>
+      <li>Key widgets: search, sort, group filters, quick profile card.</li>
+      <li>Data: minimal list loaded first; details loaded on demand to reduce startup cost.</li>
+      <li>Privacy: sensitive fields should be masked/controlled by permissions.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Student Detail / Profile</h2>
+    <p>Role: detailed student information and event history (behavioral events, submissions).</p>
+    <ul>
+      <li>Sections: personal info, contact, group membership, events log, assigned tests.</li>
+      <li>Actions: add event, assign test, export record, upload files.</li>
+      <li>Notes: keep file attachments in per-student folder; consider quota and cleanup policy.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Settings</h2>
+    <p>Role: application configuration (theme, fonts, language, LaTeX settings, storage paths).</p>
+    <ul>
+      <li>Key options: Theme selection, font selection, RTL/LTR toggle, default export paths, DB connection (Postgres) settings.</li>
+      <li>Persistence: settings.json in %LOCALAPPDATA%/MyJobAssistant/ — validate schema on load.</li>
+      <li>Note: provide a "Reset to defaults" and "Export/Import settings" feature for support scenarios.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>About / Help</h2>
+    <p>Role: version, license, credits and links to documentation/support.</p>
+    <ul>
+      <li>Include app version, license summary (link to LICENSE file), and a link to this developer comments document.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>General Developer Notes</h2>
+    <ul>
+      <li>Keep long-running operations off the UI thread (use QThread or asyncio worker pattern).</li>
+      <li>All file-system paths should be resolved using app state helpers (state.setup_app_directories()).</li>
+      <li>Use a single source of truth for i18n strings to ease localization.</li>
+      <li class="todo">TODO: Add integration test checklist for each page (navigation, basic CRUD, export).</li>
+    </ul>
+  </section>
+
+  <footer class="meta">Generated: Developer page comments — place near docs/ for quick reference.</footer>
+</body>
+</html>

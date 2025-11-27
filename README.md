@@ -1,108 +1,117 @@
 # Teacher Assistant
+pre-alpha version
 
-A desktop application for teaching/workflow assistance built with Python and PySide (PySideAbdhUI). Provides utilities and UI components to support lesson preparation and classroom tasks.
+A modern, user-friendly teacher assistance application built with PySide6 (Qt for Python).
+This application helps educational resources managment and student information with a beautiful, customizable interface.
+This project is currently in its early stages...
 
-## Key Features
+## Features
 
-- Cross-platform Qt-based desktop UI (Windows focused)
-- Modular CLI and GUI entry points
-- Easily packaged with PyInstaller and distributed with Inno Setup
-- Simple project structure for extension and customization
+- 🎨 **Customizable UI**
+  - Multiple theme support
+  - Customizable fonts
+  - RTL/LTR layout support
+  - Modern, clean interface
 
-## Requirements
+- 📚 **Educational Resource Management**
+  - View and manage educational resources
+  - Resource editor for creating and modifying content
+  - Support PDF, Image, HTML and LaTeX in resource editor
+  - Organized educational contents 
+  - Producing tests in two formats: classroom quizzes and formal exams
+  - Ability to distribute tests in PDF and HTML format
+  - Snipping tool to import image resources
 
-- Python 3.10+ (project used with Python 3.14 in development notes)
-- Windows recommended for installer steps
-- Dependencies listed in `requirements.txt` (or install via editable wheel for PySideAbdhUI)
+- 👥 **Student Management**
+  - Student list management
+  - Personal information tracking
+  - Easy navigation between student records
+  - Tracking student's behavioral events in order to achieve educational 
 
-## Quickstart (Windows)
+- 🌐 **Multilingual Support** (in progress)
+  - English and Persian language support
+  - RTL/LTR text direction handling
+  - Localized interface elements
+
+- ⚙️ **Customizable Settings** 
+  - Font selection
+  - Theme customization
+  - Layout direction preferences
+  - LaTeX document settings (in progress)
+
+- ## Next phase of the project
+  - Organizing student groups
+  - Assigning tests to students in groups and individually
+  - Getting answers back from students in image and PDF format for assigned tests
+
+<--
+## Installation
 
 1. Clone the repository:
-   - git clone <repo-url>
+```bash
+git clone https://github.com/abdhmohammadi/MyJobAssistant.git
+```
 
-2. Create a virtual environment (recommended name: `env`):
-   PowerShell:
-   ```powershell
-   python -m venv .\env
-   .\env\Scripts\Activate.ps1
-   ```
-   cmd.exe:
-   ```cmd
-   python -m venv .\env
-   .\env\Scripts\activate.bat
-   ```
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-3. Install dependencies:
-   - If using the local wheel for PySideAbdhUI (adjust path as needed):
-     ```powershell
-     pip install F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.4-py3-none-any.whl
-     ```
-   - Or editable install for development:
-     ```powershell
-     pip install -e F:\Projects\Python\PySideAbdhUI
-     ```
-   - Or install from GitHub:
-     ```powershell
-     pip install git+https://github.com/abdhmohammadi/PySideAbdhUI.git
-     ```
+3. Run the application:
+```bash
+python MyJobAssistant/main.py
+```
 
-4. Run the application:
-   ```powershell
-   python main.py
-   ```
+## Building Executable
 
-## Packaging & Distribution
+To create a standalone executable:
 
-1. Build with PyInstaller:
-   - Generate executable using the provided spec:
-     ```powershell
-     pyinstaller TeacherAssistant.spec
-     ```
-   - If path issues occur:
-     ```powershell
-     C:\Users\<User>\AppData\Roaming\Python\Python3x\Scripts\pyinstaller TeacherAssistant.spec
-     ```
+```bash
+pyinstaller pyinstaller/spec/MyJobAssistant.spec
+```
 
-2. Create an installer:
-   - Use Inno Setup to wrap the generated executable into a Windows installer.
+For Windows installer creation, use InnoSetup with the provided script. --!>
 
-## Project Layout (high level)
+## Project Structure
 
-- main.py — Application entry point
-- TeacherAssistant/ — Package source
-- requirements.txt — Pin dependencies for deployment
-- TeacherAssistant.spec — PyInstaller spec file
+```
+MyJobAssistant/
+├── main.py                 # Main application entry point
+├── resources/              # Application resources
+│   ├── icons/              # Application icons
+│   ├── fonts/              # Custom fonts
+│   └── styles/             # QSS style sheets
+├── views/                  # UI views and forms
+├── utils/                  # Utility functions
+└── PySideAbdhUI/           # Custom UI components
+```
 
-## VS Code
+## Dependencies
 
-- Select the interpreter from `. \env\Scripts\python.exe` via Command Palette: `Python: Select Interpreter`.
-- Update workspace settings if needed:
-  ```
-  "python.defaultInterpreterPath": "F:\\Projects\\Python\\Teaching-assistant-project\\env\\Scripts\\python.exe"
-  ```
+- PySide6
+- PostgreSQL (for database)
+- Other dependencies listed in requirements.txt
 
-## Troubleshooting
+## Configuration
 
-- If you manually renamed the virtual environment folder:
-  - Update any scripts/docs referencing the old name (e.g., `abdh_env` → `env`).
-  - Re-select interpreter in VS Code.
-  - If activation or shebangs break, recreate the venv (`python -m venv .\env`) and reinstall packages:
-    ```powershell
-    .\old_env\Scripts\python -m pip freeze > requirements.txt
-    python -m venv .\env
-    .\env\Scripts\Activate.ps1
-    python -m pip install -r requirements.txt
-    ```
+The application stores settings in the user's LOCALAPPDATA directory:
+- `%LOCALAPPDATA%/MyJobAssistant/settings.json`
 
 ## Contributing
 
-- Fork the repository, create a feature branch, and submit a pull request.
-- Run unit tests and linters before submitting.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-- MIT License — see LICENSE file.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contact
+## Author
 
-- Project maintainer: see repository metadata or contact via project issue tracker.
+- Abdh Mohammadi
+- GitHub: [abdhmohammadi](https://github.com/abdhmohammadi)
+
+## Acknowledgments
+
+- Built with PySide6 (Qt for Python)
+- Uses custom UI components from PySideAbdhUI
+- Icons and resources are custom-designed

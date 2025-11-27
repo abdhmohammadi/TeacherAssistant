@@ -1,6 +1,6 @@
 
 # HOW TO USE THIS PROJECT:
-#     ACTIVATE ENVIRONMENT: Terminal> abdh_env\Scripts\activate
+#     ACTIVATE ENVIRONMENT: Terminal> env\Scripts\activate
 #     RUN THE APP         : USE Run option from the vscode menu or run from Terminal-> python main.py
 #   
 # HOW TO BUILD THIS PROJECT:           
@@ -19,7 +19,6 @@
 # 2. Use InnoSetup tool to create windows installer.
 #
 # ICONS: All icons has been downloaded from https://lucide.dev/icons/categories (and modified if needed).
-
 
 from TeacherAssistant import state
 from TeacherAssistant.cli import CLI

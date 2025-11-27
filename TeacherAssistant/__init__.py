@@ -8,7 +8,7 @@ from TeacherAssistant.utils.Json import JSONManager
 from PySideAbdhUI import utils, StyleManagers as sm
 
 
-version = "0.2.3"
+version = "0.2.4"
 
 Language = 'English'
 

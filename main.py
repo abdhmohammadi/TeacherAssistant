@@ -5,11 +5,13 @@
 #   
 # HOW TO BUILD THIS PROJECT:           
 # INSTALL PySideAbdhUI:
-# OPTION 1                        : pip install F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.4-py3-none-any.whl
-# EDITABLE INSTALL(FOR DEVELOPERS): pip install -e F:\Projects\Python\PySideAbdhUI
-# INSTALL FROM GIT                : pip install git+https://github.com/abdhmohammadi/PySideAbdhUI.git
-# 
-#
+# OPTION 1 : pip install F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.4-py3-none-any.whl
+# OPTION 2 : F:/Projects/Python/Teaching-assistant-project/TeacherAssistant/env/Scripts/python.exe' 
+#            -m pip install -e F:\Projects\Python\PySideAbdhUI
+# OPTION 3 (EDITABLE INSTALL FOR DEVELOPERS): 
+#            pip install -e F:\Projects\Python\PySideAbdhUI
+# OPTION 4 (INSTALL FROM GIT): pip install git+https://github.com/abdhmohammadi/PySideAbdhUI.git
+
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
 #    1. PyInstaller:

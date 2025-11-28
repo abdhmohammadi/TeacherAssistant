@@ -12,6 +12,68 @@
     ul { margin:8px 0 12px 20px }
     .todo { color:#b33 }
     pre { background:#f7f7f7; padding:8px; border-radius:4px; overflow:auto }
+
+.tree {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Remove bullets */
+.tree ul {
+    list-style: none;
+    margin: 0;
+    padding-left: 25px;   /* indentation */
+    position: relative;
+}
+
+/* Vertical line between siblings */
+.tree ul::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 12px;  /* vertical spine position */
+    width: 0;
+    height: 100%;
+    border-left: 2px solid #777;
+}
+
+/* Node container */
+.tree li {
+    margin: 0;
+    padding: 10px 0 0 15px;
+    position: relative;
+}
+
+/* Horizontal connector — moved left more */
+.tree li::before {
+    content: "";
+    position: absolute;
+    top: 25px;
+    left: -13px;   /* <-- shifted more to the left */
+    width: 30px;   /* reaches the node perfectly */
+    border-top: 2px solid #777;
+}
+
+/* Remove the lower part of the vertical line for last child */
+.tree li:last-child::after {
+    content: "";
+    position: absolute;
+    left: 12px;
+    top: 16px;
+    height: 100%;
+    width: 2px;
+    background: white;
+}
+
+/* Node box */
+.node {
+    display: inline-block;
+    background: #f0f0f0;
+    padding: 6px 10px;
+    border: 1px solid #aaa;
+    border-radius: 6px;
+    font-size: 14px;
+}
   </style>
 </head>
 <body>
@@ -74,8 +136,35 @@
       <h2>Student List class (<code>StudentListPage</code>)</h2>
       <p>
         <strong>File:</strong> <code>TeacherAssistant/views/Pages.py</code><br>
-        <strong>Class:</strong> <code>StudentListPage(QWidget)</code>
+        <strong>Class:</strong> <code>StudentListPage(QWidget)</code><br>
+        
       </p>
+      <strong>Layout structure:</strong><br>
+      <div class="tree">
+    <ul>
+        <li><span class="node">Root QWidget</span>
+            <ul>
+                <li><span class="node">QVBoxLayout (main_layout)</span>
+                    <ul>
+                        <li><span class="node">QWidget (header widget)</span>
+                            <ul>
+                                <li><span class="node">QHBoxLayout (header_layout)</span>
+                                    <ul>
+                                        <li><span class="node">QLabel (page_title)</span></li>
+                                        <li><span class="node">QLineEdit (search_input)</span></li>
+                                        <li><span class="node">QComboBox (class_filter_combo)</span></li>
+                                        <li><span class="node">QPushButton (hamburger_btn)</span></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                        <li><span class="node">QTableWidget (tableWidget)</span></li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>
       <ul>
         <li><strong>Purpose:</strong> Central page for managing and viewing all students. Supports searching, filtering by group, importing/exporting, and quick actions for each student.</li>
         <li><strong>Main Widgets:</strong>

@@ -1,6 +1,5 @@
 
 import sys
-
 from PySideAbdhUI import Window
 from PySideAbdhUI.Notify import PopupNotifier
 # Local moduls in main.py directory must be imported

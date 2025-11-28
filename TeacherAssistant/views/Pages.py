@@ -1898,7 +1898,7 @@ class StudentListPage(QWidget):
         """
         Layout structure:
         --------------------------------------------------------------------------
-        root QWidget
+        Root QWidget
             └── QVBoxLayout (main_layout)
                 |
                 └── QWidget (header widget)
@@ -1909,6 +1909,7 @@ class StudentListPage(QWidget):
                    |   └── QPushButton (hamburger_btn)
                    |
                    └── QTableWidget (tableWidget)  
+        --------------------------------------------------------------------------
         """
         self.search_index = 0
         self._multi_select_enabled = False
@@ -2069,8 +2070,8 @@ class StudentListPage(QWidget):
         # store desired state in self._multi_select_enabled and apply later when table exists.
         if not hasattr(self, '_multi_select_enabled'):
             self._multi_select_enabled = False
-
-        action_multi = QAction(icon=QIcon(f'{state.application_path}\\resources\\icons\\svg\\layers.svg'),
+        
+        action_multi = QAction(icon=QIcon(f'{state.application_path}\\resources\\icons\\svg\\list-checks.svg'),
                                text='Enable multi-selection', parent=menu)
         action_multi.setCheckable(True)
         action_multi.setChecked(self._multi_select_enabled)

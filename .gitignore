@@ -39,6 +39,9 @@ env/
 *.sublime-project
 *.sublime-workspace
 
+# Unmanaged files
+# These files are not managed by the project and should not be included in version control. 
+docs/unmanaged
 # Application State & Data
 TeacherAssistant/state/
 .app_data/

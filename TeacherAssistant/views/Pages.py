@@ -19,7 +19,8 @@ from PySide6.QtWidgets import (QFileDialog, QListWidget, QListWidgetItem, QScrol
                                QTextEdit, QHeaderView, QTableWidget, QDialogButtonBox, QCheckBox,
                                QGridLayout, QWidget, QLabel,QApplication,QDialog, QListView, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit,QVBoxLayout,QMainWindow,QAbstractItemView,
-                               QPlainTextEdit, QComboBox, QAbstractScrollArea,QMenu,QWidgetAction)
+                               QPlainTextEdit, QComboBox, QAbstractScrollArea,QMenu,QWidgetAction,
+                               QTableWidgetSelectionRange)
 
 from Imaging.SnippingTool import SnippingWindow
 from Imaging.ImageEditor import ImageEditor
@@ -2161,7 +2162,7 @@ class StudentListPage(QWidget):
         menu.addSeparator()
 
         action5 = QAction(icon=QIcon(f'{state.application_path}\\resources\\icons\\svg\\x.svg'),text='Remove from group',parent=menu)
-        action5.triggered.connect(lambda _, data=record: self.open_personal_info_dialog(data))
+        action5.triggered.connect(lambda _, stu = {'Id':record[0], "Name":f'{record[1]} {record[2]}'}: self.remove_from_group(stu))
         menu.addAction(action5)
 
         action6 = QAction(icon=QIcon(f'{state.application_path}\\resources\\icons\\svg\\database-x.svg'), text= 'Remove from database',parent=menu)
@@ -2173,25 +2174,35 @@ class StudentListPage(QWidget):
     def show_group_dialog(self, model:QStandardItemModel,option = 'selected-list'):
 
         if option == 'all':
-            self.tableWidget.selectAll()
+            #self.tableWidget.selectAll()
+            sr = QTableWidgetSelectionRange(0, 0, 
+                                            self.tableWidget.rowCount() - 1, 
+                                            self.tableWidget.columnCount() - 1) 
+            self.tableWidget.setRangeSelected(sr, True)
         elif not self.tableWidget.selectedIndexes(): 
             PopupNotifier.Notify(self,'','First select at least one student')
             return
 
         dlg = GroupSelectionDialog(model)
         
-        if dlg.exec() == QDialog.Accepted:
+        if dlg.exec() == QDialog.DialogCode.Accepted:
             
             item = model.item(dlg.selected_group.row())
             group:viewModels.ClassroomGroupViewModel = item.data(Qt.ItemDataRole.UserRole)
             # The user has decided to group the selected list into this group.
             students = self.tableWidget.selectedIndexes()
             id_list = ''
-            
-            for student in students[:1]:
-                id = self.data[student.row()][0] 
-                id_list = f'{id_list},{id}'
-            
+            # Iterate over all selected indexes
+            for index in students:
+                row = index.row()
+                # We want to get student id from the QWidget, this data is stored in the second column
+                # The second column is a QLabel, so we can access its text
+                widget:QLabel = self.tableWidget.cellWidget(row, 1)
+                if widget is not None:
+                    # Process the id
+                    id = self.data[row][0] 
+                    id_list = f'{id_list},{id}'
+
             status, message = group.model.add_member(int(group.Id), id_list)
             
             if status: self.load_groups()
@@ -2242,11 +2253,26 @@ class StudentListPage(QWidget):
             selected:viewModels.ClassroomGroupViewModel = sender.currentData(Qt.ItemDataRole.UserRole)
             
             if not selected: return
+             
+            # Fully Explain this sql command
             if isinstance(selected, str):
                 group_filter = '' # Where user selected 'All'
+                self.tableWidget.tag= selected
             else:
                 group_filter =  f'WHERE t1.Id = ANY(string_to_array(\'{selected.members}\',\',\'))'
+                self.tableWidget.tag = selected.Id
             
+            # SQL query to retrieve student personal information along with their MOST RECENT observed behaviour (if any).
+            # - Uses a LEFT JOIN to ensure every student appears, even if they have no behaviour records.
+            # - The subquery finds the latest record per student using GROUP BY + MAX(date_time_),
+            #   then joins back to get the full row of that latest observation.
+            # - When a specific group/class is selected, {group_filter} adds a WHERE clause
+            #   filtering students by a comma-separated list of IDs using PostgreSQL's string_to_array() + ANY().
+            # - WARNING: Current f-string interpolation of 'selected.members' is vulnerable to SQL injection
+            #   if the input is not strictly controlled. Prefer parameterized queries in production.
+            # - Just add this index once:
+            #   CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_obs_student_time 
+            #   ON observed_behaviours (student_id, date_time_ DESC);
             cmd =  'SELECT t1.Id, t1.fname_, t1.lname_, t1.phone_, t1.address_, t1.photo_, t2.date_time_, '
             cmd += 't2.observed_behaviour_, t1.parent_name_, t1.parent_phone_, t1.additional_details_, '
             cmd += 't1.birth_date_, t1.gender_ FROM personal_info t1 '
@@ -2255,9 +2281,10 @@ class StudentListPage(QWidget):
             cmd += 'GROUP BY student_id) last_records ON t2.student_id = last_records.student_id '
             cmd += 'AND t2.date_time_ = last_records.max_created_at) t2 ON t1.id = t2.student_id ' 
             cmd += f'{group_filter};'
+            
 
             self.db_cursor.execute(cmd)
-
+            
             self.data = self.db_cursor.fetchall()
             self.tableWidget.clear()
             # Columns:
@@ -2270,6 +2297,8 @@ class StudentListPage(QWidget):
             self.tableWidget.setHorizontalHeaderLabels(['PHOTO','INFO', 'ADDRESS','LAST NOTE'])
         
             self.tableWidget.setRowCount(len(self.data))
+            
+            print(self.tableWidget.tag)
 
             # fetched columns:
             # 0- student Id,
@@ -2301,7 +2330,8 @@ class StudentListPage(QWidget):
                 if record[5]: # If has a photo
                     pixmap = bytea_to_pixmap(record[5])
                     # Scale the photo to fill the entire photo box (ignore aspect ratio)
-                    scaled_pixmap = pixmap.scaled(photo_label.size(), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    scaled_pixmap = pixmap.scaled(photo_label.size(), Qt.AspectRatioMode.IgnoreAspectRatio, 
+                                                                      Qt.TransformationMode.SmoothTransformation)
                     photo_label.setPixmap(scaled_pixmap)
                     photo_label.setText("")
 
@@ -2342,7 +2372,8 @@ class StudentListPage(QWidget):
                 
                 rtl = is_mostly_rtl(last_note.text())
                 
-                notes_layout.addWidget(btn,0,0,Qt.AlignmentFlag.AlignTop| (Qt.AlignmentFlag.AlignLeft if rtl else Qt.AlignmentFlag.AlignRight))
+                notes_layout.addWidget(btn,0,0,Qt.AlignmentFlag.AlignTop | 
+                                       (Qt.AlignmentFlag.AlignLeft if rtl else Qt.AlignmentFlag.AlignRight))
                 
                 self.tableWidget.setCellWidget(row, 3, w)
 
@@ -2352,6 +2383,21 @@ class StudentListPage(QWidget):
         
         except Exception as e: print(f"Database error: {e}")
   
+    def remove_from_group(self,stu):
+        group_Id = str(self.tableWidget.tag)
+        
+        self.db_cursor.execute(f'SELECT members_ FROM groups WHERE id = {group_Id};')
+        members = self.db_cursor.fetchone()[0]
+            
+        if members:
+            
+            i = str(members).find(stu['Id'])
+            if i >= 0:
+                members = str(members).replace(stu['Id'],"")
+                self.db_cursor.execute('UPDATE groups SET members_ = %s WHERE id = %s;',(members,group_Id))
+
+        
+
     def update_menu_visibility(self):
         """ Show widgets only if their row is selected """
         for row in range(self.tableWidget.rowCount()):

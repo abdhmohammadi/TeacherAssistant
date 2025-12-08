@@ -1,5 +1,5 @@
 
-abdh/
+TeacherAssistant/
 ├── TeacherAssistant/                # Main application folder
 │   ├── __init__.py
 │   ├── main.py
@@ -41,6 +41,8 @@ abdh/
 │             ├── 01-Quiz-Template.html
 │             ├── 02-Formal-Exam-config.json
 │             └── 02-Formal-Exam-Template.html
+
+PySideAbdhUI/
 ├── PySideAbdhUI/                   # Customized GUI folder
 │   ├── __init__.py
 │   ├── popup.py

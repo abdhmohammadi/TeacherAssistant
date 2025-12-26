@@ -1,9 +1,10 @@
-# Teacher Assistant
-pre-alpha version
+# Teacher Assistant project
 
 A modern, user-friendly teacher assistance application built with PySide6 (Qt for Python).
 This application helps educational resources managment and student information with a beautiful, customizable interface.
 This project is currently in its early stages...
+
+[🔍 Version history](https://htmlpreview.github.io/?https://github.com/abdhmohammadi/Abdh/blob/main/version-history.html)
 
 ## Features
 
@@ -44,47 +45,16 @@ This project is currently in its early stages...
   - Assigning tests to students in groups and individually
   - Getting answers back from students in image and PDF format for assigned tests
 
-<--
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/abdhmohammadi/MyJobAssistant.git
-```
-
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-```bash
-python MyJobAssistant/main.py
-```
 
 ## Building Executable
 
 To create a standalone executable:
 
 ```bash
-pyinstaller pyinstaller/spec/MyJobAssistant.spec
+pyinstaller pyinstaller/spec/TeacherAssistant.spec
 ```
 
-For Windows installer creation, use InnoSetup with the provided script. --!>
-
-## Project Structure
-
-```
-MyJobAssistant/
-├── main.py                 # Main application entry point
-├── resources/              # Application resources
-│   ├── icons/              # Application icons
-│   ├── fonts/              # Custom fonts
-│   └── styles/             # QSS style sheets
-├── views/                  # UI views and forms
-├── utils/                  # Utility functions
-└── PySideAbdhUI/           # Custom UI components
-```
+For Windows installer creation, use InnoSetup with the provided script.
 
 ## Dependencies
 
@@ -95,11 +65,7 @@ MyJobAssistant/
 ## Configuration
 
 The application stores settings in the user's LOCALAPPDATA directory:
-- `%LOCALAPPDATA%/MyJobAssistant/settings.json`
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- `%LOCALAPPDATA%/Abdh/TeacherAssistant/settings.json`
 
 ## License
 
@@ -107,11 +73,12 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Author
 
-- Abdh Mohammadi
+- Abdullah Mohammadi
 - GitHub: [abdhmohammadi](https://github.com/abdhmohammadi)
 
 ## Acknowledgments
 
 - Built with PySide6 (Qt for Python)
+- Uses PostgreSQL database
 - Uses custom UI components from PySideAbdhUI
 - Icons and resources are custom-designed

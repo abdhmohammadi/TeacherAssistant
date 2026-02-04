@@ -1,6 +1,6 @@
 
 import pandas as pd
-from typing import Iterable, Optional
+from typing import Iterable
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, 
                                QCheckBox, QFileDialog, QTableView, QAbstractItemView, 
                                QDialog, QScrollArea, QGridLayout, QApplication, QMenu,
@@ -21,40 +21,40 @@ from core.app_context import app_context
 # Constants for better maintainability
 
 # UI Layout Constants
-PHOTO_WIDTH = 90  # Width of student photo display in pixels
-PHOTO_HEIGHT = 130  # Height of student photo display in pixels
-PHOTO_PADDING = 10  # Additional padding around photo widget in pixels
+PHOTO_WIDTH = 90           # Width of student photo display in pixels
+PHOTO_HEIGHT = 130         # Height of student photo display in pixels
+PHOTO_PADDING = 10         # Additional padding around photo widget in pixels
 NOTES_SCROLL_HEIGHT = 120  # Fixed height for the last note scroll area in pixels
-NAME_LABEL_WIDTH = 150  # Fixed width for student name/info label in pixels
+NAME_LABEL_WIDTH = 150     # Fixed width for student name/info label in pixels
 ADDRESS_LABEL_WIDTH = 250  # Fixed width for address/contact label in pixels
-SEARCH_INPUT_WIDTH = 200  # Fixed width for search input field in pixels
-CSV_CHUNK_SIZE = 1000  # Number of rows to process per chunk when importing CSV files
+SEARCH_INPUT_WIDTH = 200   # Fixed width for search input field in pixels
+CSV_CHUNK_SIZE = 1000      # Number of rows to process per chunk when importing CSV files
 
 # Table Column Indices
 # These constants represent the column positions in the QTableView
-COL_PHOTO = 0  # Column index for student photo
-COL_INFO = 1  # Column index for student ID and name information
-COL_ADDRESS = 2  # Column index for address and contact details
+COL_PHOTO = 0      # Column index for student photo
+COL_INFO = 1       # Column index for student ID and name information
+COL_ADDRESS = 2    # Column index for address and contact details
 COL_LAST_NOTE = 3  # Column index for last observed behaviour note
 
-# Database Record Field Indices
+# Database Record Field Indices:
 # These constants represent the field positions in the database query result tuple
 # Query returns: Id, fname_, lname_, phone_, address_, photo_, date_time_, 
 #                observed_behaviour_, parent_name_, parent_phone_, additional_details_, 
 #                birth_date_, gender_
-REC_ID = 0  # Student ID field index
-REC_FNAME = 1  # First name field index
-REC_LNAME = 2  # Last name field index
-REC_PHONE = 3  # Phone number field index
-REC_ADDRESS = 4  # Address field index
-REC_PHOTO = 5  # Photo (bytea) field index
-REC_DATE_TIME = 6  # Date/time of last observation field index
-REC_OBSERVED_BEHAVIOUR = 7  # Last observed behaviour text field index
-REC_PARENT_NAME = 8  # Parent name field index
-REC_PARENT_PHONE = 9  # Parent phone field index
+REC_ID = 0                   # Student ID field index
+REC_FNAME = 1                # First name field index
+REC_LNAME = 2                # Last name field index
+REC_PHONE = 3                # Phone number field index
+REC_ADDRESS = 4              # Address field index
+REC_PHOTO = 5                # Photo (bytea) field index
+REC_DATE_TIME = 6            # Date/time of last observation field index
+REC_OBSERVED_BEHAVIOUR = 7   # Last observed behaviour text field index
+REC_PARENT_NAME = 8          # Parent name field index
+REC_PARENT_PHONE = 9         # Parent phone field index
 REC_ADDITIONAL_DETAILS = 10  # Additional details field index
-REC_BIRTH_DATE = 11  # Birth date field index
-REC_GENDER = 12  # Gender field index
+REC_BIRTH_DATE = 11          # Birth date field index
+REC_GENDER = 12              # Gender field index
 
 class StudentListPage(QWidget):
     """Main page for displaying and managing student lists."""

@@ -5,6 +5,10 @@ from PySide6.QtWidgets import (QMessageBox, QVBoxLayout,QTableWidget,QFormLayout
 
 from PySide6.QtCore import QItemSelection, QByteArray,Qt, QDate
 from PySide6.QtGui import QPixmap, QIcon
+from core.app_context import app_context
+from processing.Imaging.Tools import bytea_to_pixmap
+from processing.utils.image_tools import convert_qpixmap_to_binary
+from view_models import PersonalInfoViewModel as pvModel
 
 class CalendarPopup(QDialog):
     def __init__(self, parent=None):
@@ -118,14 +122,14 @@ class PersonalInfoDialog(QDialog):
         grid_layout.addWidget(self.photo_label, 0, 4, 6, 2)  # Span across 3 rows and 1 column
         grid_layout.setAlignment(self.photo_label,Qt.AlignmentFlag.AlignTop)
         
-        upload_photo_button = QPushButton("")
-        upload_photo_button.setIcon(QIcon(f'{state.application_path}\\resources\\icons\\svg\\upload.svg'))
+        upload_photo_button = QPushButton("") 
+        upload_photo_button.setIcon(QIcon(f'{app_context.application_path}\\resources\\icons\\svg\\upload.svg'))
         upload_photo_button.setProperty('class','grouped_mini')
         grid_layout.addWidget(upload_photo_button,5,4,alignment=Qt.AlignmentFlag.AlignRight)
         upload_photo_button.clicked.connect(self._upload_photo)
         
         self.remove_photo_button = QPushButton("")
-        self.remove_photo_button.setIcon(QIcon(f'{state.application_path}\\resources\\icons\\svg\\x.svg'))
+        self.remove_photo_button.setIcon(QIcon(f'{app_context.application_path}\\resources\\icons\\svg\\x.svg'))
         self.remove_photo_button.setProperty('class','grouped_mini')
         self.remove_photo_button.clicked.connect(self._remove_photo)
         grid_layout.addWidget(self.remove_photo_button,5,5,alignment=Qt.AlignmentFlag.AlignLeft)

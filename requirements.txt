@@ -1,6 +1,14 @@
 PySide6
+PySide6-WebEngine
 psycopg2-binary
 PySideAbdhUI
-pyinstaller
 pymupdf
+pandas
+cryptography
+Pillow
+numpy
+python-dateutil
+matplotlib
+scipy
+pyinstaller
 #pypandoc

@@ -20,7 +20,7 @@ class AppContext:
         self.PDI = 96
         self.Language = 'English'
         self.__database__  = psycopg2_database()
-
+        self.resource_path =''
         self.settings_manager = JSONManager()
         self.template_config = JSONManager()
         self.theme_manager = ThemeManager()
@@ -59,15 +59,17 @@ class AppContext:
         else:
             # If the application is run as a script(main.py)
             app_path = os.path.dirname(os.path.abspath(__file__))
-            
+        
         # Set the application path
         self.application_path = app_path
 
         # Set the settings manager path
         self.settings_manager.set_path(self.appdata_path +'\\settings.json')
 
+        self.resource_path = app_path.replace('core','') +'resources' 
         # Set the config manager path
-        self.template_config.set_path(app_path +'\\resources\\templates\\01-Quiz-config.json')
+        tmp_file_path = self.resource_path +'\\templates\\01-Quiz-config.json'
+        self.template_config.set_path(tmp_file_path)
     
     def display_calulation(self, dpi):
         

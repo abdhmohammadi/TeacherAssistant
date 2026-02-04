@@ -296,8 +296,6 @@ class EduResourcesView(QWidget):
             self.config_layout.addWidget(btn,13,0)
            
             self.templates_created = True
-
-            
    
         
         if self.templates_created:
@@ -314,15 +312,17 @@ class EduResourcesView(QWidget):
             self.time_input.setVisible(False)
             
         
-
         new_row_tmp = ''
 
-        language =app_context.Language
+        language = app_context.Language
+        
+        self.edu_template_file = Edu_Template_Files[index]
 
-        #config_file  = state.application_path + f'\\resources\\templates\\{Edu_Template_Files[index]}-config.json'
-        #template_config.set_path(config_file)
-        config = None#template_config.read()
+        config_filepath = app_context.resource_path +f'\\templates\\{self.edu_template_file}-config.json'
+        app_context.template_config.set_path(config_filepath)
+        config = app_context.template_config.read()
 
+        
         # Common configs
         self.stu_info_input.setPlaceholderText(config[language]['Student name'])
         self.stu_info_input.setText(config[language]['Student name'])
@@ -338,21 +338,21 @@ class EduResourcesView(QWidget):
         # Special configs
         if index == 0: # Classroom quiz has been selected
 
-                self.stu_id_input.setVisible(False)
-                self.teacher_input.setVisible(False)
-                self.author_input.setVisible(False)
-                self.org_info_input.setVisible(False)
-                self.field_input.setVisible(False)
-                self.term_input.setVisible(False)
-                self.clock_input.setVisible(False)
-                self.time_input.setVisible(False)
+            self.stu_id_input.setVisible(False)
+            self.teacher_input.setVisible(False)
+            self.author_input.setVisible(False)
+            self.org_info_input.setVisible(False)
+            self.field_input.setVisible(False)
+            self.term_input.setVisible(False)
+            self.clock_input.setVisible(False)
+            self.time_input.setVisible(False)
 
 
-                new_row_tmp =  '        <tr>\n'
-                new_row_tmp += f'            <td style="border-left:none;border-top:none;border-right:none; vertical-align:top;">{{}})</td>\n'
-                new_row_tmp += f'            <td style="border-left:none;border-top:none;border-right:none; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{}}">{{}}</td>\n'
-                new_row_tmp += f'            <td style="border-left:none;border-top:none;border-right:none; vertical-align:top">{{}}</td>\n'
-                new_row_tmp +=  '        </tr>\n'
+            new_row_tmp =  '        <tr>\n'
+            new_row_tmp += f'            <td style="border-left:none;border-top:none;border-right:none; vertical-align:top;">{{}})</td>\n'
+            new_row_tmp += f'            <td style="border-left:none;border-top:none;border-right:none; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{}}">{{}}</td>\n'
+            new_row_tmp += f'            <td style="border-left:none;border-top:none;border-right:none; vertical-align:top">{{}}</td>\n'
+            new_row_tmp +=  '        </tr>\n'
         
         # row index,text_align,content,point
         elif index == 1: # Formal template hass been selected
@@ -394,7 +394,7 @@ class EduResourcesView(QWidget):
                 # row index,text_align,content,point
 
         self.content_row_template = new_row_tmp
-        self.edu_template_file = Edu_Template_Files[index]
+
         self.config = config
 
         # Update layout and dialog size after all widgets are added
@@ -450,12 +450,13 @@ class EduResourcesView(QWidget):
     def ___validate_template__(self) -> bool:
         # Validate template file selection and existence
         if self.edu_template_file == '':
-            PopupNotifier.Notify(self, 'Error', 'The output template has not selected.', background_color='RED')
+            PopupNotifier.Notify(self, 'Error', 'The output template has not selected.')
             return False
         
-        template_file = app_context.application_path + f'\\resources\\templates\\{self.edu_template_file}-Template.html'
+        template_file = app_context.resource_path + f'\\templates\\{self.edu_template_file}-Template.html'
+        
         if not os.path.exists(template_file):
-            PopupNotifier.Notify(self, 'Error', f'The template file not found in the specified path--> {template_file}')
+            PopupNotifier.Notify(self, 'Error', f'The template file not found in the specified path --> {template_file}')
             return False
             
         self.template_file = template_file

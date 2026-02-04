@@ -5,7 +5,6 @@ from typing import overload, Optional
 from PySideAbdhUI.Notify import NotifyPropertyChanged, PopupNotifier
 
 from services.personal_info_service import PersonalInfoService
-
 #from services.personal_info_service import PersonalInfoService
 
 # ViewModel (Intermediary between View and Model)

@@ -4,7 +4,7 @@ import pandas as pd
 from typing import Iterable
 # Import GUI widget classes from PySide6.QtWidgets for building user interface components
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, QMessageBox, 
-                               QCheckBox, QFileDialog, QTableView, QAbstractItemView, 
+                               QCheckBox, QFileDialog, QTableView, QAbstractItemView,
                                QDialog, QScrollArea, QGridLayout, QApplication, QMenu,
                                QLabel, QLineEdit, QComboBox,QAbstractScrollArea, QPushButton)
 
@@ -45,6 +45,7 @@ NOTES_SCROLL_HEIGHT = 120
 NAME_LABEL_WIDTH = 150     
 # Fixed width for address/contact label in pixels
 ADDRESS_LABEL_WIDTH = 250  
+
 # Fixed width for search input field in pixels
 SEARCH_INPUT_WIDTH = 200   
 # Number of rows to process per chunk when importing CSV files (prevents memory overload)
@@ -93,8 +94,8 @@ REC_ADDITIONAL_DETAILS = 10
 REC_BIRTH_DATE = 11          
 # Gender field index in database query result tuple
 REC_GENDER = 12              
-
-
+# Score field index if used for input tool
+REC_SCORE = 13
 # ============================================================================
 # StudentListPage CLASS - Main UI page for displaying and managing student lists
 # ============================================================================
@@ -120,7 +121,7 @@ class StudentListPage(QWidget):
     
     # Method to initialize and configure all user interface elements
     def initUI(self):
-        """Initialize the user interface components."""
+
         # Set internal margins around the widget (left, top, right, bottom)
         self.setContentsMargins(10, 0, 10, 10)
         # Create main vertical layout container for the page
@@ -216,25 +217,50 @@ class StudentListPage(QWidget):
         header.setSectionResizeMode(COL_ADDRESS, QHeaderView.ResizeMode.ResizeToContents)
         # Configure last note column to stretch and fill remaining space
         header.setSectionResizeMode(COL_LAST_NOTE, QHeaderView.ResizeMode.Stretch)
-
         # Add table widget to main layout
         main_layout.addWidget(self.table)
-        
+
+        self.footer_widget = QWidget()
+
+        footer_layout = QVBoxLayout(self.footer_widget)
+
         # Create footer label for displaying student count statistics
-        self.footer = QLabel('')
+        self.footer_list_count = QLabel('')
         # Align footer text to the right side
-        self.footer.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.footer_list_count.setAlignment(Qt.AlignmentFlag.AlignRight)
         # Apply CSS class for caption styling
-        self.footer.setProperty('class', 'caption')
+        self.footer_list_count.setProperty('class', 'caption')
         # Add footer to main layout
-        main_layout.addWidget(self.footer)
+        #main_layout.addWidget(self.footer_list_count)
+
+        self.footer_upload_btn = QPushButton('Read scores from file')
+        self.footer_upload_btn.setVisible(False)
+        self.footer_upload_btn.clicked.connect(lambda _:self.open_file_dialog())
+
+        self.footer_save_btn = QPushButton('Save')
+        self.footer_save_btn.setVisible(False)
+        self.footer_save_btn.clicked.connect(lambda _, stu=None:self.on_save_score_clicked(stu))
+        self.footer_cancel_btn = QPushButton('Cancel')
+        self.footer_cancel_btn.setVisible(False)
+        self.footer_cancel_btn.clicked.connect((lambda _: self.show_score_inputs(False)))
         
+        footer_action_widget = QWidget()
+        footer_actions_layout = QHBoxLayout(footer_action_widget)
+
+        footer_actions_layout.addWidget(self.footer_list_count)
+        footer_actions_layout.addStretch(0)
+        footer_actions_layout.addWidget(self.footer_upload_btn)
+        footer_actions_layout.addWidget(self.footer_save_btn)
+        footer_actions_layout.addWidget(self.footer_cancel_btn)
+
+        footer_layout.addWidget(footer_action_widget)
+
+        main_layout.addWidget(self.footer_widget)
+
         # Select first group (usually "All") in the dropdown
         class_filter_combo.setCurrentIndex(0)
         # Load and display all students for the initial group selection
         self.load_students(class_filter_combo)
-
-
 
     # Method to display CSV import format requirements dialog message
     def show_csv_load_message(self):
@@ -379,7 +405,6 @@ class StudentListPage(QWidget):
             PopupNotifier.Notify(self, "Error", msg, 'bottom-right', delay=5000)
 
 
-
     # Method to create the main options menu button with various student actions
     def create_more_option_menu(self, group_model=None) -> QPushButton:
         """Create the options menu button with all available actions."""
@@ -406,7 +431,16 @@ class StudentListPage(QWidget):
         action_multi.setChecked(self._multi_select_enabled)
         # Set tooltip explaining this action
         action_multi.setToolTip('Toggle multi-row selection in the students list')
-
+        ##############################################################################
+        # Create action for toggling multi-row selection mode
+        action_enable_score_input = QAction(icon=QIcon(':/icons/list-checks.svg'), text='input score', parent=menu)
+        # Make this action checkable (can be toggled on/off)
+        #action_enable_score_input.setCheckable(True)
+        # Set initial state based on current multi-select setting
+        #action_enable_score_input.setChecked(self._multi_select_enabled)
+        # Set tooltip explaining this action
+        action_enable_score_input.setToolTip('enables input mode for each student to accept the score')
+        ##############################################################################
         # Define callback function for multi-selection toggle
         def _toggle_multi(checked):
             # Update instance variable tracking multi-select state
@@ -421,7 +455,7 @@ class StudentListPage(QWidget):
 
         # Connect the toggle action to callback function
         action_multi.triggered.connect(_toggle_multi)
-        
+        action_enable_score_input.triggered.connect(lambda _: self.show_score_inputs(True))
         # Create action for adding a new student
         action_add = QAction(icon=QIcon(':/icons/id-card.svg'), text='Add new student', parent=menu)
         # Connect action to open personal info dialog with no data (new student)
@@ -442,6 +476,7 @@ class StudentListPage(QWidget):
         menu.addSeparator()
         # Add multi-selection toggle action to menu
         menu.addAction(action_multi)
+        menu.addAction(action_enable_score_input)
         # Add second visual separator line
         menu.addSeparator()
 
@@ -492,7 +527,7 @@ class StudentListPage(QWidget):
         return btn
     
     # Method to create individual context menu for each student row
-    def create_menu_btn(self, record, row):
+    def create_stu_menu(self, record, row):
         # Create menu button for this student row
         btn = QPushButton('')
         # Set icon for dropdown menu
@@ -520,7 +555,7 @@ class StudentListPage(QWidget):
                           statusTip='No need to Edu-Item',
                           parent=menu)
         # Connect to custom assignment dialog
-        action7.triggered.connect(lambda _, stu=record[0]: self.open_custom_assignment_dialog(stu))
+        action7.triggered.connect(lambda _, stu=record[0]: self.on_save_score_clicked(stu))
         # Add custom score action to menu
         menu.addAction(action7)
         
@@ -565,50 +600,132 @@ class StudentListPage(QWidget):
         # Return the configured student context menu button
         return btn
 
+    def open_file_dialog(self):
+        
+        # Open file dialog with filters for txt and csv files
+        file_path, _ = QFileDialog.getOpenFileName(self,"Select a file","","Text Files (*.txt);;CSV Files (*.csv);;All(*.txt;*.csv)")
+        
+        if file_path: 
+            data = self.read_file(file_path)
+            if len(data) != self.model.rowCount():
+                PopupNotifier.Notify(self, message= f"The number of scores does not match the number of students.\nScores: {len(data)}\nStudents: {self.model.rowCount()}")
+                return
+            for i in range(len(data)):
+                w = self.get_score_input(i)
+                w.setText(data[i])
     
+    def read_file(self, file_path):
+        # Read file content and convert to list
+        try:
+            data = []
+            # Determine file type and read accordingly
+            if file_path.lower().endswith('.csv'):
+                data = self.read_csv_file(file_path)
+            else:  # Assume txt file
+                data = self.read_txt_file(file_path)
+            
+            return data
+        
+        except Exception as e:
+            PopupNotifier.Notify(self, message="Error reading file: {str(e)}")
+            return []
+    
+    def read_txt_file(self, file_path):
+        scores = []
+        # Read txt file and convert to list"""
+        with open(file_path, 'r', encoding='utf-8') as f:
+            # Read all lines and remove newline characters
+            lines = [line.strip() for line in f.readlines()]
+            
+            for line in lines:
+                data = line.split(',')
+            
+                for d in data:
+                    if d !='' and d!=None:
+                        scores.append(d)
+        
+        return scores
+
+    def read_csv_file(self, file_path):
+        # Read csv file and convert to list of rows
+        scores = []
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                # Split CSV line by comma and clean each value
+                row = [value.strip() for value in line.strip().split(',')]
+                for r in row:
+                    if r !='' and r !=None:
+                        scores.append(r)
+        
+        return scores
+    
+        
+    def on_save_score_clicked(self,stu_Id):
+
+        data =  self.open_custom_assignment_dialog()
+
+        if data:
+            if stu_Id !="" or stu_Id !=None:
+                # Call method to save custom assignment to database.
+                # qb_Id = 99 is a free record in the database without a resource and is used to custom assignments
+                status, message = self.update_custom_assignment(stu_Id, 99,data['description'],
+                                                            data['feedback'],data['response_date'],
+                                                            data['deadline'],data['assignment_date'],
+                                                            data['score_earned'],data['max_score'])
+            else:
+                for row in range(self.model.rowCount()):
+
+                    stu_Id = self.model.index(row,0).data(Qt.ItemDataRole.UserRole)[0]
+                    
+                    w = self.get_score_input(row)
+                    score_earned = float(w.text() or 0.0)
+                    status, message = self.update_custom_assignment(stu_Id, 99,data['description'],
+                                                            data['feedback'],data['response_date'],
+                                                            data['deadline'],data['assignment_date'],
+                                                            score_earned, data['max_score'])
+                
+                self.show_score_inputs(False)
+
+                message = f'Earned scores saved for {self.model.rowCount()} student(s).'
+
+        else:
+            message = 'Operation canceled'
+        
+        PopupNotifier.Notify(self,message=message)
 
     # Method to open custom assignment dialog for adding custom scores/assignments
-    def open_custom_assignment_dialog(self, stu_Id:str):
+    def open_custom_assignment_dialog(self):
         # Create custom assignment dialog instance
         dialog = CustomAssignmentDialog()
         # Execute dialog and wait for user response (Accepted or Rejected)
-        result = dialog.exec()
-        # Check if user clicked OK/Accept button
-        if result == QDialog.DialogCode.Accepted:
+        # and check if user clicked OK/Accept button
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             # Retrieve form data from the dialog
             data = dialog.get_data()
-            
-            # Call method to save custom assignment to database
-            status, message = self.update_custom_assignment(stu_Id,99,data['description'],data['feedback'],data['response_date'],
-                                          data['deadline'],data['assignment_date'],data['score_earned'],data['max_score'])
-
-            # Notify user of operation result
-            PopupNotifier.Notify(self,message= message)
         else:
-            # Notify user that dialog was cancelled
-            PopupNotifier.Notify(self,message= "Dialog cancelled")
-    
+            return None
+        
     # Method to insert custom assignment record into database
     def update_custom_assignment(self, stu_id: str, qb_Id: int, answer: str, feedback: str, 
                                  reply_date: str, deadline: str, assignment_date: str, 
                                  score_earned: float, max_score: float):
-        """Insert a custom assignment record into the database."""
+        
         # Wrap database insert in try-except for error handling
         try:
             # Define SQL INSERT statement for quests table
             cmd = ('INSERT INTO quests (qb_Id, student_id, max_point_, earned_point_, '
-                   'assign_date_, deadline_, reply_date_, answer_, feedback_) '
-                   'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);')
+                    'assign_date_, deadline_, reply_date_, answer_, feedback_) '
+                    'VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);')
 
             # Execute INSERT statement with parameterized query to prevent SQL injection
-            app_context.database.execute(
-                cmd, (qb_Id, stu_id, max_score, score_earned, assignment_date, 
-                     deadline, reply_date, answer, feedback))
+            app_context.database.execute(cmd, 
+                                            (qb_Id, stu_id, max_score, score_earned, assignment_date, 
+                                            deadline, reply_date, answer, feedback))
 
             # Set success status flag
             status = True
             # Build success message
-            message = f'Custom assignment for student {stu_id} was saved successfully.'
+            message = f'Custom assignment was saved successfully for student {stu_id}.'
 
         # Catch any exceptions from database operation
         except Exception as e:
@@ -832,7 +949,6 @@ class StudentListPage(QWidget):
     
     # Method to load and display students from database based on group selection
     def load_students(self, sender: QComboBox):
-        """Load students from database based on selected group filter."""
         # Wrap database loading in try-except for error handling
         try:
             # Get the selected item's user data (either 'All' string or ClassroomGroupViewModel)
@@ -920,11 +1036,11 @@ class StudentListPage(QWidget):
         # Set model row count to 0 to remove all rows
         self.model.setRowCount(0)
         # Update footer to show zero students
-        self.footer.setText('Students: 0')
+        self.footer_list_count.setText('Students: 0')
     
     # Method to update table display with student data
     def _update_table_display(self, data):
-        """Update the table display with current data."""
+
         # Wrap table update in try-except for error handling
         try:
             # Remove all existing widgets from the table
@@ -955,7 +1071,7 @@ class StudentListPage(QWidget):
                 self._create_student_row(row, record)
             
             # Update footer with count of loaded students
-            self.footer.setText(f'Students: {len(data)}')
+            self.footer_list_count.setText(f'Students: {len(data)}')
             # Resize table rows to fit content
             self.table.resizeRowsToContents()
             # Adjust horizontal header size
@@ -998,9 +1114,32 @@ class StudentListPage(QWidget):
         # Return list of all student records
         return records
     
+
+    def get_score_input(self, row):
+        # Get the widget at specific row and column
+        index = self.model.index(row, COL_INFO)
+        widget = self.table.indexWidget(index)
+    
+        if widget:
+            # Find QLineEdit in the widget's layout
+            return widget.findChild(QLineEdit)
+        
+        return None
+
+    def show_score_inputs(self, b:bool):
+        
+        for row in range(self.model.rowCount()):
+            widget = self.get_score_input(row)
+            widget.setVisible(b)
+        
+        self.footer_save_btn.setVisible(b)
+        self.footer_cancel_btn.setVisible(b)
+        self.footer_upload_btn.setVisible(b)
+
+
     # Method to create and configure widgets for displaying a single student row
     def _create_student_row(self, row: int, record: tuple):
-        """Create widgets for a single student row."""
+        
         # Create label widget for displaying student photo
         photo_label = QLabel()
         # Center photo content both horizontally and vertically
@@ -1042,9 +1181,26 @@ class StudentListPage(QWidget):
         name_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         # Set fixed width for the name label
         name_label.setFixedWidth(NAME_LABEL_WIDTH)
+        #self.table.setIndexWidget(self.model.index(row, COL_INFO), name_label)
+
+        # Create line-edit widget to input score for student
+        # this enables input mode for classroom(not individual)
+        score_input = QLineEdit('')   
+        score_input.setPlaceholderText('score')
+        #score_input.setStyleSheet('margin: 2px;')
+        score_input.setFixedWidth(NAME_LABEL_WIDTH)
+        # Align content to top and left
+        score_input.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        score_input.setVisible(False)
         # Set the name label widget in the info column of the table
-        self.table.setIndexWidget(self.model.index(row, COL_INFO), name_label)
+        #self.table.setIndexWidget(self.model.index(row, 1), score_input)
+        name_widget = QWidget()
+        name_layout = QVBoxLayout(name_widget)
+        name_layout.addWidget(name_label)
+        name_layout.addWidget(score_input)
         
+        self.table.setIndexWidget(self.model.index(row, COL_INFO), name_widget)
+
         # Build address and phone information text
         address_text = f"{record[REC_ADDRESS] or ''}\nCall: {record[REC_PHONE] or ''}"
         # Create label for displaying address and contact information
@@ -1101,7 +1257,7 @@ class StudentListPage(QWidget):
         notes_layout.addWidget(scroll_area, 0, 0)
         
         # Create context menu button for student actions
-        menu_btn = self.create_menu_btn(record, row)
+        menu_btn = self.create_stu_menu(record, row)
         # Check if note text is right-to-left language (e.g., Arabic, Hebrew)
         rtl = is_mostly_rtl(last_note.text())
         # Set button alignment based on text direction
@@ -1112,8 +1268,7 @@ class StudentListPage(QWidget):
         
         # Set the composite notes widget in the last note column of the table
         self.table.setIndexWidget(self.model.index(row, COL_LAST_NOTE), notes_widget)
-                
-    
+
     # Method to remove a student from the currently selected classroom group
     def remove_from_group(self, stu):
         """Remove a student from the current group."""
@@ -1255,7 +1410,7 @@ class StudentListPage(QWidget):
             self.model.removeRow(row_index)
             
             # Update footer with new student count
-            self.footer.setText(f'Students: {self.model.rowCount()}')
+            self.footer_list_count.setText(f'Students: {self.model.rowCount()}')
             
             # Build success message
             msg = f'Student {student_id} removed from database successfully.'

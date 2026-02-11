@@ -28,7 +28,7 @@ class MainWindow(Window.AbdhWindow):
         
         self.initUI(app_title= window_title, logo = logo, direction= language_direction)                           
     
-        self.create_left_pane()
+        self.create_left_panel()
 
         self.create_settings_pane()        
 
@@ -165,9 +165,13 @@ class MainWindow(Window.AbdhWindow):
 
         return item 
         
-    def create_left_pane(self):
+    def create_left_panel(self):
         # Init left pane
         
+        item = self.create_panel_button(':/icons/book-text.svg','   Notebook',True, True,'MenuItem')
+        item.setEnabled(False)
+        #item.clicked.connect(lambda _, sender=item:self.load_students_page(sender))
+
         item = self.create_panel_button(':/icons/graduation-cap.svg','   Students',True, True,'MenuItem')
         item.clicked.connect(lambda _, sender=item:self.load_students_page(sender))
 

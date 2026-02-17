@@ -30,7 +30,7 @@ class MainWindow(Window.AbdhWindow):
     
         self.create_left_panel()
 
-        self.create_settings_pane()        
+        self.create_settings_panel()        
 
     def on_font_changed(self,size_combo:QComboBox,font_combo:QComboBox):
         # Get the text of the selected item 
@@ -55,7 +55,7 @@ class MainWindow(Window.AbdhWindow):
     # - 'settings.json' has been located in the APPDATA PATH for windows,
     #   'settings.json' stores settings for data connection and maintainance, fonts, 
     #   settings for UI like style sheet, language and language direction
-    def create_settings_pane(self):
+    def create_settings_panel(self):
 
         self.add_right_panel_item(QLabel('LANGUAGE'))
         # Setup UI for the list of supported languages 

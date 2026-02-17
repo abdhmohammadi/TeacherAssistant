@@ -665,7 +665,7 @@ class StudentListPage(QWidget):
         data =  self.open_custom_assignment_dialog()
 
         if data:
-            if stu_Id !="" or stu_Id !=None:
+            if stu_Id !="" and stu_Id !=None:
                 # Call method to save custom assignment to database.
                 # qb_Id = 99 is a free record in the database without a resource and is used to custom assignments
                 status, message = self.update_custom_assignment(stu_Id, 99,data['description'],
@@ -673,12 +673,14 @@ class StudentListPage(QWidget):
                                                             data['deadline'],data['assignment_date'],
                                                             data['score_earned'],data['max_score'])
             else:
+
                 for row in range(self.model.rowCount()):
 
                     stu_Id = self.model.index(row,0).data(Qt.ItemDataRole.UserRole)[0]
                     
                     w = self.get_score_input(row)
                     score_earned = float(w.text() or 0.0)
+                
                     status, message = self.update_custom_assignment(stu_Id, 99,data['description'],
                                                             data['feedback'],data['response_date'],
                                                             data['deadline'],data['assignment_date'],
@@ -701,7 +703,7 @@ class StudentListPage(QWidget):
         # and check if user clicked OK/Accept button
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # Retrieve form data from the dialog
-            data = dialog.get_data()
+           return dialog.get_data()
         else:
             return None
         

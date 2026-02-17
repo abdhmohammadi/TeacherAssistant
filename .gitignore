@@ -1,7 +1,7 @@
 
-Learning.txt
 scripts
-
+TeacherAssistant/state/
+src/teacher_assistant/resources/icons
 # Python
 __pycache__/
 *.py[cod]
@@ -44,7 +44,6 @@ env/
 *.sublime-workspace
 
 # Application State & Data
-TeacherAssistant/state/
 .app_data/
 *.db
 *.sqlite

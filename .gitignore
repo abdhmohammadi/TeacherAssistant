@@ -1,7 +1,9 @@
 
+# Developer custom docs
 scripts
 TeacherAssistant/state/
 src/teacher_assistant/resources/icons
+
 # Python
 __pycache__/
 *.py[cod]

@@ -7,43 +7,57 @@ from PySide6.QtWebEngineCore import QWebEnginePage
 
 from PySide6.QtGui import ( QPageLayout, QPageSize)
 
-from PySide6.QtWidgets import ( QWidget,QPushButton,QVBoxLayout,QMainWindow )
+from PySide6.QtWidgets import ( QWidget,QPushButton,QVBoxLayout,QMainWindow, QTabWidget)
            
 from PySideAbdhUI.Notify import PopupNotifier
 
 class PdfGeneratorApp(QMainWindow):
-
-    def __init__(self,parent =None, html_content=''):
+    
+    def __init__(self, parent=None, html_source='', answer_html=''):
+        
         super().__init__(parent)
-        self.html_content = html_content
-        #self.output_pdf = output_pdf
-
-        # Set up the UI
         self.setWindowTitle("HTML to PDF Generator")
         self.setGeometry(100, 100, 900, 600)
 
-        # Create a central widget and layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
+        central = QWidget()
+        central.setProperty('class', 'window-background-layer')
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
 
-        # Add a QWebEngineView for preview
-        self.preview_view = QWebEngineView()
-        
-        self.preview_view.setHtml(self.html_content)
-        layout.addWidget(self.preview_view)
+        # Tabs
+        self.tabs = QTabWidget()
+        layout.addWidget(self.tabs)
 
-        # Add a button to generate the PDF
+        # ---- Quiz Tab ----
+        tab1 = QWidget()
+        layout1 = QVBoxLayout()
+        self.preview_source = QWebEngineView()
+        self.preview_source.setHtml(html_source)
+        layout1.addWidget(self.preview_source)
+
         self.generate_button = QPushButton("Generate PDF")
         self.generate_button.clicked.connect(self.generate_pdf)
-        layout.addWidget(self.generate_button)
+        layout1.addWidget(self.generate_button)
+        tab1.setLayout(layout1)
+        self.tabs.addTab(tab1, "Quiz")
+
+        # ---- Answers Tab (conditionally) ----
+        if answer_html:                     # Pythonic check for non-empty, non-None
+            tab2 = QWidget()
+            layout2 = QVBoxLayout()
+            self.preview_answer = QWebEngineView()
+            self.preview_answer.setHtml(answer_html)
+            layout2.addWidget(self.preview_answer)
+            tab2.setLayout(layout2)
+            self.tabs.addTab(tab2, "Answers")
+
 
     def generate_pdf(self):
         # Create a QWebEnginePage for PDF generation
         page = QWebEnginePage()
         # Load the HTML content into the page
-        page.setHtml(self.html_content)
-
+        html = self.html_source + '<br>' + self.html_answer
+        page.setHtml(html)
         # Wait for the page to load completely before printing
         def print_to_pdf(finished):
             if finished:
@@ -67,7 +81,7 @@ class PdfGeneratorApp(QMainWindow):
                     page.printToPdf(file_name, page_layout)
                     #output_html = os.path.dirname(os.path.abspath(file_name)) + '\\Edu.html'
                     #stream = open(output_html, encoding="utf-8",mode='w')
-                    #stream.write(self.html_content)
+                    #stream.write(self.html_source)
                     #stream.close()
                     #print("PDF saved successfully.")
                     #helpers.open_file_os(file_name)

@@ -20,10 +20,9 @@ class EduItemStudentService:
         '''
 
         try:
-            cmd = 'UPDATE quests SET answer_ = %s, earned_point_ = %s, reply_date_= %s, feedback_= %s '
-            cmd += 'WHERE Id = %s;'
+            cmd = 'UPDATE quests SET answer_ = %s, earned_point_ = GREATEST(0, LEAST(%s, max_point_)), reply_date_= %s, feedback_= %s WHERE Id = %s;'
 
-            app_context.database.execute(cmd,(answer, score,  reply_date, feedback, Id))
+            app_context.database.execute(cmd,(answer, score, reply_date, feedback, Id))
 
             status = True
             message =f'All changes of the Edu-Item with Id:{Id} was updated.'

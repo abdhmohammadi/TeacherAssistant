@@ -2,6 +2,7 @@
 <RCC>
 	<qresource prefix="/icons">
         <file alias="app-icon.png">icons/png/app-icon.png</file>
+		<file alias="eye.svg">icons/svg/eye.svg</file>
 		<file alias="book-text.svg">icons/svg/book-text.svg</file>
 		<file alias="bookmark-filled-blue.svg">icons/svg/bookmark-filled-blue.svg</file>
 		<file alias="bookmark.svg">icons/svg/bookmark.svg</file>

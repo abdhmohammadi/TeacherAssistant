@@ -5,14 +5,7 @@
 #   
 # HOW TO BUILD THIS PROJECT:           
 # INSTALL PySideAbdhUI:
-# OPTION 1 : pip install F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.7-py3-none-any.whl
-# OPTION 2 : F:/Projects/Python/Teaching-assistant-project/TeacherAssistant/env/Scripts/python.exe' -m pip install -e F:\Projects\Python\PySideAbdhUI
-# OPTION 3 (EDITABLE INSTALL FOR DEVELOPERS): 
-#            pip install -e F:\Projects\Python\PySideAbdhUI
-
-# OPTION 4 (INSTALL FROM GIT): pip install git+https://github.com/abdhmohammadi/PySideAbdhUI.git
-# OPTION 5 :
-# cd 'F:\Projects\Python\Teaching-assistant-project\TeacherAssistant'; .\env\Scripts\python.exe -m pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.8-py3-none-any.whl'
+#       cd 'F:\Projects\Python\Teaching-assistant-project\TeacherAssistant'; .\env\Scripts\python.exe -m pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.9-py3-none-any.whl'
 #
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
@@ -22,17 +15,17 @@
 
 # 2. Use InnoSetup tool to create windows installer.
 #
-# ICONS: All icons has been downloaded from https://lucide.dev/icons/categories (and modified if needed).
-#       and placed in the src/teacher_assistant/resources. to portable usage the icons, we created resources.qrc
-#       from png and svg files. the scripts/build_qrc.py just generates resources.qrc in resources folder. we  
-#       need to compile the resources.qrc to generate embeded icon files. any changes in the resources.qrc needs  
-#       to recompile this file. the scripts/compile_qrc.py does this task and created resources_rc.py.
-#       We imported resources_rc in the src/teacher_assistant/core/app_context.py to use icons in the app scope.
+# ICONS: All icons has been downloaded from https://lucide.dev/icons/categories (and modified where needed).
+#        and placed in the src/teacher_assistant/resources. to portable usage the icons, we created resources.qrc
+#        from png and svg files. the scripts/build_qrc.py just generates resources.qrc in resources folder. we  
+#        need to compile the resources.qrc to generate embeded icon files. any changes in the resources.qrc needs  
+#        to recompile this file. the scripts/compile_qrc.py does this task and created resources_rc.py.
+#        We imported resources_rc in the src/teacher_assistant/core/app_context.py to use icons in the app scope.
 #    
  
 import os
 import sys
- 
+  
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPixmap
 
@@ -47,7 +40,6 @@ from ui.widgets import connection_form  # a dialog to validate user and database
 
 from version import __version__ as version
 
-
 if __name__ == "__main__":
 
     app = QApplication(sys.argv) 
@@ -58,6 +50,7 @@ if __name__ == "__main__":
     app_context.display_calulation(QApplication.primaryScreen().logicalDotsPerInch())
 
     app_context.theme_manager.load()
+
     app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
     
     main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{version}', logo=QPixmap(':/icons/app-icon.png'))

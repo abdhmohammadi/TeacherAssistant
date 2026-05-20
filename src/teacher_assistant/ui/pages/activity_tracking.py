@@ -1,20 +1,20 @@
 
 from datetime import datetime
+#import dateutil as du
 from PySideAbdhUI.Notify import PopupNotifier
 from PySide6.QtGui import (Qt, QTextOption, QIcon, QAction, QPixmap, QImage)
 
-from PySide6.QtWidgets import (QListWidget, QListWidgetItem,
-                               QTextEdit, QDialogButtonBox,
+from PySide6.QtWidgets import (QFileDialog, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QProgressBar, QTextEdit, QDialogButtonBox,
                                QGridLayout, QWidget, QLabel,QApplication,QDialog, QMessageBox,
-                               QPushButton, QHBoxLayout, QVBoxLayout,
-                               QPlainTextEdit, QMenu)
+                               QPushButton, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QMenu)
 from PySideAbdhUI.Widgets import StackedWidget, Separator
 
 from processing.Imaging.Tools import bytea_to_pixmap
 from processing.text.text_processing import local_culture_digits
+from services.edu_item_services import EduItemStudentService as edu_service
 from utils import analysis
-from processing.text import text_processing
-from ui.widgets.widgets import EduItemStudentWidget, ObservedBehaviourWidget
+from processing.utils.pdf import PdfGeneratorApp
+from ui.widgets.widgets import ObservedBehaviourWidget
 from ui.pages.edu_resource_view import EduResourcesView
 from core.app_context import app_context
 
@@ -22,9 +22,12 @@ class StudentActivityTrackingPage(QWidget):
     
     def __init__(self,student):
         super().__init__()
+
         self.student = student
-    
+
         self.initUI()
+
+
     # QVLayout in root,
     # Top row of root is hosted of 'QGridLayout' and shows identical info, and activity analysis charts
     # Second is the container of 'StackedWidget' to dispaly behavioral data and activities in tow pages
@@ -34,22 +37,22 @@ class StudentActivityTrackingPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setSpacing(0)
         # returns QGrid 5x2
+        
         header_layout = self.init_StudentInfoUI()
         
         layout.addLayout(header_layout)
-
+        layout.addWidget(Separator()) # Row separator
         # A container for notes and behavioral text
         self.behav_list = QListWidget()
         # A contaner for educational items and learning conents
         self.quests_list = QListWidget()
-        
         self.load_behav_data()
-
+        # Go to the function and fix bugs(has unknown bug for the installed app)
         scaled_score, scores, items_status = self.load_quests_data()
         
         self.create_charts(header_layout, scaled_score, scores,items_status, each_row)
         
-        # header : 5x5
+        # Header
         stacked_widget = StackedWidget()
         stacked_widget.setContentsMargins(5,0,5,0)
         stacked_widget.add_page(self.behav_list)
@@ -109,14 +112,13 @@ class StudentActivityTrackingPage(QWidget):
         btn.clicked.connect(lambda _, stu={'Id':self.student[0],'Name':f'{self.student[1]}  {self.student[2]}'}:
                                       self.assign_edu_to_student(stu))
         
-        #header_layout.addWidget(btn,5,6)
         commands.addWidget(btn)
         header_layout.addLayout(commands,5,3,1,3,alignment=Qt.AlignmentFlag.AlignRight)
 
         header_layout.addWidget(Separator(stroke=2, color='#3D3D3D'),5, 0, 1, header_layout.columnCount(),alignment=Qt.AlignmentFlag.AlignTop)
         
         layout.addWidget(stacked_widget)
-
+        
     # Initalizes the given grid layout with 5 rows and 2 columns
     # the rows and columns is used to set personal data fields
     def init_StudentInfoUI(self):
@@ -190,7 +192,7 @@ class StudentActivityTrackingPage(QWidget):
 
         chart = QLabel()
         chart.setToolTip('Cumulative score: Cumulative score: The sum of all scores obtained so far, converted to a 20-point scale.')
-        chart.setFixedSize(140, 140)
+        chart.setFixedSize(140, 135)
         chart.setContentsMargins(0,0,0,0)
         chart.setPixmap(QPixmap.fromImage(image))
         chart.setScaledContents(True)
@@ -206,7 +208,7 @@ class StudentActivityTrackingPage(QWidget):
 
         chart = QLabel()
         chart.setToolTip('Average score: The average of the scores obtained so far, converted to a 20-point scale.')
-        chart.setFixedSize(140,140)
+        chart.setFixedSize(140,135)
         chart.setContentsMargins(0,0,0,0)
         chart.setPixmap(QPixmap.fromImage(image))
         chart.setScaledContents(True)
@@ -339,160 +341,562 @@ class StudentActivityTrackingPage(QWidget):
                 self.behav_list.setItemWidget(list_item, widget) 
                 
                 
-        except Exception as e: print(f"Error: {e}")
+        except Exception as e: PopupNotifier.Notify(self,message= f"Error: {e}")
 
     def load_quests_data(self):
         
-            self.quests_list.clear()
-            cmd  = 'SELECT quests.id, quests.max_point_, quests.earned_point_, quests.assign_date_, '
-            cmd += 'quests.deadline_, quests.answer_, quests.reply_date_, quests.feedback_ , '
-            cmd += 'educational_resources.content_description_ '
-            cmd += 'FROM quests LEFT JOIN educational_resources '
-            cmd += 'ON quests.qb_id = educational_resources.id WHERE quests.student_id = %s '
-            cmd += 'ORDER BY quests.assign_date_ DESC;'
-
-            records= app_context.database.fetchall(cmd,(self.student[0],))
-            # Id: record[0], max-score: record[1], earned-score: record[2]
-            # assigned-date: record[3], deadline: record[4], answer: record[5] -> long html text
-            # reply-date: record[6], feedback: record[7], main-content: record[8] -> long html text
-            #all_quests = len(records)
-            earned_score = 0.0
-            total_score = 0.0 
+        earned_score = 0.0
+        total_score = 0.0
             
-            replied = 0
-            delayed = 0
-            lost = 0
-            has_time = 0
+        replied = 0
+        delayed = 0
+        lost = 0
+        has_time = 0
 
-            score_progress = []
-            today = datetime.now()
+        score_progress = []
+        today = datetime.now()
 
-            for row, record in enumerate(records):
-                # Sum of earned scores for all activities
-                earned_score += float(record[2])
-                total_score  += float(record[1])
+        self.quests_list.clear()
+        
+        cmd  = 'SELECT id, qb_id, max_point_, earned_point_, assign_date_, deadline_, reply_date_ FROM quests '
+        cmd += 'WHERE student_id = %s ORDER BY assign_date_ DESC;'
 
-                deadline: datetime = record[4]
-                status = ''
-                # If still has not replied
-                if record[6] == None:
-                    # currently has time to reply
-                    if today <= deadline: 
-                        has_time += 1
-                        status = 'Waiting'
-                    else: 
-                        # the time passed and student has not replied
-                        # at this status the score is considered, and is assigned to zero
-                        lost += 1
-                        status = 'Lost'
-                        # zero score: record[2] is zero
-                        score_progress.append(record[2]/record[1])
-                else:  
-                    # The answer has replied    
-                    reply:datetime = record[6]
-                    # The activity has been replied befer deadline ended
-                    if reply <= deadline: 
-                        replied +=1
-                        status = 'Replied'
-                    # The activity has been replied after deadline ended(delayed)
-                    else: 
-                        delayed += 1
-                        status = 'Delayed'
-                    # stores the score for the progress chart
-                    score_progress.append(record[2]/record[1])
+        records = app_context.database.fetchall(cmd,(self.student[0],))
+        #       quiz-Id: record[0],      source-id: record[1],
+        #     max-score: record[2],   earned-score: record[3],
+        # assigned-date: record[4],       deadline: record[5],  reply-date: record[6]
+
+        for row, record in enumerate(records):
+           
+            status = '' # Options for each quiz (Replied, Waiting, Lost) 
+            # Sum of earned scores for all activities
+            earned_score += float(record[3])
+            total_score  += float(record[2])
+            
+            deadline: datetime = record[5]            
+            
+            # If still has not replied
+            if record[6] == None:
+                # currently has time to reply
+                if today <= deadline: 
+                    has_time += 1
+                    status = 'Waiting'
+                else: 
+                    # the time passed and student has not replied at 
+                    # this status the score is considered, and is assigned to zero
+                    lost += 1
+                    status = 'Lost'
+                    # Earned score  divided by max score
+                    score_progress.append(record[3]/record[2])
+            else:  
+                # The answer has replied    
+                reply:datetime = record[6]
+                # The activity has been replied befer deadline ended
+                if reply <= deadline: 
+                    replied +=1
+                    status = 'Replied'
+                # The activity has been replied after deadline ended(delayed)
+                else: 
+                    delayed += 1
+                    status = 'Delayed'
+                # stores the score for the progress chart
+                score_progress.append(record[3]/record[2])
+            
+            item_grid = QGridLayout() # For each row
+            # Column 0: Row index | quiz-id | source question Id
+            string = f'<div>{row + 1}<br>{record[0]}<br>{record[1]}</div>'
+            col0 = QLabel(string)
+            col0.setToolTip('Row index\nQuiz-Id\nSource qoustion Id')
+            col0.setTextFormat(Qt.TextFormat.RichText)
+
+            # Column 1: The time when quiz assigned to student
+            string = f'<div>Assign date : {record[4]}<br>Deadline : {record[5]}<br>Total score : {record[2]}</div>'
+            col1 =QLabel(string)
+            col1.setTextFormat(Qt.TextFormat.RichText)           
+
+            # Column 2
+            string = f'<div>Status : {status}<br>Relpy : {record[6]}<br>Earned score : {record[3]}</div>'
+            col2 =QLabel(string)
+            col2.setTextFormat(Qt.TextFormat.RichText)
+            # data 
+            data = {'student': f'{self.student[1]} {self.student[2]}', 
+                    'qb_id':record[1],
+                    'quiz-id':record[0],
+                    'asign-date': str(record[4]),
+                    'reply-date': str(record[6])
+                    }
+            
+            # Column 3: the donut of the earned score
+            bytes_ = analysis.create_donut_image(float(record[3]), float(record[2]))
+            image = QImage.fromData(bytes_)
+
+            chart = QLabel()
+            chart.setToolTip(f'Earbed score:\n{float(record[3])} of {float(record[2])}')
+            chart.setFixedSize(90, 85)
+            chart.setContentsMargins(5,5,5,5)
+            chart.setPixmap(QPixmap.fromImage(image))
+            chart.setScaledContents(True)
+
+            # Column 4: Actions    
+            view_btn = QPushButton('')
+            #view_btn.setVisible(False)
+            view_btn.setIcon(QIcon(':icons/eye.svg'))
+            view_btn.setProperty('class','grouped_mini')
+            view_btn.setToolTip('Opens a window to display complete data of the quiz')
+            view_btn.clicked.connect(lambda _, d = data : self.open_activity_item(d))
+
+            ans_btn = QPushButton('')
+            #ans_btn.setVisible(False)
+            ans_btn.setIcon(QIcon(':icons/pencil.svg'))
+            ans_btn.setProperty('class','grouped_mini')
+            ans_btn.setToolTip('Opens a window to modify the answer of the quiz received from the student.')
+            ans_btn.clicked.connect(lambda _,id= record[0]: self.__create_answer_input_dlg(quiz_id=id))
+            # add delete button
+            del_btn   = QPushButton('')
+            del_btn.setIcon(QIcon(':icons/trash-2.svg'))
+            del_btn.setProperty('class','grouped_mini')
+
+            actions_ = QVBoxLayout()
+            actions_.setContentsMargins(0,0,0,0)
+            actions_.setSpacing(0)
+            actions_.addWidget(view_btn)
+            actions_.addWidget(ans_btn)
+            actions_.addWidget(del_btn)
+
+            actions_container = QWidget()
+            actions_container.setLayout(actions_)
+            actions_container.setFixedWidth(30)
+            actions_container.setVisible(False)
+            
+            item_grid.setColumnMinimumWidth(4,35)
+            
+            item_grid.addWidget(col0,  0, 0, Qt.AlignmentFlag.AlignVCenter)    
+            item_grid.addWidget(col1,  0, 1) # Assign date
+            item_grid.addWidget(col2,  0, 2) # Status label
+            item_grid.addWidget(chart, 0, 3, Qt.AlignmentFlag.AlignCenter)
+            item_grid.addWidget(actions_container, 0, 4, Qt.AlignmentFlag.AlignTop)
+            item_grid.addWidget(Separator(),0,0,1,5,Qt.AlignmentFlag.AlignBottom) # Row separator
+
+            item_grid.setColumnStretch(1,1)      # Stretch the column
+            item_grid.setColumnStretch(2,1)      # Stretch the column
+            item_grid.setColumnStretch(3,1)      # Stretch the column
+
+            item_widget = QWidget()
+            item_widget.setLayout(item_grid)
+            list_item = QListWidgetItem()
+            
+            list_item.setSizeHint(item_widget.sizeHint())
+            
+            self.quests_list.addItem(list_item)
+            self.quests_list.setItemWidget(list_item,item_widget)
+        
+        self.quests_list.currentItemChanged.connect(self.on_current_item_changed)
+        
+        if len(records) == 0:
+            total_score = 1
+            score_progress =[0]
+        
+        return earned_score/total_score*20, score_progress, (replied, has_time, delayed, lost)
+
+    def on_current_item_changed(self, current:QListWidgetItem, previous:QListWidgetItem):
+
+        if previous:
+            widget = self.quests_list.itemWidget(previous)      
+            item_grid = widget.layout()                        
+                                
+            container_item = item_grid.itemAtPosition(0, 4)
+            if container_item:
+                container = container_item.widget()      
+                container.setVisible(False)         
+        
+        if current:
+            widget = self.quests_list.itemWidget(current)      
+            item_grid = widget.layout()                        
+                                
+            container_item = item_grid.itemAtPosition(0, 4)
+            if container_item:
+                container = container_item.widget()       
+                container.setVisible(True)         
+            
+            current.setSizeHint(widget.sizeHint())
+
+    # Opens pdf viewer for activity
+    def open_activity_item(self, data=None):
+        try:
+            html = self.generate_quiz_html(data=data)
+            answers = self.generate_answer_html(data=data)
+        except Exception as e:
+            # Show a user-friendly error message instead of failing silently
+            QMessageBox.critical(self, "Error", f"Failed to generate HTML:\n{e}")
+            return
+
+        # Keep a reference to prevent garbage collection
+        self.pdf_window = PdfGeneratorApp(html_source=html, answer_html=answers, parent=self)
+        self.pdf_window.setWindowModality(Qt.WindowModality.WindowModal)
+        self.pdf_window.show()
+
+    def _apply_template_replacements(self, html, config, language, data, total_score, mode='quiz'):
+        """Apply dimension, style and content placeholders to the loaded template."""
+        # Dimensions (same for both quiz and answer)
+        dimensions = {
+            '-- 2.43 inches --': f'{2.43 * app_context.DPI}px',
+            '-- 2.42 Inches --': f'{2.42 * app_context.DPI}px',
+            '-- 0.54 Inches --': f'{0.54 * app_context.DPI}px',
+            '-- 6.19 Inches --': f'{app_context.EDU_ITEM_PIXELS}px',
+        }
+        for old, new in dimensions.items():
+            html = html.replace(old, new)
+
+        # Style placeholders
+        html = html.replace('-- font-family --', config[language]['Font family'])
+        html = html.replace('-- direction --', config[language]['Direction'])
+        html = html.replace('-- Text Alignment --', config[language]['Text align'])
+
+        # Content placeholders
+        replacements = {
+            '-- Stu-Name --': data['student'],
+            '-- Date --': str(data.get('asign-date') or data.get('reply-date', '')),
+            '-- Book-Grade --': '' if mode == 'quiz' else 'Answer sheet',
+            '-- SUM --': str(total_score),
+        }
+        for placeholder, value in replacements.items():
+            html = html.replace(placeholder, value)
+
+        return html
+
+    def generate_quiz_html(self, data=None):
+        # --- DATABASE (SAFE) ---
+        qb_ids = data['qb_id']
+        if not isinstance(qb_ids, (list, tuple)): qb_ids = [qb_ids]
+
+        placeholders = ','.join(['%s'] * len(qb_ids))
+        cmd = f'SELECT content_description_, score_ FROM educational_resources WHERE id IN ({placeholders})'
+        records = app_context.database.fetchall(cmd, qb_ids)
+
+        if not records:  return ''
+
+        # --- LOAD TEMPLATE ---
+        template_file = app_context.resource_path + '\\templates\\01-Quiz-Template.html'
+
+        with open(template_file, encoding='utf-8') as f: html = f.read()
+
+        # --- PREPARE ROW TEMPLATE ---
+        style = 'border-left:none;border-top:none;border-right:none'
+        new_row_tmp = (
+            '        <tr>\n'
+            f'            <td style="{style}; vertical-align:top;">{{0}})</td>\n'
+            f'            <td style="{style}; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{1}}">{{2}}</td>\n'
+            f'            <td style="{style}; vertical-align:top">{{3}}</td>\n'
+            '        </tr>\n'
+        )
+
+        # --- BUILD ROWS EFFICIENTLY ---
+        language = app_context.Language
+        config = app_context.template_config.read()
+        text_align = config[language]['Text align']
+        total_score = 0.0
+        rows_html = []
+
+        for row, item in enumerate(records):
+            total_score += item[1]
+            row_str = new_row_tmp.format(row + 1, text_align, item[0], item[1])
+            rows_html.append(row_str)
+
+        # --- INSERT ROWS ONCE ---
+        html = html.replace('<!-- NEW CONTENT -->', '\n'.join(rows_html), 1)
+
+        # --- APPLY COMMON REPLACEMENTS ---
+        html = self._apply_template_replacements(html, config, language, data, total_score, mode='quiz')
+
+        return html
+    
+    def generate_answer_html(self, data=None):
+        # --- SAFE DATABASE ---
+        quiz_ids = data['quiz-id']
+        if not isinstance(quiz_ids, (list, tuple)):
+            quiz_ids = [quiz_ids]
+
+        placeholders = ','.join(['%s'] * len(quiz_ids))
+        cmd = f'SELECT answer_, earned_point_, feedback_ FROM quests WHERE id IN ({placeholders})'
+        records = app_context.database.fetchall(cmd, quiz_ids)
+
+        if not records:
+            return ''
+
+        # --- LOAD TEMPLATE (fixed syntax) ---
+        template_file = app_context.resource_path + '\\templates\\01-Quiz-Template.html'
+        with open(template_file, encoding='utf-8') as f:
+            html = f.read()
+
+        # --- ROW TEMPLATES ---
+        style = 'border-left:none;border-top:none;border-right:none'
+        new_row_tmp = (
+            '        <tr>\n'
+            f'            <td style="{style}; vertical-align:top;">{{0}})</td>\n'
+            f'            <td style="{style}; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{1}}">{{2}}</td>\n'
+            f'            <td style="{style}; vertical-align:top">{{3}}</td>\n'
+            '        </tr>\n'
+        )
+
+        feedback_tmp = (
+            '        <tr>\n'
+            f'           <td style="{style}; vertical-align:top;"></td>\n'
+            f'           <td style="{style};color:darkgray; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{0}}">{{1}}<br>{{2}}</td>\n'
+            f'           <td style="{style}; vertical-align:top;"></td>\n'
+            '        </tr>\n'
+        )
+
+        # --- BUILD ROWS ---
+        language = app_context.Language
+        config = app_context.template_config.read()
+        text_align = config[language]['Text align']
+        total_score = 0.0
+        rows_html = []
+
+        for row, item in enumerate(records):
+            total_score += item[1]
+            # main row
+            rows_html.append(new_row_tmp.format(row + 1, text_align, item[0], item[1]))
+            # optional feedback
+            if item[2]:
+                label = 'بازخورد:'   # consider moving to language config later
+                rows_html.append(feedback_tmp.format(text_align, label, item[2]))
+
+        # --- INSERT ALL ROWS AT ONCE ---
+        html = html.replace('<!-- NEW CONTENT -->', '\n'.join(rows_html), 1)
+
+        # --- COMMON REPLACEMENTS ---
+        html = self._apply_template_replacements(html, config, language, data, total_score, mode='answer')
+
+        return html
+    
+    def __create_answer_input_dlg(self, quiz_id):
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Answer Details")
+        dlg.resize(920, 400)
+        layout = QVBoxLayout(dlg)
+        
+        layout.addWidget(QLabel('ANSWER'))
+        answer_input = QTextEdit()
+        answer_input.setPlaceholderText('Load answer of the student here or write manully ...')
+        answer_input.setAcceptRichText(True)
+        layout.addWidget(answer_input)
+
+        layout.addWidget(QLabel(r'ANALYSIS & FEEDBACK'))
+        analysis_input = QTextEdit()
+        analysis_input.setPlaceholderText('add analytic explanation about replied answer')
+        analysis_input.setFixedHeight(100)
+        
+        layout.addWidget(analysis_input)
+
+        ans_footer = QHBoxLayout()
+        ans_footer.addWidget(QLabel('Score:'))
+        score_input = QLineEdit()
+        score_input.setPlaceholderText('0.0')
+        ans_footer.addWidget(score_input)
+
+        ans_footer.addWidget(QLabel("Replied at:"))
+        date_input = QLineEdit()
+        date_input.setPlaceholderText('YYYY-MM-dd HH:mm:ss')
+        date_input.setMinimumWidth(200)
+        ans_footer.addWidget(date_input)
+
+        ans_footer.addStretch(1)
+        
+        load_answer_btn = QPushButton('Load answer')
+        ans_footer.addWidget(load_answer_btn)
+        menu = QMenu(load_answer_btn)
+        menu.addAction('Plain text',lambda sender= answer_input, arg= app_context.SupportedFileTypes.TEXT: self.upload_file(sender=sender,arg=arg))
+        menu.addAction('RTF',lambda sender= answer_input,arg= app_context.SupportedFileTypes.RTF: self.upload_file(sender=sender,arg=arg))
+        menu.addAction('Image' ,lambda sender= answer_input, arg=app_context.SupportedFileTypes.IMAGE: self.upload_file(sender=sender,arg=arg))
+        menu.addAction('PDF',lambda sender= answer_input, arg=app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg))
+        menu.addAction('Html',lambda sender= answer_input,arg=app_context.SupportedFileTypes.HTML: self.upload_file(sender=sender,arg=arg))
+
+        load_answer_btn.setMenu(menu)
+        
+        save_button = QPushButton('Save')
+
+        save_button.clicked.connect(lambda _, id=quiz_id,
+                                    answer= answer_input, 
+                                    feedback= analysis_input, 
+                                    score=score_input, date=date_input: 
+                                    self.save_answer(quiz_id=id, answer_input=answer, 
+                                                     feedback_input=feedback,
+                                                     score_input=score, 
+                                                     date_input=date))
+    
+        ans_footer.addWidget(save_button)
+
+        delete_button = QPushButton("Delete")
+        delete_button.clicked.connect(lambda _, Id=quiz_id,
+                                    answer= answer_input, 
+                                    feedback= analysis_input, 
+                                    score=score_input, date=date_input:
+                                    self.delete_answer(Id=Id, answer_input=answer, 
+                                                     feedback_input=feedback,
+                                                     score_input=score, 
+                                                     date_input=date))
+                                     
+        ans_footer.addWidget(delete_button)
+
+        close_btn = QPushButton('Close')
+        close_btn.clicked.connect(dlg.reject)
+        ans_footer.addWidget(close_btn)
+
+        layout.addLayout(ans_footer)
+        # load old data
+        query = 'SELECT earned_point_, reply_date_, answer_, feedback_ FROM quests WHERE Id = %s;'
+        data = app_context.database.fetchone(query,(quiz_id,))
+
+        if data:
+            answer_input.document().setHtml(data[2])
+            analysis_input.document().setHtml(data[3])
+            score_input.setText(str(data[0]))
+            date_input.setText(str(data[1]))
+
+        dlg.exec()
+        
+    def delete_answer(self, Id, answer_input:QTextEdit, feedback_input:QTextEdit, score_input:QLineEdit, date_input:QLineEdit):
+
+        button = QMessageBox.warning(self,'DELETE RECORD','ARE YOU SURE TO DELETE THE ANSWER ?', 
+                                     QMessageBox.StandardButton.Ok, 
+                                     QMessageBox.StandardButton.Cancel)
+        
+        if button == QMessageBox.StandardButton.Cancel: return
+
+        result = edu_service.update_learning_item(self, Id=Id, answer='', feedback='', score= 0.0, reply_date=str(datetime.now()))
+        
+        if result[0]:
+            answer_input.document().clear()
+            feedback_input.document().clear()
+            score_input.setText('')
+            date_input.setText('')
+        
+        PopupNotifier.Notify(self,message=f'{result[1]}')
+
+    def save_answer(self, quiz_id, answer_input:QTextEdit, feedback_input:QTextEdit, score_input:QLineEdit, date_input:QLineEdit):
+        
+        if answer_input.document().toPlainText() == '' or score_input.text() == '' or date_input.text() == '':
+            PopupNotifier.Notify(self,message='Invalid data, the answer does not updated')
+            return
+              
+        result = edu_service.update_learning_item(self, 
+                                            Id=quiz_id,
+                                            answer=answer_input.document().toHtml(),
+                                            feedback= feedback_input.document().toHtml(),
+                                            score= float(score_input.text()),
+                                            reply_date= date_input.text())
+
+        PopupNotifier.Notify(self,message= f'{result[1]}')
+        
+    def upload_file(self,sender:QTextEdit, arg:str=app_context.SupportedFileTypes.IMAGE):
+        
+        # Open a file dialog to upload an image or PDF.
+        file_dialog = QFileDialog(self)
+        filter = app_context.FileTypes[arg]
+
+        file_dialog.setNameFilter(filter)
+        
+        if file_dialog.exec():
+        
+            file_path = file_dialog.selectedFiles()[0]
+
+            # avilable widh for edu-content is 6.19 inches
+            if arg == app_context.SupportedFileTypes.IMAGE: 
+
+                pixmap = QPixmap(file_path)
+                from processing.Imaging.Tools import pixmap_to_base64
+                from processing.utils.image_tools import pdf_to_base64
+                base64_image = pixmap_to_base64(pixmap)
+
+                html_content = f'<img src="data:image/png;base64,{base64_image}" width="{app_context.A4_PIXELS}"/>'
                 
-                answer  = text_processing.get_html_body_content(record[5])
-                feedback = text_processing.get_html_body_content(record[7])
+                sender.document().clear()
+                sender.document().setHtml(html_content)
 
-                item = EduItemStudentWidget(record[0], record[8], answer, feedback, record[1],
-                                                    record[2], record[3], record[4], record[6], status)
+            elif arg == app_context.SupportedFileTypes.PDF:
+                sender.document().clear()
+                base64s = pdf_to_base64(file_path)
+                html_content = f'<img src="data:image/png;base64,{base64s[0]}" width="{app_context.A4_PIXELS}"/>'
+                # Set the HTML content in the QTextEdit
+                sender.setHtml(html_content)
+            
+            #elif arg == app_context.SupportedFileTypes.RTF:
+
+            #    html = pypandoc.convert_file(file_path, "html")
+        
+            #    sender.document().setHtml(html)
+
+            elif arg in [app_context.SupportedFileTypes.TEXT, app_context.SupportedFileTypes.HTML]:
                 
-                item.data_updated.connect(lambda _, message :PopupNotifier.Notify(self,'', message))
+                sender.document().clear()
+                with open(file_path, 'r',encoding="utf-8") as file: data = file.read()
+                sender.document().setHtml(data)
+    
 
-                # User need to confirm delete of item
-                # this signal emited after ContentRemoved signal in the hosted model 
-                item.delete_executed.connect(lambda _, message:(
-                                             self.quests_list.takeItem(row), 
-                                             PopupNotifier.Notify(self,'', message)))
-
-                list_item = QListWidgetItem()
-        
-                list_item.setSizeHint(item.sizeHint())
-        
-                self.quests_list.addItem(list_item)
-                self.quests_list.setItemWidget(list_item, item)
-
-            if len(records) == 0:
-                total_score = 1
-                score_progress =[0]
-
-            return earned_score/total_score*20, score_progress, (replied, has_time, delayed, lost)
-
-        
     def ___create_observed_note_widget(self, row, Id, date, observed, analysis):
         
-                widget = QWidget()
-                layout = QGridLayout(widget)
+        widget = QWidget()
+        layout = QGridLayout(widget)
 
-                observed_label = QLabel(str(Id)+ ' | Observed behaviour | ' + str(date.strftime("%Y-%m-%d %H:%M:%S"))+'')
-                observed_label.setProperty('class','caption')
+        observed_label = QLabel(str(Id)+ ' | Observed behaviour | ' + str(date.strftime("%Y-%m-%d %H:%M:%S"))+'')
+        observed_label.setProperty('class','caption')
                 
-                layout.addWidget(observed_label,0,0)
+        layout.addWidget(observed_label,0,0)
 
-                behaviour_plain_text = QPlainTextEdit()
-                behaviour_plain_text.setPlainText(observed)
-                behaviour_plain_text.setReadOnly(True)  # Disable editing if not needed
-                behaviour_plain_text.setWordWrapMode(QTextOption.WrapMode.WordWrap)
-                behaviour_plain_text.setFixedHeight(100)
+        behaviour_plain_text = QPlainTextEdit()
+        behaviour_plain_text.setPlainText(observed)
+        behaviour_plain_text.setReadOnly(True)  # Disable editing if not needed
+        behaviour_plain_text.setWordWrapMode(QTextOption.WrapMode.WordWrap)
+        behaviour_plain_text.setFixedHeight(100)
                 
-                layout.addWidget(behaviour_plain_text,1,0,1,2)
+        layout.addWidget(behaviour_plain_text,1,0,1,2)
                 
-                analysis_label = QLabel('Teacher analysis:')
-                analysis_label.setProperty('class','caption')
-                #analysis_label.hide()
+        analysis_label = QLabel('Teacher analysis:')
+        analysis_label.setProperty('class','caption')
+        #analysis_label.hide()
                 
-                layout.addWidget(analysis_label,2,0)
+        layout.addWidget(analysis_label,2,0)
 
-                analysis_plain_text = QPlainTextEdit()
-                analysis_plain_text.setPlainText(analysis)
-                #analysis_plain_text.hide()
-                analysis_plain_text.setWordWrapMode(QTextOption.WrapMode.WordWrap)
-                analysis_plain_text.setFixedHeight(100)
+        analysis_plain_text = QPlainTextEdit()
+        analysis_plain_text.setPlainText(analysis)
+        #analysis_plain_text.hide()
+        analysis_plain_text.setWordWrapMode(QTextOption.WrapMode.WordWrap)
+        analysis_plain_text.setFixedHeight(100)
                 
-                layout.addWidget(analysis_plain_text,3,0,1,2)
+        layout.addWidget(analysis_plain_text,3,0,1,2)
                 
-                btn = QPushButton('')            
-                btn.setIcon(QIcon(':icons/menu.svg'))
-                btn.setProperty('class','grouped_mini')
-                menu = QMenu(btn)
+        btn = QPushButton('')            
+        btn.setIcon(QIcon(':icons/menu.svg'))
+        btn.setProperty('class','grouped_mini')
+        menu = QMenu(btn)
                 
-                btn.setMenu(menu)
+        btn.setMenu(menu)
                 
-                """action0 = QAction(text='Enabel feedback',parent=menu)
+        """action0 = QAction(text='Enabel feedback',parent=menu)
                 action0.triggered.connect(lambda:(
                                 analysis_label.setVisible( not analysis_label.isVisible()),
                                 analysis_plain_text.setVisible(not analysis_plain_text.isVisible()),
                                 widget.setFixedSize(layout.sizeHint())
                             ))
                 menu.addAction(action0)
-                """
-                action1 = QAction(text='Update',parent=menu)
-                action1.triggered.connect(lambda _, Id= Id,
-                                                    behaviour_widget= behaviour_plain_text, 
+        """
+        action1 = QAction(text='Update',parent=menu)
+        action1.triggered.connect(lambda _, Id= Id, behaviour_widget= behaviour_plain_text, 
                                                     analysis_widget= analysis_plain_text:
-                                                self.edit_behaviour_note(Id, behaviour_widget, analysis_widget))
-                menu.addAction(action1)
+                                                    self.edit_behaviour_note(Id, behaviour_widget, analysis_widget))
+        menu.addAction(action1)
 
-                action2 = QAction(text='Remove',parent =menu)
-                action2.triggered.connect(lambda _,index = row, Id=Id: self.delete_behaviour_note(record_Id=Id,record_index=index))
+        action2 = QAction(text='Remove',parent =menu)
+        action2.triggered.connect(lambda _,index = row, Id=Id: self.delete_behaviour_note(record_Id=Id,record_index=index))
                 
-                menu.addAction(action2)
-                layout.addWidget(btn,0,1,1,1,Qt.AlignmentFlag.AlignRight)
+        menu.addAction(action2)
+        layout.addWidget(btn,0,1,1,1,Qt.AlignmentFlag.AlignRight)
                 
-                return widget
+        return widget
     
-    def toggle_analysis_inputs(self, widget:QWidget):
-            widget.adjustSize()
+    def toggle_analysis_inputs(self, widget:QWidget): widget.adjustSize()
         
     def delete_behaviour_note(self, record_Id, record_index):
         

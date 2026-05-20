@@ -97,3 +97,4 @@ class DataLoaderWorker(QRunnable):
         Sets the is_running flag to False, which will cause the run() loop to exit.
         """
         self.is_running = False
+

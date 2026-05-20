@@ -543,10 +543,10 @@ class StudentListPage(QWidget):
         
         # Create action to view student's learning progress and activities
         # Opens new page to view learning profile (not personal profile)
-        action3 = QAction(icon=QIcon(':/icons/chart-spline.svg'), text= 'Learning progress',parent=menu)
+        action3 = QAction(icon=QIcon(':/icons/chart-spline.svg'), text= 'Activity tracking',parent=menu)
         # Connect to method opening behavior/activity tracking page
         action3.triggered.connect(lambda _, data=record: self.open_behaviour_list_page(data))
-        # Add learning progress action to menu
+        # Add Activity tracking action to menu
         menu.addAction(action3)
 
         # Create action for adding custom score/assignment for this student
@@ -1443,8 +1443,10 @@ class StudentListPage(QWidget):
 
     # Method to open student activity tracking page to view learning progress
     def open_behaviour_list_page(self, data): 
+
+        window = QApplication.activeWindow()
         # Add new page to show student's learning progress and activity tracking
-        self.parent().add_page(StudentActivityTrackingPage(student=data))
+        window.add_page(StudentActivityTrackingPage(student=data))
 
     # Method to open dialog for recording behavioral observations about a student
     def open_behaviour_note_editor(self, data):

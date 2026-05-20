@@ -493,7 +493,7 @@ class EduResourcesView(QWidget):
         stream.seek(0)
         html = stream.read()
         stream.close()
-        language =app_context.Language
+        language = app_context.Language
         
         # Replace content placeholders
         new_content_template = '<!-- NEW CONTENT -->'

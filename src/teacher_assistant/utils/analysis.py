@@ -1,5 +1,6 @@
 
 import io
+import random
 import matplotlib.pyplot as plt
 #from matplotlib.patches import Circle
 from matplotlib.offsetbox import TextArea, HPacker, AnnotationBbox, VPacker
@@ -105,10 +106,11 @@ def create_donut_image(x1, total=20, dpi=320):
     # Fill the entire figure area with the axes (remove margins)
     ax.set_position([0, 0, 1, 1])  # [left, bottom, width, height]
 
+    bg = "#2E2E2E"  
     # Donut chart
     ax.pie(
         [x1, total - x1],
-        colors=['#33ccff', '#444444'],
+        colors=[random_contrasting_hex(bg), '#444444'],
         startangle=90,
         wedgeprops={'width': 0.3}
     )
@@ -327,3 +329,74 @@ class SquareHandler(HandlerPatch):
         return [square]
 
 
+
+import random
+from PySide6.QtGui import QColor
+
+def random_contrasting_hex(background: QColor | str,
+                           theme: str = "auto",
+                           min_contrast: float = 4.5) -> str:
+    """
+    Returns a random hex color (e.g. "#A3F1B2") that is readable on
+    the given background.
+
+    Parameters
+    ----------
+    background : QColor or hex string
+        The background color to contrast against.
+    theme : {"light", "dark", "auto"}
+        Force foreground to be light or dark. "auto" uses
+        the background's luminance to decide.
+    min_contrast : float
+        Minimum WCAG contrast ratio (default 4.5 for normal text).
+
+    Returns
+    -------
+    str
+        Hex color code with '#' prefix.
+    """
+    if isinstance(background, str):
+        bg = QColor(background)
+    else:
+        bg = QColor(background)
+
+    # ---- relative luminance (sRGB) ----
+    def luminance(color: QColor) -> float:
+        def linearize(c):
+            c = c / 255.0
+            return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+        r, g, b = linearize(color.redF() * 255), linearize(color.greenF() * 255), linearize(color.blueF() * 255)
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    # ---- contrast ratio ----
+    def contrast_ratio(l1, l2):
+        lighter = max(l1, l2)
+        darker = min(l1, l2)
+        return (lighter + 0.05) / (darker + 0.05)
+
+    bg_lum = luminance(bg)
+
+    # ---- decide target luminance range ----
+    if theme == "auto":
+        need_light = bg_lum < 0.5   # dark background → need light foreground
+    else:
+        need_light = (theme == "dark")
+
+    # ---- try random colors until contrast condition is met ----
+    max_attempts = 1000
+    for _ in range(max_attempts):
+        # Random hue, full saturation, variable lightness
+        h = random.uniform(0, 360)
+        s = random.uniform(0.3, 1.0)  # not too grey
+        if need_light:
+            l = random.uniform(0.5, 0.9)  # light colors
+        else:
+            l = random.uniform(0.1, 0.5)  # dark colors
+
+        color = QColor.fromHslF(h / 360, s, l)
+        color_lum = luminance(color)
+        if contrast_ratio(bg_lum, color_lum) >= min_contrast:
+            return color.name()  # returns "#RRGGBB"
+
+    # Fallback: return safe color based on theme
+    return "#FFFFFF" if need_light else "#000000"

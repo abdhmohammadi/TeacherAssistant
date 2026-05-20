@@ -311,13 +311,13 @@ class EduItemStudentWidget(QWidget):
 
         main_layout.addLayout(header,0,0)
 
-        main_content_label = Label()
+        main_content_label = Label() # Customized QLabel to support text events and auto-binding property
         # Bind UI elements to ViewModel properties
         main_content_label.setWordWrap(True) 
         main_content_label.setTextFormat(Qt.TextFormat.RichText)
         main_content_label.setProperty('class','EduText')
         self.viewModel.bind_property("content", main_content, main_content_label)
-
+        
         # Wrap the label in a scroll area with a limited height so content is scrollable when it overflows
         content_scroll = QScrollArea()
         content_scroll.setWidgetResizable(True)
@@ -325,11 +325,11 @@ class EduItemStudentWidget(QWidget):
         content_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         content_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         content_scroll.setWidget(main_content_label)
-        content_scroll.setFixedHeight(150)  # adjust height as needed
+        content_scroll.setFixedHeight(150) # adjust height as needed
 
         if main_content == '' or main_content == None: 
             content_scroll.setVisible(False)
-
+            
         # adding to row 1, column 0
         main_layout.addWidget(content_scroll,1,0)
 
@@ -338,6 +338,7 @@ class EduItemStudentWidget(QWidget):
         answer_input.setAcceptRichText(True)
         self.viewModel.bind_property("response", answer, answer_input)
         
+        # adding to row 2, column 0
         main_layout.addWidget(answer_input,2,0)
         
         ans_footer = QHBoxLayout()
@@ -402,12 +403,15 @@ class EduItemStudentWidget(QWidget):
 
         load_answer_btn.setMenu(menu)
         
+        # adding to row 3, column 0
         main_layout.addLayout(ans_footer,3,0)
 
         self.analysis_input = QTextEdit()
         self.analysis_input.setPlaceholderText('add analytic explanation about replied answer')
         self.analysis_input.setFixedHeight(100)
         self.viewModel.bind_property('feedback',feedback,self.analysis_input)
+        
+        # adding to row 4, column 0
         main_layout.addWidget(self.analysis_input,4,0)
     
     

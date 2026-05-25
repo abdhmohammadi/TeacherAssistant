@@ -27,7 +27,6 @@ class StudentActivityTrackingPage(QWidget):
 
         self.initUI()
 
-
     # QVLayout in root,
     # Top row of root is hosted of 'QGridLayout' and shows identical info, and activity analysis charts
     # Second is the container of 'StackedWidget' to dispaly behavioral data and activities in tow pages
@@ -58,26 +57,29 @@ class StudentActivityTrackingPage(QWidget):
         stacked_widget.add_page(self.behav_list)
         stacked_widget.add_page(self.quests_list)
         
+        commands = QHBoxLayout()
+        commands.setContentsMargins(0,0,20,0)
+        
         btn  = QPushButton('')
         btn.setIcon(QIcon(':icons/chevron-left.svg'))
         btn.setToolTip('Observed behaviours')
         btn.setProperty('class', 'grouped_mini')
-        btn.clicked.connect(stacked_widget.go_back)
-        header_layout.addWidget(btn, 5,0,alignment=Qt.AlignmentFlag.AlignLeft)
+        btn.clicked.connect(lambda _:(activities_lbl.setText('BEHAVIOURS'), stacked_widget.go_back()))
+        commands.addWidget(btn)
+
+        activities_lbl = QLabel('ACTIVITIES')
+        activities_lbl.setProperty('class','title')
+        commands.addWidget(activities_lbl)
 
         btn  = QPushButton('')
         btn.setIcon(QIcon(':icons/chevron-right.svg'))
         btn.setProperty('class', 'grouped_mini')
         btn.setToolTip('Activities')
-        btn.clicked.connect(stacked_widget.go_next)
-        header_layout.addWidget(btn,5,0,alignment=Qt.AlignmentFlag.AlignRight)
+        btn.clicked.connect(lambda _:(activities_lbl.setText('ACTIVITIES'), stacked_widget.go_next()))
+        commands.addWidget(btn)
+        
+        commands.addStretch(1)
 
-        activities_lbl = QLabel('Activity and behaviours')
-        activities_lbl.setProperty('class','title')
-        header_layout.addWidget(activities_lbl,5,1,1,2)
-
-        commands = QHBoxLayout()
-        commands.setContentsMargins(0,0,20,0)
         btn = QPushButton('')
         btn.setIcon(QIcon(':icons/printer.svg'))
         btn.setToolTip('Export data')
@@ -113,7 +115,7 @@ class StudentActivityTrackingPage(QWidget):
                                       self.assign_edu_to_student(stu))
         
         commands.addWidget(btn)
-        header_layout.addLayout(commands,5,3,1,3,alignment=Qt.AlignmentFlag.AlignRight)
+        header_layout.addLayout(commands,5,0,1,6,alignment=Qt.AlignmentFlag.AlignRight)
 
         header_layout.addWidget(Separator(stroke=2, color='#3D3D3D'),5, 0, 1, header_layout.columnCount(),alignment=Qt.AlignmentFlag.AlignTop)
         
@@ -443,6 +445,13 @@ class StudentActivityTrackingPage(QWidget):
             view_btn.setIcon(QIcon(':icons/eye.svg'))
             view_btn.setProperty('class','grouped_mini')
             view_btn.setToolTip('Opens a window to display complete data of the quiz')
+            # data 
+            data = {'student': f'{self.student[1]} {self.student[2]}', 
+                    'qb_id':record[1],
+                    'quiz-id':record[0],
+                    'asign-date': str(record[4]),
+                    'reply-date': str(record[6])
+                    }
             view_btn.clicked.connect(lambda _, d = data : self.open_activity_item(d))
 
             ans_btn = QPushButton('')
@@ -522,154 +531,12 @@ class StudentActivityTrackingPage(QWidget):
 
     # Opens pdf viewer for activity
     def open_activity_item(self, data=None):
-        try:
-            html = self.generate_quiz_html(data=data)
-            answers = self.generate_answer_html(data=data)
-        except Exception as e:
-            # Show a user-friendly error message instead of failing silently
-            QMessageBox.critical(self, "Error", f"Failed to generate HTML:\n{e}")
-            return
 
-        # Keep a reference to prevent garbage collection
-        self.pdf_window = PdfGeneratorApp(html_source=html, answer_html=answers, parent=self)
+        # Create the window – it starts loading automatically
+        self.pdf_window = PdfGeneratorApp(data, app_context, parent=self)
         self.pdf_window.setWindowModality(Qt.WindowModality.WindowModal)
         self.pdf_window.show()
-
-    def _apply_template_replacements(self, html, config, language, data, total_score, mode='quiz'):
-        """Apply dimension, style and content placeholders to the loaded template."""
-        # Dimensions (same for both quiz and answer)
-        dimensions = {
-            '-- 2.43 inches --': f'{2.43 * app_context.DPI}px',
-            '-- 2.42 Inches --': f'{2.42 * app_context.DPI}px',
-            '-- 0.54 Inches --': f'{0.54 * app_context.DPI}px',
-            '-- 6.19 Inches --': f'{app_context.EDU_ITEM_PIXELS}px',
-        }
-        for old, new in dimensions.items():
-            html = html.replace(old, new)
-
-        # Style placeholders
-        html = html.replace('-- font-family --', config[language]['Font family'])
-        html = html.replace('-- direction --', config[language]['Direction'])
-        html = html.replace('-- Text Alignment --', config[language]['Text align'])
-
-        # Content placeholders
-        replacements = {
-            '-- Stu-Name --': data['student'],
-            '-- Date --': str(data.get('asign-date') or data.get('reply-date', '')),
-            '-- Book-Grade --': '' if mode == 'quiz' else 'Answer sheet',
-            '-- SUM --': str(total_score),
-        }
-        for placeholder, value in replacements.items():
-            html = html.replace(placeholder, value)
-
-        return html
-
-    def generate_quiz_html(self, data=None):
-        # --- DATABASE (SAFE) ---
-        qb_ids = data['qb_id']
-        if not isinstance(qb_ids, (list, tuple)): qb_ids = [qb_ids]
-
-        placeholders = ','.join(['%s'] * len(qb_ids))
-        cmd = f'SELECT content_description_, score_ FROM educational_resources WHERE id IN ({placeholders})'
-        records = app_context.database.fetchall(cmd, qb_ids)
-
-        if not records:  return ''
-
-        # --- LOAD TEMPLATE ---
-        template_file = app_context.resource_path + '\\templates\\01-Quiz-Template.html'
-
-        with open(template_file, encoding='utf-8') as f: html = f.read()
-
-        # --- PREPARE ROW TEMPLATE ---
-        style = 'border-left:none;border-top:none;border-right:none'
-        new_row_tmp = (
-            '        <tr>\n'
-            f'            <td style="{style}; vertical-align:top;">{{0}})</td>\n'
-            f'            <td style="{style}; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{1}}">{{2}}</td>\n'
-            f'            <td style="{style}; vertical-align:top">{{3}}</td>\n'
-            '        </tr>\n'
-        )
-
-        # --- BUILD ROWS EFFICIENTLY ---
-        language = app_context.Language
-        config = app_context.template_config.read()
-        text_align = config[language]['Text align']
-        total_score = 0.0
-        rows_html = []
-
-        for row, item in enumerate(records):
-            total_score += item[1]
-            row_str = new_row_tmp.format(row + 1, text_align, item[0], item[1])
-            rows_html.append(row_str)
-
-        # --- INSERT ROWS ONCE ---
-        html = html.replace('<!-- NEW CONTENT -->', '\n'.join(rows_html), 1)
-
-        # --- APPLY COMMON REPLACEMENTS ---
-        html = self._apply_template_replacements(html, config, language, data, total_score, mode='quiz')
-
-        return html
-    
-    def generate_answer_html(self, data=None):
-        # --- SAFE DATABASE ---
-        quiz_ids = data['quiz-id']
-        if not isinstance(quiz_ids, (list, tuple)):
-            quiz_ids = [quiz_ids]
-
-        placeholders = ','.join(['%s'] * len(quiz_ids))
-        cmd = f'SELECT answer_, earned_point_, feedback_ FROM quests WHERE id IN ({placeholders})'
-        records = app_context.database.fetchall(cmd, quiz_ids)
-
-        if not records:
-            return ''
-
-        # --- LOAD TEMPLATE (fixed syntax) ---
-        template_file = app_context.resource_path + '\\templates\\01-Quiz-Template.html'
-        with open(template_file, encoding='utf-8') as f:
-            html = f.read()
-
-        # --- ROW TEMPLATES ---
-        style = 'border-left:none;border-top:none;border-right:none'
-        new_row_tmp = (
-            '        <tr>\n'
-            f'            <td style="{style}; vertical-align:top;">{{0}})</td>\n'
-            f'            <td style="{style}; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{1}}">{{2}}</td>\n'
-            f'            <td style="{style}; vertical-align:top">{{3}}</td>\n'
-            '        </tr>\n'
-        )
-
-        feedback_tmp = (
-            '        <tr>\n'
-            f'           <td style="{style}; vertical-align:top;"></td>\n'
-            f'           <td style="{style};color:darkgray; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{0}}">{{1}}<br>{{2}}</td>\n'
-            f'           <td style="{style}; vertical-align:top;"></td>\n'
-            '        </tr>\n'
-        )
-
-        # --- BUILD ROWS ---
-        language = app_context.Language
-        config = app_context.template_config.read()
-        text_align = config[language]['Text align']
-        total_score = 0.0
-        rows_html = []
-
-        for row, item in enumerate(records):
-            total_score += item[1]
-            # main row
-            rows_html.append(new_row_tmp.format(row + 1, text_align, item[0], item[1]))
-            # optional feedback
-            if item[2]:
-                label = 'بازخورد:'   # consider moving to language config later
-                rows_html.append(feedback_tmp.format(text_align, label, item[2]))
-
-        # --- INSERT ALL ROWS AT ONCE ---
-        html = html.replace('<!-- NEW CONTENT -->', '\n'.join(rows_html), 1)
-
-        # --- COMMON REPLACEMENTS ---
-        html = self._apply_template_replacements(html, config, language, data, total_score, mode='answer')
-
-        return html
-    
+   
     def __create_answer_input_dlg(self, quiz_id):
 
         dlg = QDialog(self)
@@ -874,14 +741,6 @@ class StudentActivityTrackingPage(QWidget):
                 
         btn.setMenu(menu)
                 
-        """action0 = QAction(text='Enabel feedback',parent=menu)
-                action0.triggered.connect(lambda:(
-                                analysis_label.setVisible( not analysis_label.isVisible()),
-                                analysis_plain_text.setVisible(not analysis_plain_text.isVisible()),
-                                widget.setFixedSize(layout.sizeHint())
-                            ))
-                menu.addAction(action0)
-        """
         action1 = QAction(text='Update',parent=menu)
         action1.triggered.connect(lambda _, Id= Id, behaviour_widget= behaviour_plain_text, 
                                                     analysis_widget= analysis_plain_text:
@@ -933,4 +792,5 @@ class StudentActivityTrackingPage(QWidget):
         # Set the layout for the dialog
         self.dialog.setLayout(layout)
         self.dialog.exec()
+
 

@@ -37,7 +37,7 @@ class RichTextEdit(QTextEdit):
         cursor = self.textCursor()
         doc = self.document()
         block = cursor.block()
-
+        
         for frag in block.begin():
             if frag.fragment().isValid():
                 char_format = frag.fragment().charFormat()

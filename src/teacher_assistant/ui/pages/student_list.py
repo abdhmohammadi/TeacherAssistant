@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QHeaderView, Q
                                QCheckBox, QFileDialog, QTableView, QAbstractItemView,
                                QDialog, QScrollArea, QGridLayout, QApplication, QMenu,
                                QLabel, QLineEdit, QComboBox,QAbstractScrollArea, QPushButton)
-
+from PySide6.QtCore import QSize
 # Import GUI utility classes from PySide6.QtGui for icons, actions, models, and display roles
 from PySide6.QtGui import (Qt, QAction, QIcon, QStandardItemModel, QStandardItem)
 
@@ -29,20 +29,26 @@ from ui.pages.activity_tracking import StudentActivityTrackingPage
 from ui.pages.edu_resource_view import EduResourcesView
 # Import global application context for accessing database and settings
 from core.app_context import app_context 
+
 # ==================================================================================
 # UI LAYOUT CONFIGURATION CONSTANTS - Defines dimensions and spacing for UI elements
 # ==================================================================================
 
 # Width of student photo display in pixels
-PHOTO_WIDTH = 90           
+PHOTO_WIDTH = 100           
 # Height of student photo display in pixels
 PHOTO_HEIGHT = 130         
 # Additional padding around photo widget in pixels
-PHOTO_PADDING = 10         
+PHOTO_PADDING = 2
+# Based on above definations, is defined helpfull constraints for photo placeholder size
+PHOTO_HOLDER_WIDTH  = PHOTO_WIDTH  + 2*PHOTO_PADDING # Width of a QLabel as Photo placeholder
+PHOTO_HOLDER_HEIGHT = PHOTO_HEIGHT + 2*PHOTO_PADDING # Width of a QLabel as Photo placeholder
+PHOTO_HOLDER_SIZE = QSize(PHOTO_HOLDER_WIDTH, PHOTO_HOLDER_HEIGHT) # 2D size of a QLabel as Photo placeholder
+
 # Fixed height for the last note scroll area in pixels
 NOTES_SCROLL_HEIGHT = 120  
 # Fixed width for student name/info label in pixels
-NAME_LABEL_WIDTH = 150     
+NAME_LABEL_WIDTH = 200     
 # Fixed width for address/contact label in pixels
 ADDRESS_LABEL_WIDTH = 250  
 
@@ -100,7 +106,6 @@ REC_SCORE = 13
 # StudentListPage CLASS - Main UI page for displaying and managing student lists
 # ============================================================================
 class StudentListPage(QWidget):
-    """Main page for displaying and managing student lists."""
     
     # Constructor method initializes the StudentListPage widget with parent reference
     def __init__(self, parent):
@@ -128,7 +133,7 @@ class StudentListPage(QWidget):
         main_layout = QVBoxLayout(self)
         # Set spacing between layout elements
         main_layout.setSpacing(10)
-
+        
         # Create and configure title label for the page
         page_title = QLabel('STUDENT LIST')
         # Apply CSS class for heading styling
@@ -136,6 +141,13 @@ class StudentListPage(QWidget):
 
         # Load list of classroom groups from database into model
         group_model = self.load_groups()
+        # Create dropdown combo box for filtering students by classroom group
+        class_filter_combo = QComboBox()
+        # Set the data model containing list of groups
+        class_filter_combo.setModel(group_model)
+        # Connect selection change signal to load students for selected group
+        class_filter_combo.currentIndexChanged.connect(lambda _: self.load_students(class_filter_combo))
+
         # Create text input field for searching students
         search_input = QLineEdit()
         # Set placeholder text to guide user input
@@ -145,17 +157,10 @@ class StudentListPage(QWidget):
         # Connect text change signal to search function
         search_input.textChanged.connect(self.find_in_list)
 
-        # Create dropdown combo box for filtering students by classroom group
-        class_filter_combo = QComboBox()
-        # Set the data model containing list of groups
-        class_filter_combo.setModel(group_model)
-        # Connect selection change signal to load students for selected group
-        class_filter_combo.currentIndexChanged.connect(lambda _: self.load_students(class_filter_combo))
-
         # Create options menu button with various student management actions
         edu_btn = self.create_more_option_menu(group_model)
         # Set tooltip text for button
-        edu_btn.setToolTip('Open options menu')
+        edu_btn.setToolTip('Opens options menu')
 
         # Create horizontal layout for header controls (title, search, filter, menu)
         command_layout = QHBoxLayout()
@@ -172,7 +177,7 @@ class StudentListPage(QWidget):
         # Add options menu button to header
         command_layout.addWidget(edu_btn)
 
-        # Create intermediate widget to hold header layout
+        # ROW 1: Create intermediate widget to hold header layout
         header_widget = QWidget()
         # Set the header layout to the intermediate widget
         header_widget.setLayout(command_layout)
@@ -182,16 +187,18 @@ class StudentListPage(QWidget):
         # Create table model with initial 0 rows and 4 columns (PHOTO, INFO, ADDRESS, LAST NOTE)
         self.model = QStandardItemModel(0, 4)
         # Set column header labels for table display
-        self.model.setHorizontalHeaderLabels(['PHOTO', 'INFO', 'ADDRESS', 'LAST NOTE'])
+        # self.model.setHorizontalHeaderLabels(['PHOTO', 'INFO', 'ADDRESS', 'LAST NOTE'])
         
         # Create table widget to display student data
         self.table = QTableView()
+        #self.table.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         # Set the data model for the table
         self.table.setModel(self.model)
         # Enable alternating row background colors for better readability
         self.table.setAlternatingRowColors(True)
         # Hide the row number column on the left side
         self.table.verticalHeader().hide()
+        self.table.horizontalHeader().hide()
         # Set selection behavior to select entire rows instead of individual cells
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         # Set selection mode to single row selection by default
@@ -202,13 +209,18 @@ class StudentListPage(QWidget):
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         # Enable vertical scrollbar when content exceeds visible height
         self.table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        #self.table.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         # Hide grid lines between cells
         self.table.setShowGrid(False)
+
+        # ROW 2: Create column headers for the self.table
+        table_header = self.___create_headers___()
+        main_layout.addWidget(table_header)
 
         # Get the table header to configure column sizing
         header = self.table.horizontalHeader()
         # Set photo column to fixed width
-        self.table.setColumnWidth(COL_PHOTO, PHOTO_WIDTH + PHOTO_PADDING)
+        self.table.setColumnWidth(COL_PHOTO, PHOTO_HOLDER_WIDTH)        
         # Configure photo column as fixed width (no resizing)
         header.setSectionResizeMode(COL_PHOTO, QHeaderView.ResizeMode.Fixed)
         # Configure info column to resize based on content
@@ -217,9 +229,11 @@ class StudentListPage(QWidget):
         header.setSectionResizeMode(COL_ADDRESS, QHeaderView.ResizeMode.ResizeToContents)
         # Configure last note column to stretch and fill remaining space
         header.setSectionResizeMode(COL_LAST_NOTE, QHeaderView.ResizeMode.Stretch)
-        # Add table widget to main layout
+        
+        # ROW 3: Add table widget to main layout
         main_layout.addWidget(self.table)
 
+        # ROW 4: Create QWidget to hold footer data
         self.footer_widget = QWidget()
 
         footer_layout = QVBoxLayout(self.footer_widget)
@@ -262,7 +276,8 @@ class StudentListPage(QWidget):
         # Load and display all students for the initial group selection
         self.load_students(class_filter_combo)
 
-    # Method to display CSV import format requirements dialog message
+
+   # Method to display CSV import format requirements dialog message
     def show_csv_load_message(self):
         """Show warning message about CSV format requirements."""
         # Retrieve user's previous preference for showing this message
@@ -407,11 +422,11 @@ class StudentListPage(QWidget):
 
     # Method to create the main options menu button with various student actions
     def create_more_option_menu(self, group_model=None) -> QPushButton:
-        """Create the options menu button with all available actions."""
+        
         # Create a generic menu button with minimal styling
         btn = QPushButton('')            
         # Apply grouped mini button CSS class for styling
-        btn.setProperty('class', 'grouped_mini')
+        btn.setProperty('class', 'mini')
         # Set icon from resource file for menu button
         btn.setIcon(QIcon(":/icons/menu.svg"))
         # Set tooltip text displayed on hover
@@ -431,18 +446,14 @@ class StudentListPage(QWidget):
         action_multi.setChecked(self._multi_select_enabled)
         # Set tooltip explaining this action
         action_multi.setToolTip('Toggle multi-row selection in the students list')
-        ##############################################################################
+        
         # Create action for toggling multi-row selection mode
         action_enable_score_input = QAction(icon=QIcon(':/icons/list-checks.svg'), text='input score', parent=menu)
-        # Make this action checkable (can be toggled on/off)
-        #action_enable_score_input.setCheckable(True)
-        # Set initial state based on current multi-select setting
-        #action_enable_score_input.setChecked(self._multi_select_enabled)
         # Set tooltip explaining this action
         action_enable_score_input.setToolTip('enables input mode for each student to accept the score')
-        ##############################################################################
+        
         # Define callback function for multi-selection toggle
-        def _toggle_multi(checked):
+        def ___toggle_multi___(checked):
             # Update instance variable tracking multi-select state
             self._multi_select_enabled = checked
             # Check if table exists and is accessible
@@ -454,7 +465,7 @@ class StudentListPage(QWidget):
                 self.table.setSelectionMode(mode)
 
         # Connect the toggle action to callback function
-        action_multi.triggered.connect(_toggle_multi)
+        action_multi.triggered.connect(___toggle_multi___)
         action_enable_score_input.triggered.connect(lambda _: self.show_score_inputs(True))
         # Create action for adding a new student
         action_add = QAction(icon=QIcon(':/icons/id-card.svg'), text='Add new student', parent=menu)
@@ -926,7 +937,7 @@ class StudentListPage(QWidget):
         # Create a new empty QStandardItemModel with 0 rows and 4 columns
         new_model = QStandardItemModel(0, 4)  # Empty model
         # Set column headers for the new model
-        new_model.setHorizontalHeaderLabels(['PHOTO', 'INFO', 'ADDRESS', 'LAST NOTE'])
+        #new_model.setHorizontalHeaderLabels(['PHOTO', 'INFO', 'ADDRESS', 'LAST NOTE'])
         
         # Set the new model as the table's data source
         self.table.setModel(new_model)
@@ -1082,7 +1093,7 @@ class StudentListPage(QWidget):
         # Catch exceptions from table update process
         except Exception as e:
             # Print error message to console
-            print(f"Error updating table display: {e}")
+            PopupNotifier.Notify(self, message=f"Error updating table display: {e}")
     
     # Method to retrieve student record data from model item for specific row
     def _get_record_from_row(self, row: int):
@@ -1138,7 +1149,34 @@ class StudentListPage(QWidget):
         self.footer_cancel_btn.setVisible(b)
         self.footer_upload_btn.setVisible(b)
 
+    
+    def ___create_headers___(self):
+        
+        photo = QLabel('PHOTO')
+        photo.setProperty('class','table-header')
+        photo.setFixedWidth(PHOTO_HOLDER_WIDTH + PHOTO_PADDING)
 
+        info = QLabel('INFO')
+        info.setProperty('class','table-header')
+        info.setFixedWidth(NAME_LABEL_WIDTH)
+
+        addr = QLabel('ADDRESS')
+        addr.setProperty('class','table-header')
+        addr.setFixedWidth(ADDRESS_LABEL_WIDTH)
+        note = QLabel('LAST OBSERVED BEHAVIOUR')
+        note.setProperty('class','table-header')
+
+        w = QWidget()
+        layout = QHBoxLayout(w)
+        layout.setContentsMargins(0,0,0,0)
+
+        layout.setSpacing(0)
+        layout.addWidget(photo)
+        layout.addWidget(info)
+        layout.addWidget(addr)
+        layout.addWidget(note)
+        return w
+ 
     # Method to create and configure widgets for displaying a single student row
     def _create_student_row(self, row: int, record: tuple):
         
@@ -1149,9 +1187,9 @@ class StudentListPage(QWidget):
         # Set default text for placeholder when no photo available
         photo_label.setText("No\nPhoto")
         # Apply stylesheet styling for the photo label
-        photo_label.setStyleSheet('background-color: transparent; padding: 5px; text-align: center; margin: 0px;')
+        photo_label.setStyleSheet(f'background-color: transparent; padding:0px; text-align: center; margin: 0px;')
         # Set fixed size for photo label based on constants
-        photo_label.setFixedSize(PHOTO_WIDTH + PHOTO_PADDING, PHOTO_HEIGHT)
+        photo_label.setFixedSize(PHOTO_HOLDER_SIZE)#PHOTO_WIDTH + 2*PHOTO_PADDING, PHOTO_HEIGHT + 2*PHOTO_PADDING)
         
         # Check if student record has a photo (bytea data)
         if record[REC_PHOTO]:  # If has a photo
@@ -1161,7 +1199,7 @@ class StudentListPage(QWidget):
                 pixmap = bytea_to_pixmap(record[REC_PHOTO])
                 # Scale pixmap to fit label size maintaining aspect ratio
                 scaled_pixmap = pixmap.scaled(
-                    photo_label.size(), 
+                    QSize(PHOTO_WIDTH, PHOTO_HEIGHT), 
                     Qt.AspectRatioMode.KeepAspectRatio, 
                     Qt.TransformationMode.SmoothTransformation
                 )
@@ -1181,23 +1219,20 @@ class StudentListPage(QWidget):
         name_label = QLabel(f"{record[REC_ID]}<br><strong>{record[REC_FNAME]} {record[REC_LNAME]}</strong>")
         # Align content to top and left
         name_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
-        # Set fixed width for the name label
-        name_label.setFixedWidth(NAME_LABEL_WIDTH)
-        #self.table.setIndexWidget(self.model.index(row, COL_INFO), name_label)
 
         # Create line-edit widget to input score for student
         # this enables input mode for classroom(not individual)
         score_input = QLineEdit('')   
         score_input.setPlaceholderText('score')
-        #score_input.setStyleSheet('margin: 2px;')
-        score_input.setFixedWidth(NAME_LABEL_WIDTH)
         # Align content to top and left
         score_input.setAlignment(Qt.AlignmentFlag.AlignLeft)
         score_input.setVisible(False)
         # Set the name label widget in the info column of the table
         #self.table.setIndexWidget(self.model.index(row, 1), score_input)
         name_widget = QWidget()
+        name_widget.setFixedWidth(NAME_LABEL_WIDTH)
         name_layout = QVBoxLayout(name_widget)
+
         name_layout.addWidget(name_label)
         name_layout.addWidget(score_input)
         

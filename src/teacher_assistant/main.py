@@ -10,8 +10,8 @@
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
 #    1. PyInstaller:
-#       pyinstaller .\scripts\TeacherAssistant.spec
-#       if not works --> C:\Users\AbdhM\AppData\Roaming\Python\Python314\Scripts\pyinstaller .\scripts\TeacherAssistant.spec
+#       pyinstaller .\scripts\TeacherAssistant.spec --noconfirm
+#       if not works --> C:\Users\AbdhM\AppData\Roaming\Python\Python314\Scripts\pyinstaller .\scripts\TeacherAssistant.spec --noconfirm
 
 # 2. Use InnoSetup tool to create windows installer.
 #
@@ -48,9 +48,13 @@ if __name__ == "__main__":
     app_context.setup_app_directories()
     # computes dpi to display edu-item size
     app_context.display_calulation(QApplication.primaryScreen().logicalDotsPerInch())
+    
+    current_font = app_context.settings_manager.find_value('font')
+    if current_font:
+       app_context.theme_manager.update_qss_font(dict(current_font)['size'],dict(current_font)['family'])
 
     app_context.theme_manager.load()
-
+        
     app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
     
     main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{version}', logo=QPixmap(':/icons/app-icon.png'))
@@ -60,7 +64,7 @@ if __name__ == "__main__":
     connection_dialog = connection_form.PostgreSqlConnectionWidget(main_window)
 
     status, settings = connection_dialog.show_dialog()
-
+    
     if status: main_window.load_students_page(None)
     
     sys.exit(app.exec())

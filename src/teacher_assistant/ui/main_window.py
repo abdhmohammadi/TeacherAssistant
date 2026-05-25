@@ -35,13 +35,10 @@ class MainWindow(Window.AbdhWindow):
     def on_font_changed(self,size_combo:QComboBox,font_combo:QComboBox):
         # Get the text of the selected item 
         selected_font = font_combo.itemText(font_combo.currentIndex())
-        # Font-size options: [tiny, small, medium, large]
-        #                    [8,    10,    12,     14   ]
-        sz = 8 + 2*size_combo.currentIndex()
 
-        app_context.theme_manager.add_property_to_widget('QWidget','font-family',selected_font)
-        # to be applicable for QWidgets we need to store font size in the pt unit. 
-        app_context.theme_manager.add_property_to_widget('QWidget','font-size',str(sz) + "pt")
+        sz = 10 + 2*size_combo.currentIndex()
+        
+        app_context.theme_manager.update_qss_font(sz,selected_font)
         
         app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
 
@@ -85,23 +82,22 @@ class MainWindow(Window.AbdhWindow):
         combo2 = QComboBox()
         combo2.setPlaceholderText("Select a font")
         combo2.addItems(fonts)
-        current_font = app_context.settings_manager.find_value('font')
-        if current_font:
-            combo2.setCurrentText(dict(current_font)['family'])
-        else:
-            combo2.setCurrentText('Times New Roman')
-
+        
         self.add_right_panel_item(combo2)
 
         combo3 = QComboBox()
         combo3.setPlaceholderText("Select font size")
-        combo3.addItems(['Tiny','Small', 'Medium', 'Large'])
+        combo3.addItems(['10','12', '14', '16', '18', '20', '22', '24'])
+
         current_font = app_context.settings_manager.find_value('font')
+    
         if current_font:
             combo2.setCurrentText(dict(current_font)['family'])
+            combo3.setCurrentText(str(dict(current_font)['size']))
         else:
             combo2.setCurrentText('Times New Roman')
-
+            combo3.setCurrentText('12')
+        
         self.add_right_panel_item(combo3)
         # Changes the application font, this change affects all objects in the application
         combo2.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
@@ -141,7 +137,8 @@ class MainWindow(Window.AbdhWindow):
 
         github = QLabel('\n https://github.com/abdhmohammadi/')
         self.add_right_panel_item(github)
-        github.setProperty('class','hyperlink')          
+        github.setProperty('class','hyperlink')
+
 
     def on_theme_switch(self,sender:QComboBox):
 
@@ -151,7 +148,7 @@ class MainWindow(Window.AbdhWindow):
         # Apply theme immediately
 
     # defined to create menu-like items placed in the left panel
-    def create_panel_button(self, icon_path=None,text='',checkable=True, checked = False, class_name ='')->QPushButton:
+    def create_panel_button(self, icon_path=None, text='',checkable=True, checked = False, class_name ='')->QPushButton:
         
         item = QPushButton(text.upper())
         

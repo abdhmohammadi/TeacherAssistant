@@ -696,12 +696,10 @@ class EducationalResourceEditor(QWidget):
                 self.source_input.setText(row[1])
                 self.score_input.setText(str(row[2]))
                 if not helpers.is_rtf(row[3]):
-                
                     # this used to HTML and LaTeX source files(pure LaTeX or HTML data)
                     self.content_description_input.document().setPlainText(row[3])
 
                 else:                     
-                
                     # This is used to RTF or txt to display in the QTextEdit properly
                     self.content_description_input.document().setHtml(row[3])
                 

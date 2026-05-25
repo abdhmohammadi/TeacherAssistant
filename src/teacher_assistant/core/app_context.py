@@ -20,11 +20,15 @@ class AppContext:
         self.PDI = 96
         self.Language = 'English'
         self.__database__  = psycopg2_database()
+        #self.___connection_settings___ = {}
         self.resource_path =''
         self.settings_manager = JSONManager()
         self.template_config = JSONManager()
         self.theme_manager = ThemeManager()
     
+    
+    #@property 
+    #def connection_settings(self): return self.___connection_settings___
     @property 
     def database(self): return self.__database__
 

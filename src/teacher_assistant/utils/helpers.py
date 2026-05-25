@@ -22,6 +22,7 @@ def get_application_dir():
     else:
         # Use the directory of the script when running in development
         return os.path.dirname(os.path.abspath(sys.argv[0]))
+
 def compile_latex(tex_path:str, compile='pdflatex'):
 
         # Run pdflatex and parse output
@@ -40,7 +41,6 @@ def compile_latex(tex_path:str, compile='pdflatex'):
         else:
             print("\nCompilation failed!")
             print(process.stderr.read())
-
 
 def run_latex(source:str, compile='xelatex',output_pdf_name:str='output.pdf'):
 
@@ -139,11 +139,9 @@ def is_latex(text):
     # Use re.DOTALL to allow .*? to match across multiple lines
     return any(re.search(pattern, text, re.DOTALL| re.IGNORECASE) for pattern in latex_patterns)
 
-
 def is_html(text:str):
     
     # Check if the text contains HTML tags.
-    
     html_patterns = [
         r'<html>.*?</html>',  # HTML tag
         r'<head>.*?</head>',  # Head tag
@@ -166,7 +164,6 @@ def is_rtf(text:str):
     # If the text is not LaTeX or HTML format, or if it is HTML and contains <meta name"qrichtext" ../> 
     # we say it is raw data
     return not (ltx or html) or (html and len(matches)>0)
-
 
 def is_pdf(text:str): 
     pattern = r'<meta\s+[^>]*name\s*=\s*["\']pdf["\'][^>]*(?:/?>|</meta>)'
@@ -254,3 +251,4 @@ class Converters:
         # Convert inches to pixels
         return inches * dpi
 
+converters = Converters()

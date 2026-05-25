@@ -159,7 +159,6 @@ class ThemeManager:
         # Check if the widget already has a stylesheet definition
         widget_pattern = re.compile(rf'{widget_name}\s*{{[^}}]*}}')
         match = widget_pattern.search(qss)
-
         if match:
             # Extract the existing stylesheet block for the widget
             widget_style = match.group(0)
@@ -167,11 +166,13 @@ class ThemeManager:
             # Check if the property already exists in the widget's stylesheet
             property_pattern = re.compile(rf'{property_name}\s*:\s*[^;]+;')
             property_match = property_pattern.search(widget_style)
-
+            
             if property_match:
                 # If the property exists, update its value
                 updated_style = widget_style.replace(property_match.group(0), new_property)
                 qss = qss.replace(widget_style, updated_style)
+    
+                print('Property updated:',property_match)
 
                 #logger.info(f"Updated property '{property_name}' to '{property_value}' for widget '{widget_name}'.")
             else:
@@ -179,7 +180,8 @@ class ThemeManager:
                 updated_style = widget_style.rstrip('}') + f"\n    {new_property}\n}}"
                 qss = qss.replace(widget_style, updated_style)
                 #logger.info(f"Added property '{property_name}: {property_value}' to widget '{widget_name}'.")
-            
+                print('Property added:',property_match)
+
             # Update sylesheet template
             with open(self.template_path, 'w',encoding="utf-8") as f:
                 f.write(qss)
@@ -187,6 +189,63 @@ class ThemeManager:
 
             #self.apply_theme(QApplication.instance(), self.get_current_theme_name())
 
+    #import re
+    #from pathlib import Path
+
+    def update_qss_font(self, font_size: int, font_family: str):
+        """
+        Modify a .qss file so that the global font rule (* { ... }) uses the given
+        size and family. Other rules are left untouched.
+        
+        Special widgets that have a font set via setFont() will keep their manual
+        font automatically because QWidget::font overrides the stylesheet.
+        """
+        with open(self.template_path,'r',encoding="utf-8") as f: 
+            raw = f.read()
+            f.close()
+        #qss_file = Path(qss_path)
+        #raw = qss_file.read_text(encoding='utf-8')
+
+        # Pattern to match the whole global * { ... } block
+        global_rule_pattern = re.compile(
+            r'(\*\s*\{)'          # opening of the * rule
+            r'([^}]+?)'           # contents (non-greedy to avoid eating following rules)
+            r'(\})',               # closing brace
+            re.DOTALL
+        )
+
+        def replace_global_rule(match):
+            """Inside the * { ... } block, replace font-size and font-family."""
+            opening = match.group(1)
+            body = match.group(2)
+            closing = match.group(3)
+
+            # Replace existing font-size / font-family declarations
+            body = re.sub(r'font-size\s*:\s*[^;]+;', f'font-size: {font_size}px;', body)
+            body = re.sub(r'font-family\s*:\s*[^;]+;', f'font-family: "{font_family}";', body)
+
+            # If they were missing, append them
+            if 'font-size' not in body:
+                body += f' font-size: {font_size}px;'
+            if 'font-family' not in body:
+                body += f' font-family: "{font_family}";'
+
+            return f'{opening}{body}{closing}'
+
+        new_qss, count = global_rule_pattern.subn(replace_global_rule, raw)
+
+        if count == 0:
+            # No global * rule found → add one at the very beginning
+            new_rule = f"* {{\n    font-size: {font_size}px;\n    font-family: \"{font_family}\";\n}}\n\n"
+            
+            new_qss = new_rule + raw
+      
+        # Write back only if something changed (avoid unnecessary I/O)
+        if new_qss != raw:
+            with open(self.template_path, 'w',encoding="utf-8") as f:
+                f.write(new_qss)
+                f.close()
+  
 # ========================================================================
 # Additional Package Initialization or Configuration
 # ========================================================================

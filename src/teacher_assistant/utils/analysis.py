@@ -5,6 +5,12 @@ import matplotlib.pyplot as plt
 #from matplotlib.patches import Circle
 from matplotlib.offsetbox import TextArea, HPacker, AnnotationBbox, VPacker
 import matplotlib.lines as mlines
+from matplotlib.legend_handler import HandlerPatch
+from matplotlib.patches import Rectangle
+from matplotlib.colors import to_rgba
+import numpy as np
+
+from PySide6.QtGui import QColor
 
 def create_horizontal_stacked_bar(values, colors=None, labels=None):
    
@@ -184,7 +190,6 @@ def create_line_chart_image(x_values, y_values):
 
 def create_normal_bar_chart(values, labels=None, colors=None):
 
-
     if colors is None:
         colors = plt.cm.tab10.colors[:len(values)]
 
@@ -290,10 +295,67 @@ def create_pie_chart(values, labels=None, colors=None,ncol=None):
     buf.close()
     return bytes_
 
-from matplotlib.legend_handler import HandlerPatch
-from matplotlib.patches import Rectangle
-from matplotlib.colors import to_rgba
-import numpy as np
+
+# ---------- Random contrasting hex color utility (light/dark aware) ----------
+def random_contrasting_hex(background: QColor | str,
+                           theme: str = "auto",
+                           min_contrast: float = 4.5) -> str:
+    """
+    Returns a random hex color that is readable on the given background
+    and is **never extremely bright** (no white, and generally darker).
+    """
+    if isinstance(background, str):
+        bg = QColor(background)
+    else:
+        bg = QColor(background)
+
+    def luminance(color: QColor) -> float:
+        def linearize(c):
+            c = c / 255.0
+            return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+        r, g, b = linearize(color.redF() * 255), linearize(color.greenF() * 255), linearize(color.blueF() * 255)
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+    def contrast_ratio(l1, l2):
+        lighter = max(l1, l2)
+        darker = min(l1, l2)
+        return (lighter + 0.05) / (darker + 0.05)
+
+    bg_lum = luminance(bg)
+
+    if theme == "auto":
+        need_light = bg_lum < 0.5
+    else:
+        need_light = (theme == "dark")
+
+    max_attempts = 1000
+    for _ in range(max_attempts):
+        h = random.uniform(0, 360)
+        s = random.uniform(0.4, 1.0)   # higher minimum saturation → bolder colors
+
+        if need_light:
+            # Light foreground – but darker than before (max 0.7)
+            l = random.uniform(0.4, 0.7)
+        else:
+            # Dark foreground – deeper darks (max 0.35)
+            l = random.uniform(0.1, 0.35)
+
+        color = QColor.fromHslF(h / 360, s, l)
+
+        # Reject white and very bright colours (lightness > 85%)
+        if color.name() == "#ffffff" or color.lightnessF() > 0.85:
+            continue
+
+        color_lum = luminance(color)
+        if contrast_ratio(bg_lum, color_lum) >= min_contrast:
+            return color.name()
+
+    # Darker fallbacks instead of pure white / black
+    if need_light:
+        return "#C8C8C8"   # dark grey, still readable on black
+    else:
+        return "#1A1A1A"   # very dark grey, almost black
+
 
 class SquareHandler(HandlerPatch):
     def create_artists(self, legend, orig_handle,
@@ -327,76 +389,3 @@ class SquareHandler(HandlerPatch):
             transform=trans
         )
         return [square]
-
-
-
-import random
-from PySide6.QtGui import QColor
-
-def random_contrasting_hex(background: QColor | str,
-                           theme: str = "auto",
-                           min_contrast: float = 4.5) -> str:
-    """
-    Returns a random hex color (e.g. "#A3F1B2") that is readable on
-    the given background.
-
-    Parameters
-    ----------
-    background : QColor or hex string
-        The background color to contrast against.
-    theme : {"light", "dark", "auto"}
-        Force foreground to be light or dark. "auto" uses
-        the background's luminance to decide.
-    min_contrast : float
-        Minimum WCAG contrast ratio (default 4.5 for normal text).
-
-    Returns
-    -------
-    str
-        Hex color code with '#' prefix.
-    """
-    if isinstance(background, str):
-        bg = QColor(background)
-    else:
-        bg = QColor(background)
-
-    # ---- relative luminance (sRGB) ----
-    def luminance(color: QColor) -> float:
-        def linearize(c):
-            c = c / 255.0
-            return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
-        r, g, b = linearize(color.redF() * 255), linearize(color.greenF() * 255), linearize(color.blueF() * 255)
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b
-
-    # ---- contrast ratio ----
-    def contrast_ratio(l1, l2):
-        lighter = max(l1, l2)
-        darker = min(l1, l2)
-        return (lighter + 0.05) / (darker + 0.05)
-
-    bg_lum = luminance(bg)
-
-    # ---- decide target luminance range ----
-    if theme == "auto":
-        need_light = bg_lum < 0.5   # dark background → need light foreground
-    else:
-        need_light = (theme == "dark")
-
-    # ---- try random colors until contrast condition is met ----
-    max_attempts = 1000
-    for _ in range(max_attempts):
-        # Random hue, full saturation, variable lightness
-        h = random.uniform(0, 360)
-        s = random.uniform(0.3, 1.0)  # not too grey
-        if need_light:
-            l = random.uniform(0.5, 0.9)  # light colors
-        else:
-            l = random.uniform(0.1, 0.5)  # dark colors
-
-        color = QColor.fromHslF(h / 360, s, l)
-        color_lum = luminance(color)
-        if contrast_ratio(bg_lum, color_lum) >= min_contrast:
-            return color.name()  # returns "#RRGGBB"
-
-    # Fallback: return safe color based on theme
-    return "#FFFFFF" if need_light else "#000000"

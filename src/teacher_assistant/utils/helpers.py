@@ -24,23 +24,23 @@ def get_application_dir():
         return os.path.dirname(os.path.abspath(sys.argv[0]))
 
 def compile_latex(tex_path:str, compile='pdflatex'):
+    print('TEX PATH:',tex_path)
+    # Run pdflatex and parse output
+    process = subprocess.Popen([compile, tex_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    # Print output in real-time
+    print("Compiling LaTeX document...")
+    for line in process.stdout:
+        print(line, end="")
 
-        # Run pdflatex and parse output
-        process = subprocess.Popen([compile, tex_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        # Print output in real-time
-        print("Compiling LaTeX document...")
-        for line in process.stdout:
-            print(line, end="")
+    # Wait for the process to finish
+    process.wait()
 
-        # Wait for the process to finish
-        process.wait()
-
-        # Check the result
-        if process.returncode == 0:
-            print("\nCompilation successful!")
-        else:
-            print("\nCompilation failed!")
-            print(process.stderr.read())
+    # Check the result
+    if process.returncode == 0:
+        print("\nCompilation successful!")
+    else:
+        print("\nCompilation failed!")
+        print(process.stderr.read())
 
 def run_latex(source:str, compile='xelatex',output_pdf_name:str='output.pdf'):
 
@@ -70,7 +70,7 @@ def run_latex(source:str, compile='xelatex',output_pdf_name:str='output.pdf'):
         # directory to cash
         curdir = os.curdir
         appdata_dir = os.getenv('LOCALAPPDATA')
-        app_dir = os.path.join(appdata_dir, 'MyJobAssistant')
+        app_dir = os.path.join(appdata_dir, 'Abdh\TeacherAssistant')
         
         # Create the directory if it doesn't exist
         os.makedirs(app_dir, exist_ok=True)

@@ -86,7 +86,7 @@ class EduItemViewModel(NotifyPropertyChanged):
         msg =''
         try:
             
-            self.db_cursor.execute(f'SELECT answer_, additional_details_ FROM educational_resources WHERE Id = {self.Id};')
+            self.db_cursor.execute(f'SELECT answer_, metadata_ FROM educational_resources WHERE Id = {self.Id};')
             data = self.db_cursor.fetchone()
             self.answer = data[0]
             self.details = data[1]

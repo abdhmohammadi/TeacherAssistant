@@ -11,6 +11,7 @@ from PySide6.QtCore import QSize
 # Import GUI utility classes from PySide6.QtGui for icons, actions, models, and display roles
 from PySide6.QtGui import (Qt, QAction, QIcon, QStandardItemModel, QStandardItem)
 
+from PySideAbdhUI.Widgets import SearchBox
 # Import custom PopupNotifier for displaying notification messages to users
 from PySideAbdhUI.Notify import PopupNotifier
 # Import utility function to convert database bytea photo data to QPixmap for display
@@ -73,7 +74,7 @@ COL_LAST_NOTE = 3
 # DATABASE RECORD FIELD INDEX CONSTANTS - Maps field positions in query result tuples
 # ===================================================================================
 # Query returns tuples with fields: Id, fname_, lname_, phone_, address_, photo_, date_time_, 
-# observed_behaviour_, parent_name_, parent_phone_, additional_details_, birth_date_, gender_
+# observed_behaviour_, parent_name_, parent_phone_, metadata_, birth_date_, gender_
 # Student ID field index in database query result tuple
 REC_ID = 0                   
 # First name field index in database query result tuple
@@ -102,6 +103,7 @@ REC_BIRTH_DATE = 11
 REC_GENDER = 12              
 # Score field index if used for input tool
 REC_SCORE = 13
+
 # ============================================================================
 # StudentListPage CLASS - Main UI page for displaying and managing student lists
 # ============================================================================
@@ -148,14 +150,22 @@ class StudentListPage(QWidget):
         # Connect selection change signal to load students for selected group
         class_filter_combo.currentIndexChanged.connect(lambda _: self.load_students(class_filter_combo))
 
+
+
+        # Create the search box and add it to the toolbar
+        search_box = SearchBox()
+        search_box.returnPressed.connect(lambda: print("Search:", search_box.text()))
+        #toolbar.addWidget(search_box)
+
+
         # Create text input field for searching students
-        search_input = QLineEdit()
+        #search_input = QLineEdit()
         # Set placeholder text to guide user input
-        search_input.setPlaceholderText('Search students...')
+        #search_input.setPlaceholderText('Search students...')
         # Limit search input field width
-        search_input.setFixedWidth(SEARCH_INPUT_WIDTH)
+        #search_input.setFixedWidth(SEARCH_INPUT_WIDTH)
         # Connect text change signal to search function
-        search_input.textChanged.connect(self.find_in_list)
+        search_box.textChanged.connect(self.find_in_list)
 
         # Create options menu button with various student management actions
         edu_btn = self.create_more_option_menu(group_model)
@@ -171,7 +181,7 @@ class StudentListPage(QWidget):
         # Add expandable empty space to push remaining items to the right
         command_layout.addStretch()
         # Add search input field to header
-        command_layout.addWidget(search_input)
+        command_layout.addWidget(search_box)
         # Add group filter dropdown to header
         command_layout.addWidget(class_filter_combo)
         # Add options menu button to header
@@ -373,7 +383,7 @@ class StudentListPage(QWidget):
                 "Phone": "phone_",
                 "Address": "address_",
                 "Parent Phone": "parent_phone_",
-                "Additional Details": "additional_details_",
+                "Additional Details": "metadata_",
                 "Gender": "gender_",
                 "Date": "birth_date_"
             }
@@ -971,7 +981,7 @@ class StudentListPage(QWidget):
             base_query = (
                 'SELECT t1.Id, t1.fname_, t1.lname_, t1.phone_, t1.address_, t1.photo_, '
                 't2.date_time_, t2.observed_behaviour_, t1.parent_name_, t1.parent_phone_, '
-                't1.additional_details_, t1.birth_date_, t1.gender_ '
+                't1.metadata_, t1.birth_date_, t1.gender_ '
                 'FROM personal_info t1 '
                 'LEFT JOIN ('
                 '  SELECT t2.* FROM observed_behaviours t2 '

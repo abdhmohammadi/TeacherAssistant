@@ -63,9 +63,6 @@ class DataLoaderWorker(QRunnable):
                 # This prevents loading all data at once and keeps UI responsive
                 rows = cursor.fetchmany(20)  # Small internal batches
         
-                # If no more rows, exit the loop
-                if not rows: break
-
                 # Emit signal to main thread with the batch of data
                 # This allows the UI to update incrementally as data loads
                 self.signals.batch_ready.emit(rows)
@@ -75,6 +72,9 @@ class DataLoaderWorker(QRunnable):
                 # - Thread cancellation to be checked
                 # - UI thread to process events and stay responsive
                 time.sleep(0.005)  # Tiny yield
+
+                # If no more rows, exit the loop
+                if not rows: break
 
             # Emit finished signal with total count when loading completes
             self.signals.finished.emit(total_loaded)

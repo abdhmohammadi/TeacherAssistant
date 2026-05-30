@@ -52,7 +52,6 @@ def is_mostly_rtl(text: str, threshold: float = 0.5) -> bool:
     # Determine if RTL characters are dominant
     return rtl_count / total_count >= threshold if total_count else False
 
-
 def get_html_body_content(html_content):
     if type(html_content) == type(None) : return ''
 

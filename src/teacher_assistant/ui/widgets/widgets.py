@@ -515,7 +515,6 @@ class EduItemWidget(QWidget):
         # Add the content label to the layout
         main_layout.addWidget(self.content_label,1,0,1,1, Qt.AlignmentFlag.AlignTop)
 
-
     def update_view(self):
 
         # Bind ViewModel properties to UI elements
@@ -574,7 +573,7 @@ class EduItemWidget(QWidget):
             
             self._view_model.details = '[MARKED]' + sender.text() + '\n' + self._view_model.details
             
-            status, msg = self._view_model.update_value('additional_details_',self._view_model.details)
+            status, msg = self._view_model.update_value('metadata_',self._view_model.details)
             
             if status: 
                 self.titlebar.layout().itemAt(0).widget().setVisible(True)
@@ -722,7 +721,7 @@ class EduItemWidget(QWidget):
 
 
     def update_details(self):
-        status , msg =self._view_model.update_value('additional_details_', self._view_model.details)
+        status , msg =self._view_model.update_value('metadata_', self._view_model.details)
 
         PopupNotifier.Notify(QApplication.activeWindow(), '', msg,background_color= 'green' if status else 'red')
 
@@ -761,7 +760,6 @@ class EduItemWidget(QWidget):
             self.score_input = QLineEdit(str(self._view_model.score))
             self._view_model.bind_property('score',self._view_model.score, self.score_input)
 
-            #self.score_input.textChanged.connect(lambda:setattr(self._view_model,'score',self.score_input.text()))
             self.score_input.setToolTip('Changes of the score is not applied to database. '+
                                         'to update score go to "Resource Editor".\n' +
                                         app_context.ToolTips['Score change warning'])

@@ -4,7 +4,8 @@ from datetime import datetime
 from PySideAbdhUI.Notify import PopupNotifier
 from PySide6.QtGui import (Qt, QTextOption, QIcon, QAction, QPixmap, QImage)
 
-from PySide6.QtWidgets import (QFileDialog, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QProgressBar, QTextEdit, QDialogButtonBox,
+from PySide6.QtWidgets import (QFileDialog, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QProgressBar,
+                               QTextEdit, QDialogButtonBox,
                                QGridLayout, QWidget, QLabel,QApplication,QDialog, QMessageBox,
                                QPushButton, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QMenu)
 from PySideAbdhUI.Widgets import StackedWidget, Separator
@@ -13,7 +14,7 @@ from processing.Imaging.Tools import bytea_to_pixmap
 from processing.text.text_processing import local_culture_digits
 from services.edu_item_services import EduItemStudentService as edu_service
 from utils import analysis
-from processing.utils.pdf import PdfGeneratorApp
+from ui.dialogs.answer_view import AnswerView
 from ui.widgets.widgets import ObservedBehaviourWidget
 from ui.pages.edu_resource_view import EduResourcesView
 from core.app_context import app_context
@@ -345,10 +346,21 @@ class StudentActivityTrackingPage(QWidget):
                 
         except Exception as e: PopupNotifier.Notify(self,message= f"Error: {e}")
 
+    def calc_total(self, scores:str=''):
+        
+            if not scores: return 0.0
+        
+            lst = scores.split('-')
+            total = 0.0
+        
+            for val in lst:
+                total+= float(val)
+            return total
+    
     def load_quests_data(self):
         
         earned_score = 0.0
-        total_score = 0.0
+        total_score  = 0.0
             
         replied = 0
         delayed = 0
@@ -360,20 +372,20 @@ class StudentActivityTrackingPage(QWidget):
 
         self.quests_list.clear()
         
-        cmd  = 'SELECT id, qb_id, max_point_, earned_point_, assign_date_, deadline_, reply_date_ FROM quests '
+        cmd  = 'SELECT id, qb_ids_, total_score_, scores_, assign_date_, deadline_, reply_date_ FROM quests '
         cmd += 'WHERE student_id = %s ORDER BY assign_date_ DESC;'
 
         records = app_context.database.fetchall(cmd,(self.student[0],))
-        #       quiz-Id: record[0],      source-id: record[1],
-        #     max-score: record[2],   earned-score: record[3],
-        # assigned-date: record[4],       deadline: record[5],  reply-date: record[6]
-
+        #         quiz-Id: record[0],       source-ids: record[1],
+        #     total-score: record[2],    earned-scores: record[3],
+        #   assigned-date: record[4],         deadline: record[5],  reply-date: record[6]
+        
         for row, record in enumerate(records):
-           
+            
             status = '' # Options for each quiz (Replied, Waiting, Lost) 
             # Sum of earned scores for all activities
-            earned_score += float(record[3])
-            total_score  += float(record[2])
+            earned_score = self.calc_total(record[3])
+            total_score  = float(record[2]) if record[2] else 1.0
             
             deadline: datetime = record[5]            
             
@@ -402,38 +414,31 @@ class StudentActivityTrackingPage(QWidget):
                     delayed += 1
                     status = 'Delayed'
                 # stores the score for the progress chart
-                score_progress.append(record[3]/record[2])
+                score_progress.append(earned_score/total_score)
             
             item_grid = QGridLayout() # For each row
-            # Column 0: Row index | quiz-id | source question Id
-            string = f'<div>{row + 1}<br>{record[0]}<br>{record[1]}</div>'
+            # Column 0: Row index | quiz-id
+            string = f'<div>{row + 1}<br>{record[0]}</div>'
             col0 = QLabel(string)
-            col0.setToolTip('Row index\nQuiz-Id\nSource qoustion Id')
+            col0.setToolTip('Row index\nQuiz-Id')
             col0.setTextFormat(Qt.TextFormat.RichText)
 
             # Column 1: The time when quiz assigned to student
-            string = f'<div>Assign date : {record[4]}<br>Deadline : {record[5]}<br>Total score : {record[2]}</div>'
+            string = f'<div>Assign date : {record[4]}<br>Deadline : {record[5]}<br>Total score : {total_score}</div>'
             col1 =QLabel(string)
             col1.setTextFormat(Qt.TextFormat.RichText)           
 
             # Column 2
-            string = f'<div>Status : {status}<br>Relpy : {record[6]}<br>Earned score : {record[3]}</div>'
+            string = f'<div>Status : {status}<br>Relpy : {record[6]}<br>Earned score : {earned_score}</div>'
             col2 =QLabel(string)
             col2.setTextFormat(Qt.TextFormat.RichText)
-            # data 
-            data = {'student': f'{self.student[1]} {self.student[2]}', 
-                    'qb_id':record[1],
-                    'quiz-id':record[0],
-                    'asign-date': str(record[4]),
-                    'reply-date': str(record[6])
-                    }
             
             # Column 3: the donut of the earned score
-            bytes_ = analysis.create_donut_image(float(record[3]), float(record[2]))
+            bytes_ = analysis.create_donut_image(earned_score, total_score)
             image = QImage.fromData(bytes_)
 
             chart = QLabel()
-            chart.setToolTip(f'Earbed score:\n{float(record[3])} of {float(record[2])}')
+            chart.setToolTip(f'Earbed score:\n{earned_score} of {total_score}')
             chart.setFixedSize(90, 85)
             chart.setContentsMargins(5,5,5,5)
             chart.setPixmap(QPixmap.fromImage(image))
@@ -446,20 +451,21 @@ class StudentActivityTrackingPage(QWidget):
             view_btn.setProperty('class','grouped_mini')
             view_btn.setToolTip('Opens a window to display complete data of the quiz')
             # data 
-            data = {'student': f'{self.student[1]} {self.student[2]}', 
-                    'qb_id':record[1],
-                    'quiz-id':record[0],
-                    'asign-date': str(record[4]),
-                    'reply-date': str(record[6])
+            data = {'student': f'{self.student[1]} {self.student[2]}', # To display on the output report
+                    'qb_ids':record[1],                                # To fetch quiz content from question bank
+                    'quiz-id':record[0],                               # To fetch and update answer data in the quests table
+                    'asign-date': str(record[4]),                      # To display on the output report
+                    'reply-date': str(record[6])                       # To display on output report and modify.
                     }
+            
             view_btn.clicked.connect(lambda _, d = data : self.open_activity_item(d))
 
-            ans_btn = QPushButton('')
+            """ans_btn = QPushButton('')
             #ans_btn.setVisible(False)
             ans_btn.setIcon(QIcon(':icons/pencil.svg'))
             ans_btn.setProperty('class','grouped_mini')
             ans_btn.setToolTip('Opens a window to modify the answer of the quiz received from the student.')
-            ans_btn.clicked.connect(lambda _,id= record[0]: self.__create_answer_input_dlg(quiz_id=id))
+            ans_btn.clicked.connect(lambda _,id= record[0]: self.__create_answer_input_dlg(quiz_id=id))"""
             # add delete button
             del_btn   = QPushButton('')
             del_btn.setIcon(QIcon(':icons/trash-2.svg'))
@@ -469,7 +475,6 @@ class StudentActivityTrackingPage(QWidget):
             actions_.setContentsMargins(0,0,0,0)
             actions_.setSpacing(0)
             actions_.addWidget(view_btn)
-            actions_.addWidget(ans_btn)
             actions_.addWidget(del_btn)
 
             actions_container = QWidget()
@@ -529,13 +534,13 @@ class StudentActivityTrackingPage(QWidget):
             
             current.setSizeHint(widget.sizeHint())
 
-    # Opens pdf viewer for activity
+    # Opens answer viewer for activity
     def open_activity_item(self, data=None):
 
         # Create the window – it starts loading automatically
-        self.pdf_window = PdfGeneratorApp(data, app_context, parent=self)
-        self.pdf_window.setWindowModality(Qt.WindowModality.WindowModal)
-        self.pdf_window.show()
+        self.answer_window = AnswerView(data, parent=self)
+#        self.answer_window.setWindowModality(Qt.WindowModality.WindowModal)
+        self.answer_window.exec()
    
     def __create_answer_input_dlg(self, quiz_id):
 
@@ -613,13 +618,13 @@ class StudentActivityTrackingPage(QWidget):
 
         layout.addLayout(ans_footer)
         # load old data
-        query = 'SELECT earned_point_, reply_date_, answer_, feedback_ FROM quests WHERE Id = %s;'
+        query = 'SELECT scores_, reply_date_, responses_, feedback_ FROM quests WHERE Id = %s;'
         data = app_context.database.fetchone(query,(quiz_id,))
 
         if data:
             answer_input.document().setHtml(data[2])
             analysis_input.document().setHtml(data[3])
-            score_input.setText(str(data[0]))
+            score_input.setText(str(self.calc_total(data[0])))
             date_input.setText(str(data[1]))
 
         dlg.exec()
@@ -647,7 +652,8 @@ class StudentActivityTrackingPage(QWidget):
         if answer_input.document().toPlainText() == '' or score_input.text() == '' or date_input.text() == '':
             PopupNotifier.Notify(self,message='Invalid data, the answer does not updated')
             return
-              
+        
+        
         result = edu_service.update_learning_item(self, 
                                             Id=quiz_id,
                                             answer=answer_input.document().toHtml(),

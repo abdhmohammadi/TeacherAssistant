@@ -6,7 +6,7 @@ from core.theme_manager import ThemeManager
 from data.database import psycopg2_database
 
 # IMPORTANT: Registers the resources automatically
-# this module embeds icon resources to the app without includeing main files to
+# this module embeds icon resources to the app without including main files to
 # the installable package 
 from resources import resources_rc
 

@@ -27,8 +27,9 @@ from PySide6.QtWidgets import ( QGridLayout, QWidget, QLabel,QApplication,QDialo
 
 from PySideAbdhUI.Notify import PopupNotifier
 from PySideAbdhUI.CardGridView import CardGridView
+from PySideAbdhUI.Widgets import SearchBox
 
-from processing.utils.pdf import PdfGeneratorApp
+from ui.dialogs.answer_view import AnswerView
 from data.loaders import DataLoaderWorker
 from ui.widgets.widgets import EduItemWidget
 from core.app_context import app_context
@@ -73,9 +74,10 @@ class EduResourcesView(QWidget):
         header.addWidget(page_title,1)
 
         #header.addStretch(1)
-        self.source_input = QLineEdit()
+
+        self.source_input = SearchBox(expanded_width=400)
         self.source_input.setPlaceholderText("Filter data using 'Source' ...")
-        self.source_input.textChanged.connect(lambda text:self.load_data(filter=text) )
+        self.source_input.textEdited.connect(lambda text:self.load_data(filter=text) )
         header.addWidget(self.source_input,1)
 
         btn3 = QPushButton('distribute')
@@ -163,6 +165,8 @@ class EduResourcesView(QWidget):
 
     def distribute(self):
         '''Distributes selected edu-items to the students'''
+        
+        # When students has not been specified, we try to publish an assessment as html file.
         if len(self.target_students) == 0:
             self.show_template_selector_dlg()
         else:
@@ -186,15 +190,20 @@ class EduResourcesView(QWidget):
                 future_time = self.get_deadline()
                 
                 for stu in self.target_students: 
+                    qb_IDs = ''
+                    # List of Edu-Items: last index was included sub totlal values
+                    for item in items[:len(items)-1]: 
+                        qb_IDs += str(item['Id']) +'-'
 
-                    # List of Edu-Items
-                    for item in items[:len(items)-1]: # last index was included sub totlal values
-                        cmd = 'INSERT INTO quests(qb_id, student_id, max_point_, earned_point_, assign_date_, deadline_, answer_, reply_date_, feedback_) '
-                        cmd += 'VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+                    total_score =  items[len(items)-1]['total_score']
+                    
+                    cmd = 'INSERT INTO quests(student_id, qb_ids_, assign_date_, deadline_, total_score_, reply_date_, scores_, responses_, feedback_) '
+                    
+                    cmd += 'VALUES(%s, %s, %s,%s, %s, %s, %s, %s, %s)'
         
-                        values = (item['Id'], stu['Id'], item['score'], 0, str(utc_time), str(future_time), None, None, None)
+                    values = (stu['Id'], qb_IDs[:-1], str(utc_time), str(future_time),total_score, None, None, None, None)
 
-                        app_context.database.execute(cmd,values)
+                    app_context.database.execute(cmd,values)
                 
                 msg  = f'Number of {len(items)-1} edu-item{'s' if len(items)-1>1 else ''} was assigned to {stu_cnt} student{'s' if stu_cnt>1 else ''} successfully'
                 
@@ -464,8 +473,12 @@ class EduResourcesView(QWidget):
     
 
     def get_selected_contents(self):
+        """
+            Returns list fo dict of {row, Id, content, score}...{total_score}
+        """
         # Get selected cards and their content
         selected_content = []
+        # Sum of scores of all questions
         total_points = 0
         row = 0
         
@@ -474,16 +487,16 @@ class EduResourcesView(QWidget):
             if data['selected']:
                 row += 1
                 content = {
-                    'Id':data['Id'],
                     'row': row,
+                    'Id':data['Id'],
                     'content': data['content'],
                     'score': float(data['score'])
                 }
                 selected_content.append(content)
                 total_points += content['score']
         
-        if selected_content:
-            selected_content.append({'total_points': total_points})
+        if selected_content: # Sum of scores of all questions
+            selected_content.append({'total_score': total_points})
             
         return selected_content
 
@@ -553,7 +566,7 @@ class EduResourcesView(QWidget):
         self.dialog.setModal(False)
         self.dialog.move(10, 10)
         
-        window = PdfGeneratorApp(html_content=html, parent=self.dialog)
+        window = AnswerView(html_content=html, parent=self.dialog)
         window.setWindowModality(Qt.WindowModality.WindowModal)
         window.move(self.dialog.geometry().topRight() + QPoint(10, 0))
         window.show()
@@ -576,9 +589,9 @@ class EduResourcesView(QWidget):
         # Use server-side cursor for streaming + low memory
         search = f"%{filter_text}%".strip()
         # Build safe parameterized query
-        base_query  = "SELECT Id, content_description_, score_, source_, additional_details_ FROM educational_resources"
-        where_parts = f"(source_ ILIKE '%{search}' OR content_description_ ILIKE '%{search}' "
-        where_parts = f"{where_parts} OR additional_details_ ILIKE '%{search}' OR TEXT(Id) ILIKE '%{search}')"
+        base_query  = "SELECT Id, content_, score_, source_, metadata_ FROM educational_resources"
+        where_parts = f"(source_ ILIKE '%{search}' OR content_ ILIKE '%{search}' "
+        where_parts = f"{where_parts} OR metadata_ ILIKE '%{search}' OR TEXT(Id) ILIKE '%{search}')"
                           
         where_clause = "WHERE " + where_parts if where_parts else ""
 

@@ -1,5 +1,4 @@
 PySide6
-PySide6-WebEngine
 psycopg2-binary
 PySideAbdhUI
 pymupdf
@@ -10,5 +9,4 @@ numpy
 python-dateutil
 matplotlib
 scipy
-pyinstaller
-#pypandoc
+pypandoc

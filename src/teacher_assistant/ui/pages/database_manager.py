@@ -150,7 +150,7 @@ class DatabaseManagerPage(QWidget):
 
         # Check if pg_dump.exe exists
         if not os.path.exists(PG_DUMP_PATH):
-           PopupNotifier.Notify(self, 'Backup report', f"❌ PostgreSQL tools not found. Ensure pg_dump.exe exists at: {PG_DUMP_PATH}.")
+           PopupNotifier.Notify(self, 'Backup report', f"PostgreSQL tools not found. Ensure pg_dump.exe exists at: {PG_DUMP_PATH}.")
            return
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -159,7 +159,7 @@ class DatabaseManagerPage(QWidget):
         try:
             os.makedirs(self.view_model.backup_path, exist_ok=True)
         except Exception as e:
-            msg = f"❌ Failed to create output directory: {e}."
+            msg = f"Failed to create output directory: {e}."
 
         output_file = os.path.join(self.view_model.backup_path, backup_filename)
 
@@ -201,7 +201,7 @@ class DatabaseManagerPage(QWidget):
         PG_RESTORE_PATH = bin_path + r"\\pg_restore.exe"
         # Check if pg_dump.exe exists
         if not os.path.exists(PG_RESTORE_PATH):
-           PopupNotifier.Notify(self, 'Restore report', f"❌ PostgreSQL tools not found. Ensure pg_dump.exe exists at: {PG_RESTORE_PATH}.")
+           PopupNotifier.Notify(self, 'Restore report', f"PostgreSQL tools not found. Ensure pg_dump.exe exists at: {PG_RESTORE_PATH}.")
            return
         
         dump_file, _ = QFileDialog.getOpenFileName(self, "Open Backup", self.view_model.backup_path, "Dump Files (*.dump)")
@@ -276,7 +276,8 @@ class DatabaseManagerPage(QWidget):
             cur = conn.cursor()
 
             # Terminate all connections to the target database
-            cur.execute(psycopg2.sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s AND pid <> pg_backend_pid();"), [database])
+            cur.execute(psycopg2.sql.SQL("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = %s " \
+                                         "AND pid <> pg_backend_pid();"), [database])
 
             # Drop the database
             cur.execute(psycopg2.sql.SQL("DROP DATABASE IF EXISTS {}").format(psycopg2.sql.Identifier(database)))
@@ -287,7 +288,7 @@ class DatabaseManagerPage(QWidget):
             conn.close()
 
         except Exception as e:
-            msg = f"❌ Error dropping database: {e}."
+            msg = f"Error dropping database: {e}."
 
         PopupNotifier.Notify(self,'🗑️',msg)
     

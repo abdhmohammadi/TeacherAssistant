@@ -1,21 +1,21 @@
 import os
-#import pypandoc
 import pymupdf
+from PySide6.QtCore import QSize
+from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon,QPixmap, QColor, QTextCharFormat, QTextDocument, QTextCursor)
 
-from PySide6.QtGui import (Qt, QIcon,QPixmap, QColor, QTextCharFormat, QTextDocument, QTextCursor)
-
-from PySide6.QtWidgets import (QFileDialog, QTextEdit, QGridLayout, QWidget, QLabel,QApplication, QMessageBox,
+from PySide6.QtWidgets import (QComboBox, QFileDialog, QFontComboBox, QTabWidget, QTextEdit, 
+                               QVBoxLayout, QWidget, QLabel,QApplication, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit, QMenu,QWidgetAction)
 
                 
 from PySideAbdhUI.Notify import PopupNotifier
-
+from PySideAbdhUI.Widgets import SearchBox
 
 from processing.Imaging.Tools import pixmap_to_base64
 from processing.Imaging.SnippingTool import SnippingWindow
 from utils import helpers
 from processing.utils.image_tools import pdf_to_base64
-from ui.widgets.widgets import RichTextEdit
+from PySideAbdhUI.document_editor import RichTextEditor
 from core.app_context import app_context
 
 """
@@ -106,63 +106,101 @@ class EducationalResourceEditor(QWidget):
     # Managed with QGridLayout
     # Grid divided into 5x6 (rows x columns)
     
-    def __init__(self, cursor=None):
+    def __init__(self):
 
         super().__init__()
-        self.db_cursor = cursor
+        
         self.id = 0
-        main_layout = QGridLayout(self)
-        self.setContentsMargins(10,0,10,25)
-
-        page_title = QLabel('RESOURCE EDITOR')
-        page_title.setProperty('class','heading2')
-
-        main_layout.addWidget(page_title,0,0,1,1,Qt.AlignmentFlag.AlignTop)
-        
-        self.content_description_input = RichTextEdit()        
-
-        # 10 + 10 margins of tow edges and 15 pixel for scroll bar = 35 pixels
-        self.content_description_input.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
-
-        self.content_description_input.setPlaceholderText("Content")
-        self.content_description_input.setAcceptRichText(True)  # Enable rich text support
-        main_layout.addWidget(self.content_description_input,2,0)
-        
-        self.answer_input = QTextEdit(self)
-        # 10 + 10 margins of tow edges and 15 pixel for scroll bar = 35 pixels
-        self.answer_input.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)  
-        self.answer_input.setPlaceholderText("Answer")
-        self.answer_input.setAcceptRichText(True)  # Enable rich text support
-        main_layout.addWidget(self.answer_input,4,0)
+        main_layout = QVBoxLayout(self)
+        self.setContentsMargins(10,0,10,10)
+        main_layout.addLayout(self.create_header_panel())
 
         
-        self.create_right_panel(main_layout)
+        self.doc_editor = RichTextEditor()
+        self.answer_input = RichTextEditor()
         
+        
+
         widget = self.create_content_commands()
-        main_layout.addWidget(widget,1,0)
-        widget = self.create_answer_commands()
-        main_layout.addWidget(widget,3,0)
+        
+        main_layout.addWidget(widget)
 
+        self.setup_tabwidgets(main_layout)
+
+        self.metadata_input = QTextEdit(self)
+        
+        self.metadata_input.setPlaceholderText("Additional Details")
+        self.metadata_input.setMaximumHeight(150)
+        self.metadata_input.setAcceptRichText(True)  # Enable rich text support
+        self.metadata_input.setToolTip('Add description about question, analytical notes and etc.')
+        main_layout.addWidget(self.metadata_input)
+
+        footer = QHBoxLayout()
+        main_layout.addLayout(footer)
+        
+        footer.addWidget(QLabel('Score:'))
+        self.score_input = QLineEdit('1')
+        self.score_input.setFixedWidth(50)
+        self.score_input.setToolTip('The maximum score for current question.')
+        footer.addWidget(self.score_input)
+
+        footer.addStretch(1)
 
         btn = QPushButton('  DELETE')
         btn.setIcon(QIcon(':icons/trash-2.svg'))
-
-        btn.setToolTip('Removes the current record form database')
+        btn.setToolTip('Removes the current record form database.')
         btn.clicked.connect(self.remove_record)
-        main_layout.addWidget(btn,3,3,1,1,Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTop)
+        footer.addWidget(btn)
         
         save_button = QPushButton('  SAVE')
         save_button.setIcon(QIcon(':icons/database.svg'))
+        save_button.setToolTip('Saves the current record in the database.')
         save_button.clicked.connect(self.save_to_database)
-        main_layout.addWidget(save_button,3,4,1,1,Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignTop)
+        footer.addWidget(save_button)
+
+        
+    def setup_tabwidgets(self, layout:QVBoxLayout):
+
+        # -- Create tab widget --
+        self.tabs = QTabWidget()
+        layout.addWidget(self.tabs)
+        
+        # -- Tab 1 --
+        # 10 + 10 margins of tow edges and 15 pixel for scroll bar = 35 pixels
+        #self.doc_editor.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
+        # 10 + 10 margins of tow edges and 15 pixel for scroll bar = 35 pixels
+        #self.answer_input.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)  
+        self.tabs.addTab(self.doc_editor, "Question")
+        
+        # -- Tab 2 --        
+        self.tabs.addTab(self.answer_input, "Answer")
+
+        self.tabs.setCurrentIndex(0)
+        w = QWidget()
+        
+        clayout = QHBoxLayout(w)
+        clayout.setContentsMargins(0,0,0,10)
+        
+        clayout.addWidget(QLabel('Source:'))
+        self.source_input = QLineEdit()
+        self.source_input.setFixedSize(QSize(400, 32))
+        self.source_input.setPlaceholderText("Source")
+        self.source_input.setToolTip('Specifies the source textbook or concept for current question.')
+        clayout.addWidget(self.source_input)
+        
+        self.tabs.setCornerWidget(w,Qt.Corner.TopRightCorner)
 
 
-    def create_right_panel(self,layout:QGridLayout):
+    def create_header_panel(self):
+        
+        layout = QHBoxLayout()
+        
+        page_title = QLabel('RESOURCE EDITOR')
+        page_title.setProperty('class','heading2')
+        layout.addWidget(page_title)
+        layout.addStretch(1)
 
-        self.Id_label = QLabel()
-        self.Id_label.setProperty('class','caption')
-        layout.addWidget(self.Id_label, 0,2,1,2,Qt.AlignmentFlag.AlignBottom)
-        layout.setColumnStretch(3,1)
+        #layout.setColumnStretch(3,1)
         back_button = QPushButton() 
         # Back Navigation
         back_button.setText('')
@@ -171,7 +209,12 @@ class EducationalResourceEditor(QWidget):
         back_button.setToolTip(app_context.ToolTips['Back'])
         back_button.clicked.connect(lambda _, direction='<':self.load_record(direction))
 
-        layout.addWidget(back_button,0,4,1,1,Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignBottom)
+        layout.addWidget(back_button)#,0,4,1,1,Qt.AlignmentFlag.AlignLeft|Qt.AlignmentFlag.AlignBottom)
+        
+        self.Id_label = QLabel()
+        self.Id_label.setProperty('class','caption')
+        layout.addWidget(self.Id_label)#, 0,2,1,2,Qt.AlignmentFlag.AlignBottom)
+        
         next_button = QPushButton()
 
         next_button.setText('')
@@ -180,139 +223,38 @@ class EducationalResourceEditor(QWidget):
         next_button.setToolTip(app_context.ToolTips['Next'])
         next_button.clicked.connect(lambda _ , direction='>':self.load_record(direction))
         
-        layout.addWidget(next_button,0,4,1,1,Qt.AlignmentFlag.AlignRight|Qt.AlignmentFlag.AlignBottom)
-
-        layout.addWidget(QLabel('Source:'),1,1)
+        layout.addWidget(next_button)
         
-        self.source_input = QLineEdit()
-        self.source_input.setPlaceholderText("Source")
-        layout.addWidget(self.source_input,1,2,1,3)
-        
-
-        self.additional_details_input = QTextEdit(self)
-        
-        self.additional_details_input.setPlaceholderText("Additional Details")
-        self.additional_details_input.setAcceptRichText(True)  # Enable rich text support
-        layout.addWidget(self.additional_details_input,2,1,1,4)
-
-        layout.addWidget(QLabel('Score'),3,1)
-        self.score_input = QLineEdit('1')
-        self.score_input.setFixedWidth(100)
-        layout.addWidget(self.score_input,3,2)
+        return layout
 
 
+
+    def insertMathDialog(self): self.tabs.currentWidget().insertMathDialog()
+    def insertImageFile(self): self.tabs.currentWidget().insertImageFile()
+    def insertTableDialog(self): self.tabs.currentWidget().insertTableDialog()
+    def applyTextStyle(self, command=''): self.tabs.currentWidget().applyTextStyle(command)
+    def chooseTextColor(self): self.tabs.currentWidget().chooseTextColor()
+    def chooseBackgroundColor(self): self.tabs.currentWidget().chooseBackgroundColor()
+    def setAlignment(self, command='left'): self.tabs.currentWidget().setAlignment(command)
+    def setParagraphDirection(self, rtl=False): self.tabs.currentWidget().setParagraphDirection(rtl)
+    def importTextFile(self): self.tabs.currentWidget().importTextFile('"Text files (*.txt)"')
+    def loadHtmlFile(self): self.tabs.currentWidget().loadHtmlFile()
+    def openDocx (self): self.tabs.currentWidget().openDocx()
+    def loadPDF(self): self.upload_file(sender=self.tabs.currentWidget(),arg=app_context.SupportedFileTypes.PDF, options='ReadOnly')
+    def setFontFamily(self,fontFamily): self.tabs.currentWidget().setFontFamily(fontFamily)
+    def setFontSize(self,size:int=12): self.tabs.currentWidget().setFontSize(size)
+    def setPageSize(self,page_size_name): self.tabs.currentWidget().setPageSize(page_size_name)
+    def showMarginDialog(self): self.tabs.currentWidget().showMarginDialog()
+    def exportFile(self, file_type): self.tabs.currentWidget().exportFile(file_type)
+    def exportAsImage(self): self.tabs.currentWidget().exportAsImage()
+    
     def create_content_commands(self):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,3,0)
         layout.setSpacing(2)
 
-        layout.addWidget(QLabel('Content'))
-        layout.addStretch(1)
-        
-        # LaTeX
-        btn_latex = QPushButton('')
-        btn_latex.setProperty('class','mini')
-        btn_latex.setIcon(QIcon(':icons/TeX.svg'))
-        btn_latex.setToolTip(app_context.ToolTips['Generate LaTeX'])
-
-        menu_latex = QMenu(self)
-        btn_latex.setMenu(menu_latex)
-        menu_latex.addAction('New LaTeX script', lambda sender=self.content_description_input: self.___config_latex(sender))
-        menu_latex.addAction('Run LaTeX', lambda sender= self.content_description_input: self.run_latex(sender))
-                 
-        layout.addWidget(btn_latex)
-
-        # HTML
-        btn_html = QPushButton('')
-        btn_html.setProperty('class','mini')
-        btn_html.setIcon(QIcon(':icons/html-code.svg'))
-        btn_html.setToolTip(app_context.ToolTips['Generate HTML'])
-        menu_html = QMenu(self)
-        btn_html.setMenu(menu_html)
-        menu_html.addAction('New HTML Script',lambda sender=self.content_description_input: self.___config_basic_html(sender))
-        menu_html.addAction('Run HTML',lambda _, sender=self.content_description_input: self.run_html(sender))
-        
-        layout.addWidget(btn_html)
-        
-        # INSERT BUTTON(Upload Image and insert into current content)
-        add_img_button = QPushButton('')
-        add_img_button.setProperty('class','mini')
-        add_img_button.setIcon(QIcon(':icons/image-plus.svg'))
-        add_img_button.setToolTip(app_context.ToolTips['Insert Image'])
-        add_img_button.clicked.connect(lambda _, sender= self.content_description_input, arg=app_context.SupportedFileTypes.IMAGE: self.upload_file(sender=sender,arg=arg, options='+'))
-        
-        layout.addWidget(add_img_button)
-
-        # Add Snipping tools button
-        snip_button = QPushButton("")
-        snip_button.setProperty('class','mini')
-        snip_button.setIcon(QIcon(':icons/square-bottom-dashed-scissors.svg'))
-        snip_button.setToolTip(app_context.ToolTips['Insert Image from screen'])
-        snip_button.clicked.connect(lambda _, t = self.content_description_input :self.run_snipping_tool(t))
-        layout.addWidget(snip_button)
-
-        ####################################################################################################
-        # INSERT MENU(Clean content and upload files as new content)
-        button = QPushButton('')
-        button.setProperty('class','mini')
-        button.setIcon(QIcon(':icons/upload.svg'))
-        button.setToolTip(app_context.ToolTips['Upload File'])
-
-        menu = QMenu(button)
-        menu.addAction('Plain text',lambda sender= self.content_description_input, arg= app_context.SupportedFileTypes.TEXT: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('RTF',lambda sender= self.content_description_input,arg= app_context.SupportedFileTypes.RTF: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('Image',lambda sender= self.content_description_input, arg=app_context.SupportedFileTypes.IMAGE: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('PDF(Editable)',lambda sender= self.content_description_input,arg= app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg, options='Editable'))
-        menu.addAction('PDF(Readonly)',lambda sender= self.content_description_input,arg=app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg, options='ReadOnly'))
-        menu.addAction('Word(docx)',lambda sender= self.content_description_input,arg= app_context.SupportedFileTypes.DOCX: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('LaTeX',lambda sender= self.content_description_input,arg= app_context.SupportedFileTypes.LaTeX: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('Html',lambda sender= self.content_description_input,arg=app_context.SupportedFileTypes.HTML: self.upload_file(sender=sender,arg=arg))
-        
-        button.setMenu(menu)
-        
-        layout.addWidget(button)
-        ####################################################################################################
-  
-        from_db_btn = QPushButton("")
-        from_db_btn.setProperty('class','mini')
-        from_db_btn.setIcon(QIcon(':icons/database-search.svg'))
-        from_db_btn.setToolTip(app_context.ToolTips['Find in database'])
-
-        # Create a QMenu
-        menu = QMenu(self)
-        # Create a QWidgetAction to hold custom widgets
-        widget_action = QWidgetAction(self)
-
-        # Create a widget to hold the QLineEdit and QPushButton
-        widget = QWidget()
-
-        # Set the widget to the QWidgetAction
-        widget_action.setDefaultWidget(widget)
-
-        # Add the QWidgetAction to the menu
-        menu.addAction(widget_action)
-
-        menu_layout = QHBoxLayout(widget)        
-        # Add a QLineEdit
-        line_edit = QLineEdit('')
-        line_edit.setPlaceholderText("Id of edu resource ...")
-        menu_layout.addWidget(line_edit)
-
-        # Add Find Id QPushButton
-        inner_button = QPushButton('')
-        inner_button.setIcon(QIcon(':icons/search.svg'))
-        inner_button.setProperty('class','mini')
-        inner_button.clicked.connect(lambda _, sender= line_edit: self.load_from_database(sender))
-        menu_layout.addWidget(inner_button)
-
-        # Set the menu to the QPushButton
-        from_db_btn.setMenu(menu)
-
-        layout.addWidget(from_db_btn)
-        ######################################################################################################
-
-
+        # Button to clear content of the document
         btn = QPushButton('')
         btn.setProperty('class','mini')
         btn.setIcon(QIcon(':icons/text.svg'))
@@ -320,8 +262,192 @@ class EducationalResourceEditor(QWidget):
         btn.clicked.connect(self.clear_content)
         layout.addWidget(btn)
 
-        # separator
-        layout.addWidget(QLabel('|'))
+        # INSERT MENU(Clean content and upload files as new content)
+        button = QPushButton('')
+        button.setProperty('class','mini')
+        button.setIcon(QIcon(':icons/folder-open-dot.svg'))
+        button.setToolTip('Working with files')
+
+        menu = QMenu(button)
+
+        menu.addAction('Open Plain text', self.importTextFile) 
+        menu.addAction('Open Html file',self.loadHtmlFile)
+        menu.addAction('Open PDF(Readonly)',self.loadPDF)
+        menu.addAction('Open docx', self.openDocx)
+        #menu.addAction('LaTeX',lambda: self.doc_editor.importTextFile("LaTeX(*.tex)"))
+        
+        menu.addSeparator()
+        
+        menu.addAction('Save as HTML', lambda: self.exportFile('html'))
+        menu.addAction("Save as Plain text", lambda: self.exportFile('txt'))
+        menu.addAction("Save as Image", self.exportAsImage)
+        menu.addAction("Save as PDF", lambda: self.exportFile('pdf'))
+        menu.addAction('Save as docx', lambda: self.exportFile('docx'))
+        #menu.addAction('PDF(Editable)',lambda sender= self.doc_editor,arg= app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg, options='Editable'))
+        
+        button.setMenu(menu)
+        
+        layout.addWidget(button)
+
+        btn_math = QPushButton('')
+        btn_math.setProperty('class','mini')
+        btn_math.setIcon(QIcon(':icons/sigma.svg'))
+        btn_math.setToolTip('Insert math formula')
+        btn_math.clicked.connect(self.insertMathDialog)
+
+        layout.addWidget(btn_math)
+
+        btn_table = QPushButton('')
+        btn_table.setProperty('class','mini')
+        btn_table.setIcon(QIcon(':icons/sheet.svg'))
+        btn_table.setToolTip('Insert table')
+        btn_table.clicked.connect(self.insertTableDialog)
+
+        layout.addWidget(btn_table)
+
+        btn_Text = QPushButton('')
+        btn_Text.setProperty('class','mini')
+        btn_Text.setIcon(QIcon(':icons/pencil.svg'))
+        btn_Text.setToolTip('Text font styles')
+
+        layout.addWidget(btn_Text)
+
+        menu_text = QMenu(self)
+
+        btn_Text.setMenu(menu_text)
+        for name, slot in [
+            ("Bold", lambda : self.applyTextStyle('Bold')), 
+            ("Italic", lambda: self.applyTextStyle('Italic')),# or editor.setItalic(italic: bool)
+            ("Underline", lambda: self.applyTextStyle('Underline')),
+            ("Strike", lambda: self.applyTextStyle('Strike')),
+            ('Text Color', self.chooseTextColor),
+            ('Highlight',self.chooseBackgroundColor)
+        ]:
+            menu_text.addAction(name, slot)
+
+        menu_text.addSeparator()
+
+        lalign_btn = QPushButton("")
+        lalign_btn.setProperty('class','mini')
+        lalign_btn.setToolTip('Left alignment')
+        lalign_btn.setIcon(QIcon(':icons/left-to-right.svg'))
+        lalign_btn.clicked.connect(lambda: self.setAlignment('left'))
+        layout.addWidget(lalign_btn)
+
+        calign_btn = QPushButton("")
+        calign_btn.setProperty('class','mini')
+        calign_btn.setToolTip('Center alignment')
+        calign_btn.setIcon(QIcon(':icons/center-align.svg'))
+        calign_btn.clicked.connect(lambda: self.setAlignment('center'))
+        layout.addWidget(calign_btn)
+
+        ralign_btn = QPushButton("")
+        ralign_btn.setProperty('class','mini')
+        ralign_btn.setToolTip('Right alignment')
+        ralign_btn.setIcon(QIcon(':icons/right-to-left.svg'))
+        ralign_btn.clicked.connect(lambda: self.setAlignment('right'))
+        layout.addWidget(ralign_btn)
+
+        justify_btn = QPushButton("")
+        justify_btn.setProperty('class','mini')
+        justify_btn.setToolTip('Justify')
+        justify_btn.setIcon(QIcon(':icons/justify.svg'))
+        justify_btn.clicked.connect(lambda: self.setAlignment('justify'))
+        layout.addWidget(justify_btn)
+
+        ltr_btn = QPushButton('')
+        ltr_btn.setProperty('class','mini')
+        ltr_btn.setToolTip('Left to Right direction')
+        ltr_btn.setIcon(QIcon(':icons/pilcrow-right.svg'))
+        ltr_btn.clicked.connect(lambda: self.setParagraphDirection(False))
+        layout.addWidget(ltr_btn)
+        
+        rtl_btn = QPushButton('')
+        rtl_btn.setProperty('class','mini')
+        rtl_btn.setToolTip('Right to Left direction')
+        rtl_btn.setIcon(QIcon(':icons/pilcrow-left.svg'))
+        rtl_btn.clicked.connect(lambda: self.setParagraphDirection(True))
+        layout.addWidget(rtl_btn)
+
+        # LaTeX
+        #btn_latex = QPushButton('')
+        #btn_latex.setProperty('class','mini')
+        #btn_latex.setIcon(QIcon(':icons/TeX.svg'))
+        #btn_latex.setToolTip(app_context.ToolTips['Generate LaTeX'])
+
+        #menu_latex = QMenu(self)
+        #btn_latex.setMenu(menu_latex)
+        #menu_latex.addAction('New LaTeX script', lambda sender=self.doc_editor: self.___config_latex(sender))
+        #menu_latex.addAction('Run LaTeX', lambda sender= self.doc_editor: self.run_latex(sender))
+                 
+        #layout.addWidget(btn_latex)
+
+        # HTML
+        #btn_html = QPushButton('')
+        #btn_html.setProperty('class','mini')
+        #btn_html.setIcon(QIcon(':icons/html-code.svg'))
+        #btn_html.setToolTip(app_context.ToolTips['Generate HTML'])
+        #menu_html = QMenu(self)
+        #btn_html.setMenu(menu_html)
+        #menu_html.addAction('New HTML Script',lambda sender=self.doc_editor: self.___config_basic_html(sender))
+        #menu_html.addAction('Run HTML',lambda _, sender=self.doc_editor: self.run_html(sender))
+        
+        #btn_html.setDisabled(True)
+        #layout.addWidget(btn_html)
+        
+        # INSERT BUTTON(Upload Image and insert into current content)
+        add_img_button = QPushButton('')
+        add_img_button.setProperty('class','mini')
+        add_img_button.setIcon(QIcon(':icons/image-plus.svg'))
+        add_img_button.setToolTip(app_context.ToolTips['Insert Image'])
+        add_img_button.clicked.connect(self.insertImageFile) 
+        layout.addWidget(add_img_button)
+
+        # Add Snipping tools button
+        snip_button = QPushButton("")
+        snip_button.setProperty('class','mini')
+        snip_button.setIcon(QIcon(':icons/square-bottom-dashed-scissors.svg'))
+        snip_button.setToolTip(app_context.ToolTips['Insert Image from screen'])
+        #snip_button.clicked.connect(lambda _, t = self.doc_editor :self.run_snipping_tool(t))
+        layout.addWidget(snip_button)
+
+        btn = QPushButton('')
+        btn.setProperty('class','mini')
+        btn.setIcon(QIcon(':icons/square-dashed.svg'))
+        btn.setToolTip('Paper margins')
+        btn.clicked.connect(self.showMarginDialog)
+        layout.addWidget(btn)
+
+        fontCombo = QFontComboBox()
+        fontCombo.setFixedWidth(100)
+        fontCombo.setFontFilters(QFontComboBox.FontFilter.AllFonts)
+        fontCombo.setWritingSystem(QFontDatabase.WritingSystem.Any)  # or QFontDatabase.Any
+        fontCombo.setCurrentFont(QFont("Arial",12))  # default font
+        fontCombo.setToolTip('System installed fonts')
+        fontCombo.currentFontChanged.connect(lambda f: self.setFontFamily(f.family()))
+        layout.addWidget(fontCombo)
+        
+        font_size_edit = QLineEdit('12')
+        font_size_edit.setFixedWidth(30)
+        font_size_edit.setToolTip('Font size')
+        font_size_edit.textChanged.connect(self.setFontSize)
+        layout.addWidget(font_size_edit)
+
+        pageCombo = QComboBox()
+        pageCombo.addItems(["A4", "Letter", "B5", "Edu-Item"])
+        pageCombo.setCurrentText('A4')
+        pageCombo.setFixedWidth(80)
+        pageCombo.setToolTip('Paper size')
+        pageCombo.currentTextChanged.connect(self.setPageSize)
+        layout.addWidget(pageCombo)
+        
+        layout.addStretch(1)
+        
+        search_input = SearchBox()
+        search_input.setPlaceholderText('Search Id ...')
+        search_input.textEdited.connect(lambda _, sender= search_input: self.load_from_database(sender))
+        layout.addWidget(search_input)
+
 
         btn_mark = QPushButton('')
         btn_mark.setProperty('class','mini')
@@ -334,22 +460,22 @@ class EducationalResourceEditor(QWidget):
         # not be distributed before it is removed.
         # Notice: application of this mark is in the 'EduResourceViewer' form. 
         btn_mark.clicked.connect(lambda :(
-                                    self.additional_details_input.moveCursor(QTextCursor.MoveOperation.Start),
-                                    self.additional_details_input.insertPlainText('[MARKED]\n' ),
-                                    self.additional_details_input.moveCursor(QTextCursor.MoveOperation.Up),
-                                    self.additional_details_input.setFocus(Qt.FocusReason.MouseFocusReason)
+                                    self.metadata_input.moveCursor(QTextCursor.MoveOperation.Start),
+                                    self.metadata_input.insertPlainText('[MARKED]\n' ),
+                                    self.metadata_input.moveCursor(QTextCursor.MoveOperation.Up),
+                                    self.metadata_input.setFocus(Qt.FocusReason.MouseFocusReason)
                                         ))
         
         btn_mark.setIcon(QIcon(':icons/bookmark.svg'))
         layout.addWidget(btn_mark)
-
-
+        
         widget = QWidget()
-        widget.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
+        #widget.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
         widget.setLayout(layout)
 
         return widget
-        
+    
+    
     def create_answer_commands(self):
 
         layout = QHBoxLayout()
@@ -422,32 +548,24 @@ class EducationalResourceEditor(QWidget):
 
         return widget    
 
-    def ___config_basic_html(self,sender:QTextEdit):
+    def ___config_basic_html(self,sender:RichTextEditor):
         
-        sender.document().clear()
-        
-        text = '<b>Add here main content.</b>'
+        sender.clear()
 
-        html_template  = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">\n'
-        html_template += '<html lang="en">\n'
-        html_template += '<head> <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0"></head>\n'
-        html_template += f'<body style="width:{app_context.EDU_ITEM_PIXELS}px;">\n'
-        html_template += '   <main>\n'
-        html_template += '      ' + text + '\n'
-        html_template += '   </main>\n'
-        html_template += '</body>\n'
-        html_template += '</html>'
+        html_template  = f'''
+        &lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;<br>
+        &lt;html lang="en"&gt;<br>&lt;head&gt;<br>
+        &nbsp; &nbsp; &nbsp; &nbsp; &lt;meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0"&gt;<br>
+        &lt;/head&gt;<br>&lt;body style="width:{app_context.EDU_ITEM_PIXELS}px;"&gt;<br>
+        &nbsp; &nbsp; &nbsp; &nbsp; 
+        &lt;main&gt;&lt;b&gt;Add here main content.&lt;/b&gt;&lt;/main&gt;<br>
+        &lt;/body&gt;<br>&lt;/html&gt;
+        '''
+        sender.setText(html_template,False)    
 
-        sender.document().setPlainText(html_template)
-        
-        #self.___highlightText(sender, text)
-    
+    def ___config_latex(self,sender:RichTextEditor):
 
-    def ___config_latex(self,sender:QTextEdit):
-
-        #self.___document_type = MyJobAssistant.DocumentType.LaTeX
-
-        sender.document().clear()
+        sender.clear()
 
         text = '   Add here main content '
         documentclass = 'article'
@@ -462,9 +580,7 @@ class EducationalResourceEditor(QWidget):
                           '\\end{{document}}'
                          ).format(documentclass, package, font, text)
 
-        sender.document().setPlainText(latex_content)
-        
-        self.___highlightText(sender, text)  
+        sender.setText(latex_content)
 
 
     def ___highlightText(self,sender:QTextEdit,search_text):
@@ -496,16 +612,16 @@ class EducationalResourceEditor(QWidget):
 
     def clear_content(self):
 
-        self.id=0
+        self.id = 0
         self.Id_label.setText('(New item)')
         self.source_input.clear()
-        self.score_input.clear()
-        self.content_description_input.document().clear()
-        self.answer_input.document().clear()
-        self.additional_details_input.clear()
+        self.score_input.setText('0.0')
+        self.doc_editor.clear()
+        self.answer_input.clear()
+        self.metadata_input.clear()
 
 
-    def upload_PDF_as_html(self, PDF_path, sender:QTextEdit):
+    def upload_PDF_as_html(self, PDF_path, sender:RichTextEditor):
 
         try:
 
@@ -527,7 +643,7 @@ class EducationalResourceEditor(QWidget):
             print(f"Error processing PDF: {e}")
 
 
-    def upload_file(self,sender:QTextEdit, arg:str=app_context.SupportedFileTypes.IMAGE, options=None):
+    def upload_file(self,sender:RichTextEditor, arg:str=app_context.SupportedFileTypes.IMAGE, options=None):
         
         # Open a file dialog to upload an image or PDF.
         file_dialog = QFileDialog(self)
@@ -555,7 +671,7 @@ class EducationalResourceEditor(QWidget):
                     sender.setHtml(html_content)
 
             elif arg == app_context.SupportedFileTypes.PDF:
-                sender.document().clear()
+                sender.clear()
                 if options == 'Editable':
                     self.upload_PDF_as_html(file_path, sender)
                 else:
@@ -565,7 +681,6 @@ class EducationalResourceEditor(QWidget):
                     
                     # Set the HTML content in the QTextEdit
                     sender.setHtml(html_content)
-
 
             elif arg in [app_context.SupportedFileTypes.TEXT,
                          app_context.SupportedFileTypes.RTF,
@@ -581,7 +696,6 @@ class EducationalResourceEditor(QWidget):
             #    sender.document().clear()
             #    html = pypandoc.convert_file(file_path,'html',extra_args=['--embed-resources'])
             #    sender.document().setHtml(html)
-
 
     # we read Plain text, but save in HTML format as RTF data
     def read_plain_text(self,sender:QTextEdit, file_path):
@@ -628,14 +742,19 @@ class EducationalResourceEditor(QWidget):
 
         sender.document().setHtml(html)
     
+    def run_latex(self,sender:RichTextEditor):
+        try:
+            html = helpers.run_latex(sender.getPlainTextSync(), compile='xepersian', output_pdf_name= 'edu-resource.PDF')
+            # Set the HTML content in the RichTextEditor
+            sender.clear()
+            sender.setHtml(html)
 
-    def run_latex(self,sender:QTextEdit):
-
-        html = helpers.run_latex(sender.toPlainText(), compile='xepersian', output_PDF_name= 'edu-resource.PDF')
-        # Set the HTML content in the QTextEdit
-        sender.clear()
-        sender.insertHtml(html)
+            msg = "LaTeX operation created the output pdf successfully."
+        except Exception as e:
+            msg = f'Error: {e}.'
         
+        PopupNotifier.Notify(self,"Message", msg)
+
         
     def run_snipping_tool(self,target:QTextEdit):
 
@@ -666,74 +785,64 @@ class EducationalResourceEditor(QWidget):
         
         try:
 
-            self.db_cursor.execute(query)
+            app_context.database.execute(query)
             msg = f'The record {self.id} removed from database.'
             self.clear_content()
 
         except Exception as e:
             msg = f'Database error: {e}.'
         
-        PopupNotifier.Notify(self,"Message", msg, 'bottom-right', delay=3000, background_color='#353030',border_color="#2E7D32")
+        PopupNotifier.Notify(self,"Message", msg)
 
     def load_record(self, direction:str=' >'):
         
+        """ Fetch the one record based on <b>direction</b>.<br>
+            if <b>direction</b> is <b>></b> is fetched next to current record,<br>
+            if <b>direction</b> is <b><</b> is fetched previou to current record,<br>
+            and if <b>direction</b> is <b>EMPTY STRING,</b> is fetched first record bigger than zero Id.<br>
+        """
         try:
             order = 'ORDER BY Id DESC' if direction == '<' else ' ORDER BY Id ASC'
             where =  f'WHERE Id {direction} {self.id} {order} LIMIT 1;' if not direction == '' else f'WHERE Id>0 {order} LIMIT 1;'
 
             # Fetch the data from the database
-            query  = "SELECT Id, source_, score_, content_description_, additional_details_, answer_ FROM educational_resources " + where
+            query  = f"SELECT Id, source_, score_, content_, answer_, metadata_ FROM educational_resources {where}"
             
             row = app_context.database.fetchone(query)
-            
-            msg = f"No content found in the database for Id {direction} {self.id}."
-
-            if row:
-
+            if row:            
                 self.clear_content()
 
                 self.id = int(row[0])
                 self.source_input.setText(row[1])
                 self.score_input.setText(str(row[2]))
-                if not helpers.is_rtf(row[3]):
-                    # this used to HTML and LaTeX source files(pure LaTeX or HTML data)
-                    self.content_description_input.document().setPlainText(row[3])
-
-                else:                     
-                    # This is used to RTF or txt to display in the QTextEdit properly
-                    self.content_description_input.document().setHtml(row[3])
                 
-                self.additional_details_input.setText(row[4])
-
-                if helpers.is_rtf(row[4]):
-                    self.answer_input.document().setHtml(row[5])
-                else:
-                    self.answer_input.document().setPlainText(row[5])
-
-                msg = "Content loaded from database."
+                self.doc_editor.setText(row[3])
+                self.answer_input.setText(row[4])
+                self.metadata_input.setText(row[5])
                 
                 self.Id_label.setText('Content editing | ' + str(self.id))
 
-                self.content_description_input.minimumSizeHint()
+            #self.doc_editor.minimumSizeHint()
             
         except Exception() as e:
-            
-            msg = f"Database error: {e}."
-            print(msg)
+            PopupNotifier.Notify(self,"Message", f"Error: {e}.")
 
-        PopupNotifier.Notify(self,"Message", msg, 'bottom-right')
+        
 
     def load_from_database(self,sender:QLineEdit):
         
-        id  = sender.text()
+        # Id of the record in the database
+        id  = sender.text() 
         id  = 0 if id == '' else int(id)
         
-        if id == int(self.id) :return
+        if self.id and id == int(self.id) :return
         
         self.id = id
         self.load_record('=')
-
-    # We save the all data as text, but to manage advanced datatypes of text like rich texts with image, 
+    ###################################################################################################
+    ##############  WARNING: this comment is not valid, it has to updated | 2026-05-27 ################
+    ###################################################################################################
+     # We save the all data as text, but to manage advanced datatypes of text like rich texts with image, 
     # table or formulas we need advanced control on our data, becuase of this to simple managment, we save:
     # Plaintext and RTF as HTML format, Also we write LaTeX and HTML code in the editor directly, these type
     # of text are saved directly and without any conversion. to resore PlainText and RTF, will useing setHtml()
@@ -741,6 +850,7 @@ class EducationalResourceEditor(QWidget):
     # deference between RTF and HTML format in our contents is: we use HTML format with managing HTML tags, and
     # the text without HTML tags, but containing text formating is RTF. also the RTF text without formated
     # content, is mean PlainText.
+    ####################################################################################################
     def save_to_database(self):
         
         # Edu-Item source book
@@ -751,37 +861,32 @@ class EducationalResourceEditor(QWidget):
         score = float(score) if score !='' and score.replace('.','').isnumeric() else '1'
         
         # Get the entire content of QTextEdit
-        content = self.content_description_input.document().toPlainText()
+        content = self.doc_editor.getHtmlContentSync()
 
-        if helpers.is_rtf(content): content = self.content_description_input.toHtml()
+        answer = self.answer_input.getHtmlContentSync()
 
-        answer = self.answer_input.document().toPlainText()
-
-        if helpers.is_rtf(answer): answer = self.answer_input.document().toHtml()
-
-        details = self.additional_details_input.toPlainText()
+        details = self.metadata_input.toPlainText()
         
         try:
 
             query ="INSERT INTO educational_resources "\
-                   "(source_, score_, content_description_, answer_, additional_details_)"\
+                   "(source_, score_, content_, answer_, metadata_)"\
                    "VALUES (%s, %s, %s, %s, %s) RETURNING id;"
                 
             variables = (source, score, content, answer, details)
 
             msg = 'inserted'
                
-            if self.id>0:
-                query = "UPDATE educational_resources SET source_ = %s, score_= %s, content_description_= %s,"\
-                        "answer_= %s, additional_details_= %s WHERE Id= %s RETURNING id;"
+            if self.id and self.id>0:
+                query = "UPDATE educational_resources SET source_ = %s, score_= %s, content_= %s,"\
+                        "answer_= %s, metadata_= %s WHERE Id= %s RETURNING id;"
 
-                variables = (source, score, content, answer, details, self.id)    # Save the HTML content to the database
+                variables = (source, score, content, answer, details, self.id)
                                 
                 msg = 'updated'
-            
-            self.db_cursor.execute(query, variables)
                 
-            self.id = self.db_cursor.fetchone()[0]
+            # execute the query and return id
+            self.id = app_context.database.execute_and_return(query, variables)[0]
             
             self.Id_label.setText(f'{str(self.id)} | Content recently {msg}.')
 

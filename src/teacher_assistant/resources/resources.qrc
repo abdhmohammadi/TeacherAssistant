@@ -2,6 +2,18 @@
 <RCC>
 	<qresource prefix="/icons">
         <file alias="app-icon.png">icons/png/app-icon.png</file>
+		<file alias="text-initial.svg">icons/svg/text-initial.svg</file>
+		<file alias="save.svg">icons/svg/save.svg</file>
+		<file alias="folder-closed.svg">icons/svg/folder-closed.svg</file>
+		<file alias="square-dashed.svg">icons/svg/square-dashed.svg</file>
+		<file alias="sigma.svg">icons/svg/sigma.svg</file>
+		<file alias="folder-open-dot.svg">icons/svg/folder-open-dot.svg</file>
+		<file alias="pilcrow-right.svg">icons/svg/pilcrow-right.svg</file>
+		<file alias="pilcrow-left.svg">icons/svg/pilcrow-left.svg</file>
+		<file alias="right-to-left.svg">icons/svg/right-to-left.svg</file>
+		<file alias="center-align.svg">icons/svg/center-align.svg</file>
+		<file alias="left-to-right.svg">icons/svg/left-to-right.svg</file>
+		<file alias="justify.svg">icons/svg/justify.svg</file>
 		<file alias="eye.svg">icons/svg/eye.svg</file>
 		<file alias="book-text.svg">icons/svg/book-text.svg</file>
 		<file alias="bookmark-filled-blue.svg">icons/svg/bookmark-filled-blue.svg</file>

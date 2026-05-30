@@ -26,8 +26,17 @@ class psycopg2_database:
     def fetchone(self, query, params=None):
         with self.connection.cursor() as cur:
             cur.execute(query, params)
-            return cur.fetchone()
+            result = cur.fetchone()
+            return result
 
+    def execute_and_return(self, query, params=None): 
+        with self.connection.cursor() as cur:
+            cur.execute(query, params)
+            self.connection.commit()
+            result = cur.fetchone()
+            return result
+
+    
     def fetchall(self, query, params=None):
         with self.connection.cursor() as cur:
             cur.execute(query, params)
@@ -215,8 +224,8 @@ def initialize_database(connection:connection):
         (
             id bigint NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 100 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
             source_ text COLLATE pg_catalog."default" NOT NULL,
-            content_description_ text COLLATE pg_catalog."default" NOT NULL,
-            additional_details_ text COLLATE pg_catalog."default",
+            content_ text COLLATE pg_catalog."default" NOT NULL,
+            metadata_ text COLLATE pg_catalog."default",
             answer_ text COLLATE pg_catalog."default",
             score_ real,
             CONSTRAINT educational_resources_pkey PRIMARY KEY (id)
@@ -229,10 +238,10 @@ def initialize_database(connection:connection):
         COMMENT ON COLUMN public.educational_resources.source_
             IS 'Stores the address of the text content.';
 
-        COMMENT ON COLUMN public.educational_resources.content_description_
+        COMMENT ON COLUMN public.educational_resources.content_
             IS 'Stores the text content of a educational resource or any learning content from high school textbooks.';
 
-        COMMENT ON COLUMN public.educational_resources.additional_details_
+        COMMENT ON COLUMN public.educational_resources.metadata_
             IS 'Additional explanations about the content.';
 
         COMMENT ON COLUMN public.educational_resources.answer_
@@ -285,7 +294,7 @@ def initialize_database(connection:connection):
             address_ text COLLATE pg_catalog."default",
             parent_name_ text COLLATE pg_catalog."default",
             parent_phone_ text COLLATE pg_catalog."default",
-            additional_details_ text COLLATE pg_catalog."default",
+            metadata_ text COLLATE pg_catalog."default",
             gender_ text COLLATE pg_catalog."default",
             birth_date_ date,
             CONSTRAINT personal_info_pkey PRIMARY KEY (id)

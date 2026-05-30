@@ -40,14 +40,14 @@ class PersonalInfoService:
             if old_id == '' or old_id == None:
                 # Insert personal information into the table
                 query  = 'INSERT INTO personal_info(id, fname_, lname_, parent_name_, phone_, parent_phone_, address_, '
-                query += 'additional_details_, birth_date_, gender_, photo_) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+                query += 'metadata_, birth_date_, gender_, photo_) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
                 
                 params = (id, fname, lname, parent, phone, parent_phone, address, additional_details, birth_date, gender, photo)
             
             else:
             
                 query = 'UPDATE personal_info SET id= %s, fname_=%s, lname_=%s, parent_name_=%s, phone_=%s, parent_phone_=%s, address_=%s, '
-                query += 'additional_details_=%s, photo_=%s, birth_date_=%s, gender_=%s WHERE Id=%s;'
+                query += 'metadata_=%s, photo_=%s, birth_date_=%s, gender_=%s WHERE Id=%s;'
                 
                 params = (id, fname, lname, parent, phone, parent_phone, address, additional_details, photo, birth_date, gender, old_id)
 

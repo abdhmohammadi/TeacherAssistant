@@ -5,7 +5,7 @@
 #   
 # HOW TO BUILD THIS PROJECT:           
 # INSTALL PySideAbdhUI:
-#       cd 'F:\Projects\Python\Teaching-assistant-project\TeacherAssistant'; .\env\Scripts\python.exe -m pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.0.9-py3-none-any.whl'
+#       pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.3.1-py3-none-any.whl'
 #
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
@@ -22,17 +22,15 @@
 #        to recompile this file. the scripts/compile_qrc.py does this task and created resources_rc.py.
 #        We imported resources_rc in the src/teacher_assistant/core/app_context.py to use icons in the app scope.
 #    
- 
+
 import os
 import sys
   
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPixmap
-
 # Add the 'src' directory to the Python path to allow for absolute imports
 # This is crucial for making the project runnable from any location
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
-
 from core.app_context import app_context
 
 from ui.main_window import MainWindow
@@ -41,8 +39,8 @@ from ui.widgets import connection_form  # a dialog to validate user and database
 from version import __version__ as version
 
 if __name__ == "__main__":
-
-    app = QApplication(sys.argv) 
+    
+    app = QApplication(sys.argv)    
 
     # Setup the app directories
     app_context.setup_app_directories()

@@ -510,7 +510,7 @@ class EducationalResourceEditor(QWidget):
         return widget
     
     
-    def create_answer_commands(self):
+    '''def create_answer_commands(self):
 
         layout = QHBoxLayout()
         layout.setContentsMargins(0,0,3,0)
@@ -581,8 +581,8 @@ class EducationalResourceEditor(QWidget):
         widget.setLayout(layout)
 
         return widget    
-
-    def ___config_basic_html(self,sender:RichTextEditor):
+    '''
+    """def ___config_basic_html(self,sender:RichTextEditor):
         
         sender.clear()
 
@@ -596,7 +596,7 @@ class EducationalResourceEditor(QWidget):
         &lt;/body&gt;<br>&lt;/html&gt;
         '''
         sender.setText(html_template,False)    
-
+    
     def ___config_latex(self,sender:RichTextEditor):
 
         sender.clear()
@@ -615,43 +615,15 @@ class EducationalResourceEditor(QWidget):
                          ).format(documentclass, package, font, text)
 
         sender.setText(latex_content)
-
-
-    def ___highlightText(self,sender:QTextEdit,search_text):
-        # The text to search for
-        # Get the QTextDocument from the QTextEdit
-        document = sender.document()
-
-        # Create a QTextCharFormat to define the highlighting style
-        highlight_format = QTextCharFormat()
-        highlight_format.setBackground(QColor("yellow"))  # Set background color
-        highlight_format.setForeground(QColor("red"))     # Set text color (optional)
-
-        # Create a QTextCursor to manipulate the document
-        cursor = sender.textCursor()
-
-        # Move the cursor to the beginning of the document
-        cursor.movePosition(QTextCursor.Start)
-
-        # Loop to find and highlight all occurrences of the text
-        while True:
-            # Search for the text using QTextDocument's find method
-            cursor = document.find(search_text, cursor, QTextDocument.FindFlag.FindCaseSensitively)
-            if cursor.isNull():
-                break  # Exit the loop if no more occurrences are found
-
-            # Apply the highlighting format to the found text
-            cursor.mergeCharFormat(highlight_format)
-
-
+    """
     def clear_content(self):
 
         self.id = 0
         self.Id_label.setText('(New item)')
         self.source_input.clear()
         self.score_input.setText('0.0')
-        self.doc_editor.clear()
-        self.answer_input.clear()
+        self.doc_editor.clearContent()
+        self.answer_input.clearContent()
         self.metadata_input.clear()
 
 
@@ -676,7 +648,7 @@ class EducationalResourceEditor(QWidget):
         except Exception() as e:
             print(f"Error processing PDF: {e}")
 
-    """
+    
     def upload_file(self,sender:RichTextEditor, arg:str=app_context.SupportedFileTypes.IMAGE, options=None):
         
         # Open a file dialog to upload an image or PDF.
@@ -718,7 +690,7 @@ class EducationalResourceEditor(QWidget):
             #    sender.document().clear()
             #    html = pypandoc.convert_file(file_path,'html',extra_args=['--embed-resources'])
             #    sender.document().setHtml(html)
-
+    
     # we read Plain text, but save in HTML format as RTF data
     def read_plain_text(self,sender:QTextEdit, file_path):
         
@@ -746,7 +718,7 @@ class EducationalResourceEditor(QWidget):
             #   4) click Enviorenment Variables ...
             #   5) go to system variables section
             #   6) scroll to and select 'Path' item
-            #   7) click Edit\ click New and add 'C:\Program Files\pandoc-3.6.3\'
+            #   7) click Edit--> click New and add 'C:\\Program Files\\pandoc-3.6.3\\'
             #   8) save changes
             # 2) install pypandoc using pip install pypandoc
             # import pypandoc
@@ -754,7 +726,6 @@ class EducationalResourceEditor(QWidget):
             #html = pypandoc.convert_file(file_path, "html")
         
             #sender.document().setHtml(html)
-    
 
     def run_html(self, sender:QTextEdit):
 
@@ -776,7 +747,7 @@ class EducationalResourceEditor(QWidget):
             msg = f'Error: {e}.'
         
         PopupNotifier.Notify(self,"Message", msg)
-
+    """
         
     def run_snipping_tool(self,target:QTextEdit):
 

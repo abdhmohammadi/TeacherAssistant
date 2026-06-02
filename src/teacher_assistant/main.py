@@ -5,7 +5,7 @@
 #   
 # HOW TO BUILD THIS PROJECT:           
 # INSTALL PySideAbdhUI:
-#       pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.3.1-py3-none-any.whl'
+#        Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.3.9-py3-none-any.whl'
 #
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
@@ -26,11 +26,12 @@
 import os
 import sys
   
-from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QPixmap
 # Add the 'src' directory to the Python path to allow for absolute imports
 # This is crucial for making the project runnable from any location
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
+
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QPixmap
 from core.app_context import app_context
 
 from ui.main_window import MainWindow
@@ -48,11 +49,13 @@ if __name__ == "__main__":
     app_context.display_calulation(QApplication.primaryScreen().logicalDotsPerInch())
     
     current_font = app_context.settings_manager.find_value('font')
+    
     if current_font:
-       app_context.theme_manager.update_qss_font(dict(current_font)['size'],dict(current_font)['family'])
+       app_context.theme_manager.update_qss_font(
+           dict(current_font)['size'],dict(current_font)['family'])
 
     app_context.theme_manager.load()
-        
+    
     app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
     
     main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{version}', logo=QPixmap(':/icons/app-icon.png'))

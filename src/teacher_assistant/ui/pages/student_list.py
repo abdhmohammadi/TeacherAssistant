@@ -134,7 +134,7 @@ class StudentListPage(QWidget):
         # Create main vertical layout container for the page
         main_layout = QVBoxLayout(self)
         # Set spacing between layout elements
-        main_layout.setSpacing(10)
+        main_layout.setSpacing(5)
         
         # Create and configure title label for the page
         page_title = QLabel('STUDENT LIST')
@@ -150,20 +150,9 @@ class StudentListPage(QWidget):
         # Connect selection change signal to load students for selected group
         class_filter_combo.currentIndexChanged.connect(lambda _: self.load_students(class_filter_combo))
 
-
-
         # Create the search box and add it to the toolbar
         search_box = SearchBox()
         search_box.returnPressed.connect(lambda: print("Search:", search_box.text()))
-        #toolbar.addWidget(search_box)
-
-
-        # Create text input field for searching students
-        #search_input = QLineEdit()
-        # Set placeholder text to guide user input
-        #search_input.setPlaceholderText('Search students...')
-        # Limit search input field width
-        #search_input.setFixedWidth(SEARCH_INPUT_WIDTH)
         # Connect text change signal to search function
         search_box.textChanged.connect(self.find_in_list)
 
@@ -225,6 +214,7 @@ class StudentListPage(QWidget):
 
         # ROW 2: Create column headers for the self.table
         table_header = self.___create_headers___()
+
         main_layout.addWidget(table_header)
 
         # Get the table header to configure column sizing
@@ -239,7 +229,6 @@ class StudentListPage(QWidget):
         header.setSectionResizeMode(COL_ADDRESS, QHeaderView.ResizeMode.ResizeToContents)
         # Configure last note column to stretch and fill remaining space
         header.setSectionResizeMode(COL_LAST_NOTE, QHeaderView.ResizeMode.Stretch)
-        
         # ROW 3: Add table widget to main layout
         main_layout.addWidget(self.table)
 

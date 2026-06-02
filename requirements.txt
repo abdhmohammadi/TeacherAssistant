@@ -1,7 +1,6 @@
 PySide6
 psycopg2-binary
 PySideAbdhUI
-pymupdf
 pandas
 cryptography
 Pillow

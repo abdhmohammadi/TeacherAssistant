@@ -1,11 +1,11 @@
 
-from io import BytesIO
+#from io import BytesIO
 from PySide6.QtGui import QPixmap,QImage,QPainter, QIcon, QPainterPath
 from PySide6.QtCore import QBuffer,QByteArray,Qt
 import base64
 from PIL import Image
 from scipy.ndimage import sobel
-import pymupdf
+#import pymupdf
 import os
 import numpy as np
 import json
@@ -154,95 +154,6 @@ def convert_qpixmap_to_binary(qpixmap):
         qimage.save(buffer, "PNG")
         binary_data = buffer.data().data()
         return binary_data
-
-"""
-
-def bytea_to_pixmap(bytea_data):
-        try:
-            if bytea_data:
-                if isinstance(bytea_data, memoryview):
-                    bytea_data = bytea_data.tobytes()
-                
-                pixmap = QPixmap()
-                pixmap.loadFromData(bytea_data)
-                return pixmap
-            
-        except Exception as e:
-            print(f"Image loading error: {e}")
-        return QPixmap()
-
-
-def pixmap_to_base64(pixmap:QPixmap):
-        # Convert QPixmap to QImage
-        image = pixmap.toImage()
-
-        # Convert QImage to bytes
-        byte_array = QByteArray()
-        buffer = QBuffer(byte_array)
-        buffer.open(QBuffer.OpenModeFlag.WriteOnly)
-        image.save(buffer, "PNG")  # Save as PNG format
-        buffer.close()
-
-        # Convert bytes to base64
-        base64_data = base64.b64encode(byte_array.data()).decode("utf-8")
-        return base64_data
-"""
-def pdf_to_base64(pdf_path):
-    from PIL import Image  # Pillow for saving images
-
-    # Open the PDF file
-    pdf_document = pymupdf.open(pdf_path)
-    pages = []
-    # Iterate through each page
-    for page_number in range(len(pdf_document)):
-        # Get the page
-        page = pdf_document.load_page(page_number)
-    
-        # Set the zoom factor for high quality (e.g., 4x)
-        zoom = 4  # Higher zoom means higher resolution
-        mat = pymupdf.Matrix(zoom, zoom)
-    
-        # Render the page to an image (pixmap)
-        pix = page.get_pixmap(matrix=mat)
-    
-        # Convert the pixmap to a PIL Image
-        image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-        
-        buffered = BytesIO()
-        image.save(buffered, format="PNG")
-        pages.append(base64.b64encode(buffered.getvalue()).decode("utf-8"))
-    
-    return pages
-
-def pdf_to_image(pdf_path):
-
-    images =[]
-    try:
-        # Open the PDF file using PyMuPDF
-        pdf_document = pymupdf.open(pdf_path)
-
-        # Iterate through each page in the PDF
-        for page_num in range(len(pdf_document)):
-                # Load the page
-                page = pdf_document.load_page(page_num)
-
-                # Render the page to a pixmap
-                pix = page.get_pixmap(matrix=pymupdf.Matrix(3, 3)) # High resolution
-                # Save the QPixmap with best quality (PNG is lossless)
-                #images.append(pix)
-                pix.save("output_image.png", "PNG")
-                # Convert the Pixmap to a QImage
-                image_format = QImage.Format.Format_RGB888 if pix.alpha == 0 else QImage.Format.Format_RGBA8888
-                img = Image.fromqpixmap(pix)
-                qimage = QImage(pix.samples, pix.width, pix.height, pix.stride, image_format)
-                
-                # Convert QImage to QPixmap
-                pixmap = QPixmap.fromImage(qimage)
-                images.append(pixmap)
-
-    except Exception as e:
-            print(f"Error processing PDF: {e}")
-    return images
 
 
 # ccrop image with white background
@@ -450,3 +361,94 @@ def crop_colored_background_margins(input_image_path, output_directory, toleranc
 #print(crop_white_background_margins('C:/Users/AbdhM/AppData/Local/MyJobAssistant/edu-resource.png',
 #                                'C:/Users/AbdhM/AppData/Local/MyJobAssistant/',
 #                                edge_threshold=10,tolerance=10,margin_threshold=0.99))
+
+
+"""
+
+def bytea_to_pixmap(bytea_data):
+        try:
+            if bytea_data:
+                if isinstance(bytea_data, memoryview):
+                    bytea_data = bytea_data.tobytes()
+                
+                pixmap = QPixmap()
+                pixmap.loadFromData(bytea_data)
+                return pixmap
+            
+        except Exception as e:
+            print(f"Image loading error: {e}")
+        return QPixmap()
+
+
+def pixmap_to_base64(pixmap:QPixmap):
+        # Convert QPixmap to QImage
+        image = pixmap.toImage()
+
+        # Convert QImage to bytes
+        byte_array = QByteArray()
+        buffer = QBuffer(byte_array)
+        buffer.open(QBuffer.OpenModeFlag.WriteOnly)
+        image.save(buffer, "PNG")  # Save as PNG format
+        buffer.close()
+
+        # Convert bytes to base64
+        base64_data = base64.b64encode(byte_array.data()).decode("utf-8")
+        return base64_data
+
+def pdf_to_base64(pdf_path):
+    from PIL import Image  # Pillow for saving images
+
+    # Open the PDF file
+    pdf_document = pymupdf.open(pdf_path)
+    pages = []
+    # Iterate through each page
+    for page_number in range(len(pdf_document)):
+        # Get the page
+        page = pdf_document.load_page(page_number)
+    
+        # Set the zoom factor for high quality (e.g., 4x)
+        zoom = 4  # Higher zoom means higher resolution
+        mat = pymupdf.Matrix(zoom, zoom)
+    
+        # Render the page to an image (pixmap)
+        pix = page.get_pixmap(matrix=mat)
+    
+        # Convert the pixmap to a PIL Image
+        image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+        
+        buffered = BytesIO()
+        image.save(buffered, format="PNG")
+        pages.append(base64.b64encode(buffered.getvalue()).decode("utf-8"))
+    
+    return pages
+
+def pdf_to_image(pdf_path):
+
+    images =[]
+    try:
+        # Open the PDF file using PyMuPDF
+        pdf_document = pymupdf.open(pdf_path)
+
+        # Iterate through each page in the PDF
+        for page_num in range(len(pdf_document)):
+                # Load the page
+                page = pdf_document.load_page(page_num)
+
+                # Render the page to a pixmap
+                pix = page.get_pixmap(matrix=pymupdf.Matrix(3, 3)) # High resolution
+                # Save the QPixmap with best quality (PNG is lossless)
+                #images.append(pix)
+                pix.save("output_image.png", "PNG")
+                # Convert the Pixmap to a QImage
+                image_format = QImage.Format.Format_RGB888 if pix.alpha == 0 else QImage.Format.Format_RGBA8888
+                img = Image.fromqpixmap(pix)
+                qimage = QImage(pix.samples, pix.width, pix.height, pix.stride, image_format)
+                
+                # Convert QImage to QPixmap
+                pixmap = QPixmap.fromImage(qimage)
+                images.append(pixmap)
+
+    except Exception as e:
+            print(f"Error processing PDF: {e}")
+    return images
+"""

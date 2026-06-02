@@ -70,7 +70,7 @@ def run_latex(source:str, compile='xelatex',output_pdf_name:str='output.pdf'):
         # directory to cash
         curdir = os.curdir
         appdata_dir = os.getenv('LOCALAPPDATA')
-        app_dir = os.path.join(appdata_dir, 'Abdh\TeacherAssistant')
+        app_dir = os.path.join(appdata_dir, 'Abdh\\TeacherAssistant')
         
         # Create the directory if it doesn't exist
         os.makedirs(app_dir, exist_ok=True)

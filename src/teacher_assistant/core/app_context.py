@@ -126,8 +126,8 @@ ToolTips = {
     'StyleSheet':'There are a number of custom styles can be applied to the UI.\nChanging it will affects all UI objects of the application.',
     'Direction':'Page direction options: It is provided Left-to-Right and Right-to-Left.\nThe direction is applied on the content of main frame,\nTitlebar, left panel and right panel are not affected currently.',
     'LaTeX Settings':'Will be supported in future updates!',
-    'Back':'Navigate to the previous record.',
-    'Next':'Navigate to the next record.',
+    'Back':'Navigate to the previous page/record.',
+    'Next':'Navigate to the next page/record.',
     'Generate LaTeX':'Generate basic LaTeX code for new content.',
     'Generate HTML':'Generate basic HTML code for new content.',
     'Insert Image':'Insert an image into the current content.',
@@ -137,7 +137,8 @@ ToolTips = {
     'New Content':'Clear the current content and start a new content.',
     'Set bookmark':'Bookmark to emphasize and review before distribution',
     'Marked Item':'Bookmarked item: this item need to review before distribution',
-    'Score change warning':'It is better not to change the score after recording. Changing the value of the score may cause inconsistency in data analysis.',
+    'Score change warning':'It is better not to change the score after recording. '
+    '                       Changing the value of the score may cause inconsistency in data analysis.',
     'Activity status':'''Status of activities from all requested activities:\n
                          Replyed: Activities that have been replied to within the specified time.\n
                          Remained: Activities that still have time to be delivered.\n

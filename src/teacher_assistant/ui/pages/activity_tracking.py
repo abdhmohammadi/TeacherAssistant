@@ -14,6 +14,7 @@ from processing.Imaging.Tools import bytea_to_pixmap
 from processing.text.text_processing import local_culture_digits
 from services.edu_item_services import EduItemStudentService as edu_service
 from utils import analysis
+from processing.Imaging.Tools import pixmap_to_base64
 from ui.dialogs.answer_view import AnswerView
 from ui.widgets.widgets import ObservedBehaviourWidget
 from ui.pages.edu_resource_view import EduResourcesView
@@ -679,27 +680,12 @@ class StudentActivityTrackingPage(QWidget):
             if arg == app_context.SupportedFileTypes.IMAGE: 
 
                 pixmap = QPixmap(file_path)
-                from processing.Imaging.Tools import pixmap_to_base64
-                from processing.utils.image_tools import pdf_to_base64
                 base64_image = pixmap_to_base64(pixmap)
 
                 html_content = f'<img src="data:image/png;base64,{base64_image}" width="{app_context.A4_PIXELS}"/>'
                 
                 sender.document().clear()
                 sender.document().setHtml(html_content)
-
-            elif arg == app_context.SupportedFileTypes.PDF:
-                sender.document().clear()
-                base64s = pdf_to_base64(file_path)
-                html_content = f'<img src="data:image/png;base64,{base64s[0]}" width="{app_context.A4_PIXELS}"/>'
-                # Set the HTML content in the QTextEdit
-                sender.setHtml(html_content)
-            
-            #elif arg == app_context.SupportedFileTypes.RTF:
-
-            #    html = pypandoc.convert_file(file_path, "html")
-        
-            #    sender.document().setHtml(html)
 
             elif arg in [app_context.SupportedFileTypes.TEXT, app_context.SupportedFileTypes.HTML]:
                 

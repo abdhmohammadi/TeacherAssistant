@@ -1,5 +1,5 @@
 import os
-import pymupdf
+#import pymupdf
 from PySide6.QtCore import QSize
 from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon,QPixmap, QColor, QTextCharFormat, QTextDocument, QTextCursor)
 
@@ -14,7 +14,6 @@ from PySideAbdhUI.Widgets import SearchBox
 from processing.Imaging.Tools import pixmap_to_base64
 from processing.Imaging.SnippingTool import SnippingWindow
 from utils import helpers
-from processing.utils.image_tools import pdf_to_base64
 from PySideAbdhUI.document_editor import RichTextEditor
 from core.app_context import app_context
 
@@ -240,14 +239,27 @@ class EducationalResourceEditor(QWidget):
     def importTextFile(self): self.tabs.currentWidget().importTextFile('"Text files (*.txt)"')
     def loadHtmlFile(self): self.tabs.currentWidget().loadHtmlFile()
     def openDocx (self): self.tabs.currentWidget().openDocx()
-    def loadPDF(self): self.upload_file(sender=self.tabs.currentWidget(),arg=app_context.SupportedFileTypes.PDF, options='ReadOnly')
+    def openPdf(self): self.tabs.currentWidget().openPdf()
     def setFontFamily(self,fontFamily): self.tabs.currentWidget().setFontFamily(fontFamily)
     def setFontSize(self,size:int=12): self.tabs.currentWidget().setFontSize(size)
     def setPageSize(self,page_size_name): self.tabs.currentWidget().setPageSize(page_size_name)
     def showMarginDialog(self): self.tabs.currentWidget().showMarginDialog()
     def exportFile(self, file_type): self.tabs.currentWidget().exportFile(file_type)
     def exportAsImage(self): self.tabs.currentWidget().exportAsImage()
-    
+    def zoom(self,zm='in'):
+        if zm == 'in':
+            self.tabs.currentWidget().zoomIn()
+        elif zm== 'out':
+            self.tabs.currentWidget().zoomOut()
+        elif zm== 'fit':
+            self.tabs.currentWidget().fitPage()
+        
+    def zoom_percent(self,arg:str):
+        
+        if not arg.strip('%').isdigit(): return
+
+        self.tabs.currentWidget().setZoomPercent(int(arg.strip('%')))
+
     def create_content_commands(self):
 
         layout = QHBoxLayout()
@@ -271,19 +283,19 @@ class EducationalResourceEditor(QWidget):
         menu = QMenu(button)
 
         menu.addAction('Open Plain text', self.importTextFile) 
-        menu.addAction('Open Html file',self.loadHtmlFile)
-        menu.addAction('Open PDF(Readonly)',self.loadPDF)
-        menu.addAction('Open docx', self.openDocx)
-        #menu.addAction('LaTeX',lambda: self.doc_editor.importTextFile("LaTeX(*.tex)"))
+        menu.addAction('Open Html document',self.loadHtmlFile)
+        menu.addAction('Open Word document(docx)', self.openDocx)
+        menu.addAction('Open PDF(Readonly)',self.openPdf)
+        #menu.addAction('PDF(Editable)',self.loadPDF)      # Planed
+        #menu.addAction('LaTeX',lambda: self.loadLaTeX)    # Planed
         
         menu.addSeparator()
         
-        menu.addAction('Save as HTML', lambda: self.exportFile('html'))
         menu.addAction("Save as Plain text", lambda: self.exportFile('txt'))
+        menu.addAction('Save as HTML document', lambda: self.exportFile('html'))
+        menu.addAction('Save as  Word document(docx)', lambda: self.exportFile('docx'))
         menu.addAction("Save as Image", self.exportAsImage)
         menu.addAction("Save as PDF", lambda: self.exportFile('pdf'))
-        menu.addAction('Save as docx', lambda: self.exportFile('docx'))
-        #menu.addAction('PDF(Editable)',lambda sender= self.doc_editor,arg= app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg, options='Editable'))
         
         button.setMenu(menu)
         
@@ -418,37 +430,6 @@ class EducationalResourceEditor(QWidget):
         btn.clicked.connect(self.showMarginDialog)
         layout.addWidget(btn)
 
-        fontCombo = QFontComboBox()
-        fontCombo.setFixedWidth(100)
-        fontCombo.setFontFilters(QFontComboBox.FontFilter.AllFonts)
-        fontCombo.setWritingSystem(QFontDatabase.WritingSystem.Any)  # or QFontDatabase.Any
-        fontCombo.setCurrentFont(QFont("Arial",12))  # default font
-        fontCombo.setToolTip('System installed fonts')
-        fontCombo.currentFontChanged.connect(lambda f: self.setFontFamily(f.family()))
-        layout.addWidget(fontCombo)
-        
-        font_size_edit = QLineEdit('12')
-        font_size_edit.setFixedWidth(30)
-        font_size_edit.setToolTip('Font size')
-        font_size_edit.textChanged.connect(self.setFontSize)
-        layout.addWidget(font_size_edit)
-
-        pageCombo = QComboBox()
-        pageCombo.addItems(["A4", "Letter", "B5", "Edu-Item"])
-        pageCombo.setCurrentText('A4')
-        pageCombo.setFixedWidth(80)
-        pageCombo.setToolTip('Paper size')
-        pageCombo.currentTextChanged.connect(self.setPageSize)
-        layout.addWidget(pageCombo)
-        
-        layout.addStretch(1)
-        
-        search_input = SearchBox()
-        search_input.setPlaceholderText('Search Id ...')
-        search_input.textEdited.connect(lambda _, sender= search_input: self.load_from_database(sender))
-        layout.addWidget(search_input)
-
-
         btn_mark = QPushButton('')
         btn_mark.setProperty('class','mini')
         btn_mark.setToolTip(app_context.ToolTips['Set bookmark'])
@@ -468,6 +449,59 @@ class EducationalResourceEditor(QWidget):
         
         btn_mark.setIcon(QIcon(':icons/bookmark.svg'))
         layout.addWidget(btn_mark)
+
+        btn = QPushButton('+/-')
+        btn.setProperty('class','mini')
+        btn.setToolTip('Zoom in, out and fit page')
+        #btn.setIcon(QIcon(':icons/square-dashed.svg'))
+        btn.clicked.connect(self.showMarginDialog)
+
+        menu = QMenu(btn)
+        btn.setMenu(menu)
+
+        menu.addAction('Zoom In',lambda: self.zoom('in'))
+        menu.addAction('Zoom Out',lambda: self.zoom('out'))
+        menu.addAction('Fit page',lambda: self.zoom('fit'))
+
+        layout.addWidget(btn)
+        
+        zoom_edit = QLineEdit('100%')
+        zoom_edit.setFixedWidth(50)
+        zoom_edit.setToolTip('Zoom')
+        zoom_edit.textEdited.connect(self.zoom_percent)
+        
+        layout.addWidget(zoom_edit)
+
+        font_size_edit = QLineEdit('12')
+        font_size_edit.setFixedWidth(34)
+        font_size_edit.setToolTip('Font size')
+        font_size_edit.textChanged.connect(self.setFontSize)
+        layout.addWidget(font_size_edit)
+
+        fontCombo = QFontComboBox()
+        fontCombo.setFixedWidth(100)
+        fontCombo.setFontFilters(QFontComboBox.FontFilter.AllFonts)
+        fontCombo.setWritingSystem(QFontDatabase.WritingSystem.Any)  # or QFontDatabase.Any
+        fontCombo.setCurrentFont(QFont("Arial",12))  # default font
+        fontCombo.setToolTip('System installed fonts')
+        fontCombo.currentFontChanged.connect(lambda f: self.setFontFamily(f.family()))
+        layout.addWidget(fontCombo)
+        
+        pageCombo = QComboBox()
+        pageCombo.addItems(["A4", "Letter", "B5", "Edu-Item"])
+        pageCombo.setCurrentText('A4')
+        pageCombo.setFixedWidth(80)
+        pageCombo.setToolTip('Paper size')
+        pageCombo.currentTextChanged.connect(self.setPageSize)
+        layout.addWidget(pageCombo)
+        
+        layout.addStretch(1)
+        
+        search_input = SearchBox()
+        search_input.setToolTip('Find Id in the database ...')
+        search_input.setPlaceholderText('Find Id ...')
+        search_input.textEdited.connect(lambda _, sender= search_input: self.load_from_database(sender))
+        layout.addWidget(search_input)
         
         widget = QWidget()
         #widget.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
@@ -621,7 +655,7 @@ class EducationalResourceEditor(QWidget):
         self.metadata_input.clear()
 
 
-    def upload_PDF_as_html(self, PDF_path, sender:RichTextEditor):
+    """def upload_PDF_as_html(self, PDF_path, sender:RichTextEditor):
 
         try:
 
@@ -642,7 +676,7 @@ class EducationalResourceEditor(QWidget):
         except Exception() as e:
             print(f"Error processing PDF: {e}")
 
-
+    """
     def upload_file(self,sender:RichTextEditor, arg:str=app_context.SupportedFileTypes.IMAGE, options=None):
         
         # Open a file dialog to upload an image or PDF.
@@ -668,18 +702,6 @@ class EducationalResourceEditor(QWidget):
                     sender.insertHtml(html_content)
                 else: 
                     sender.document().clear()
-                    sender.setHtml(html_content)
-
-            elif arg == app_context.SupportedFileTypes.PDF:
-                sender.clear()
-                if options == 'Editable':
-                    self.upload_PDF_as_html(file_path, sender)
-                else:
-
-                    base64s = pdf_to_base64(file_path)
-                    html_content = f'<img src="data:image/png;base64,{base64s[0]}" width="{app_context.EDU_ITEM_PIXELS}"/>'
-                    
-                    # Set the HTML content in the QTextEdit
                     sender.setHtml(html_content)
 
             elif arg in [app_context.SupportedFileTypes.TEXT,

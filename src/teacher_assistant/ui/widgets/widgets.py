@@ -12,13 +12,13 @@ from PySide6.QtWidgets import (QHBoxLayout, QVBoxLayout, QMenu, QWidgetAction, Q
 
 from PySideAbdhUI.Notify import PopupNotifier
 from PySideAbdhUI.Widgets import Label
+from PySideAbdhUI.document_editor import RichTextEditor
 
 from PIL import Image
 
 from processing.Imaging import ImageEditor
 from processing.Imaging.Tools import bytea_to_pixmap, pixmap_to_base64
 from processing.text import text_processing
-from processing.utils.image_tools import pdf_to_base64
 from core.app_context import app_context
 from services.edu_item_services import EduItemStudentService
 from view_models.EduItems import EduItemStudentViewModel, EduItemViewModel
@@ -449,19 +449,6 @@ class EduItemStudentWidget(QWidget):
                 sender.document().clear()
                 sender.document().setHtml(html_content)
 
-            elif arg == app_context.SupportedFileTypes.PDF:
-                sender.document().clear()
-                base64s = pdf_to_base64(file_path)
-                html_content = f'<img src="data:image/png;base64,{base64s[0]}" width="{app_context.A4_PIXELS}"/>'
-                # Set the HTML content in the QTextEdit
-                sender.setHtml(html_content)
-            
-            #elif arg == app_context.SupportedFileTypes.RTF:
-
-            #    html = pypandoc.convert_file(file_path, "html")
-        
-            #    sender.document().setHtml(html)
-
             elif arg in [app_context.SupportedFileTypes.TEXT, app_context.SupportedFileTypes.HTML]:
                 
                 sender.document().clear()
@@ -507,10 +494,10 @@ class EduItemWidget(QWidget):
         main_layout.addWidget(self.titlebar,0,0,1,1)
 
         # Create a QLabel for the HTML content
-        self.content_label = QLabel()   # HTML content in second column 
-        self.content_label.setWordWrap(True)        
-        self.content_label.setTextFormat(Qt.TextFormat.RichText)
-        self.content_label.setProperty('class','EduText')
+        self.content_label = RichTextEditor(default_size='Edu-Item') #QLabel()   # HTML content in second column
+        # Remove margins to fit with Grid card.
+        self.content_label.fit_margins() 
+        
         self.content_label.setText(self._view_model.content)
         # Add the content label to the layout
         main_layout.addWidget(self.content_label,1,0,1,1, Qt.AlignmentFlag.AlignTop)

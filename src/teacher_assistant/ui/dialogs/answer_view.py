@@ -14,7 +14,6 @@ from PySide6.QtWidgets import ( QDialog, QFileDialog, QHBoxLayout, QLineEdit, QL
                                QPushButton,QVBoxLayout, QTabWidget)
 
 from PySideAbdhUI.Notify import PopupNotifier
-from processing.utils.image_tools import pdf_to_base64
 from processing.text import text_processing
 from core.app_context import app_context
 
@@ -260,11 +259,6 @@ class AnswerView(QDialog):
         elif '*.html *.htm'.find(ext)>-1:
             with open(filepath, "r", encoding="utf-8") as f: html_content = f.read()
 
-        elif '*.pdf'.find(ext)>-1:
-            b64 = pdf_to_base64(filepath)
-            # We use first page of pdf file
-            html_content = f'<img src="data:image/png;base64,{b64[0]}" width="{app_context.EDU_ITEM_PIXELS}"/>'
-        
         return html_content
     
     def _on_replace_answer(self, textEdit:QTextEdit):

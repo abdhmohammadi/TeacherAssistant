@@ -186,7 +186,13 @@ class EducationalResourceEditor(QWidget):
         self.source_input.setPlaceholderText("Source")
         self.source_input.setToolTip('Specifies the source textbook or concept for current question.')
         clayout.addWidget(self.source_input)
+        search_input = SearchBox()
+        search_input.setToolTip('Find Id in the database ...')
+        search_input.setPlaceholderText('Find Id ...')
+        search_input.textEdited.connect(lambda _, sender= search_input: self.load_from_database(sender))
+        clayout.addWidget(search_input)
         
+
         self.tabs.setCornerWidget(w,Qt.Corner.TopRightCorner)
 
 
@@ -229,23 +235,26 @@ class EducationalResourceEditor(QWidget):
 
 
     def insertMathDialog(self): self.tabs.currentWidget().insertMathDialog()
-    def insertImageFile(self): self.tabs.currentWidget().insertImageFile()
+    def insertImageFile(self): self.tabs.currentWidget().insertImage()
     def insertTableDialog(self): self.tabs.currentWidget().insertTableDialog()
     def applyTextStyle(self, command=''): self.tabs.currentWidget().applyTextStyle(command)
     def chooseTextColor(self): self.tabs.currentWidget().chooseTextColor()
     def chooseBackgroundColor(self): self.tabs.currentWidget().chooseBackgroundColor()
     def setAlignment(self, command='left'): self.tabs.currentWidget().setAlignment(command)
     def setParagraphDirection(self, rtl=False): self.tabs.currentWidget().setParagraphDirection(rtl)
-    def importTextFile(self): self.tabs.currentWidget().importTextFile('"Text files (*.txt)"')
-    def loadHtmlFile(self): self.tabs.currentWidget().loadHtmlFile()
-    def openDocx (self): self.tabs.currentWidget().openDocx()
-    def openPdf(self): self.tabs.currentWidget().openPdf()
     def setFontFamily(self,fontFamily): self.tabs.currentWidget().setFontFamily(fontFamily)
     def setFontSize(self,size:int=12): self.tabs.currentWidget().setFontSize(size)
     def setPageSize(self,page_size_name): self.tabs.currentWidget().setPageSize(page_size_name)
     def showMarginDialog(self): self.tabs.currentWidget().showMarginDialog()
-    def exportFile(self, file_type): self.tabs.currentWidget().exportFile(file_type)
-    def exportAsImage(self): self.tabs.currentWidget().exportAsImage()
+    
+    def exportFile(self, file_type): self.tabs.currentWidget().saveFile(file_type)
+    def exportAsImage(self): self.tabs.currentWidget().saveImage()
+
+    def importTextFile(self): self.tabs.currentWidget().loadTextFile()
+    def loadHtmlFile(self): self.tabs.currentWidget().loadHtmlFile()
+    def openDocx (self): self.tabs.currentWidget().loadDocxFile()
+    def openPdf(self): self.tabs.currentWidget().loadPdfFile()
+    
     def zoom(self,zm='in'):
         if zm == 'in':
             self.tabs.currentWidget().zoomIn()
@@ -496,12 +505,6 @@ class EducationalResourceEditor(QWidget):
         layout.addWidget(pageCombo)
         
         layout.addStretch(1)
-        
-        search_input = SearchBox()
-        search_input.setToolTip('Find Id in the database ...')
-        search_input.setPlaceholderText('Find Id ...')
-        search_input.textEdited.connect(lambda _, sender= search_input: self.load_from_database(sender))
-        layout.addWidget(search_input)
         
         widget = QWidget()
         #widget.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
@@ -794,6 +797,10 @@ class EducationalResourceEditor(QWidget):
             if <b>direction</b> is <b><</b> is fetched previou to current record,<br>
             and if <b>direction</b> is <b>EMPTY STRING,</b> is fetched first record bigger than zero Id.<br>
         """
+        if self.tabs.currentWidget().isModified():
+            PopupNotifier.Notify(self, 'Warning','unsaved data detected.',
+                                 timer =False,slot= self.doc_editor.setClean)
+            return
         try:
             order = 'ORDER BY Id DESC' if direction == '<' else ' ORDER BY Id ASC'
             where =  f'WHERE Id {direction} {self.id} {order} LIMIT 1;' if not direction == '' else f'WHERE Id>0 {order} LIMIT 1;'

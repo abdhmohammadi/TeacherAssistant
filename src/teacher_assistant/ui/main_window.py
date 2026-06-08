@@ -1,5 +1,5 @@
 
-from PySideAbdhUI import Window
+from PySideAbdhUI import Window, __version__ as ui_version
 
 # PySide6 modules
 from PySide6.QtCore import Qt
@@ -135,9 +135,25 @@ class MainWindow(Window.AbdhWindow):
         self.add_right_panel_item(theme_selector)
         
 
-        github = QLabel('\n https://github.com/abdhmohammadi/')
-        self.add_right_panel_item(github)
+        self.right_panel_layout.addStretch(1)
+
+        
+        self.add_right_panel_item(QLabel(f'App Version: {app_context.app_version}'))
+        self.add_right_panel_item(QLabel(f' UI Version: {ui_version}'))
+
+        github_repo = 'https://github.com/abdhmohammadi/teacherassisstance'
+        gitgub_page = 'https://abdhmohammadi.github.io'
+        ui_repo     =  'https://github.com/abdhmohammadi/pysydeabdhui'
+
+        github = QLabel(f'<a href="{gitgub_page}">Home page</a><br>' \
+                        f'<a href="{github_repo}">GitHub</a><br>' \
+                        f'<a href="{ui_repo}">GitHub for UI</a>', 
+                        openExternalLinks=True, 
+                        textInteractionFlags= Qt.TextInteractionFlag.LinksAccessibleByMouse)
+        
         github.setProperty('class','hyperlink')
+
+        self.add_right_panel_item(github)
 
 
     def on_theme_switch(self,sender:QComboBox):

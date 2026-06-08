@@ -4,7 +4,7 @@ import sys
 from utils.Json_manager import JSONManager
 from core.theme_manager import ThemeManager
 from data.database import psycopg2_database
-
+from version import __version__
 # IMPORTANT: Registers the resources automatically
 # this module embeds icon resources to the app without including main files to
 # the installable package 
@@ -27,8 +27,8 @@ class AppContext:
         self.theme_manager = ThemeManager()
     
     
-    #@property 
-    #def connection_settings(self): return self.___connection_settings___
+    @property 
+    def app_version(self): return __version__
     @property 
     def database(self): return self.__database__
 

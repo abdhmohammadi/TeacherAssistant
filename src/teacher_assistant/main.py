@@ -5,7 +5,7 @@
 #   
 # HOW TO BUILD THIS PROJECT:           
 # INSTALL PySideAbdhUI:
-#        Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.3.9-py3-none-any.whl'
+#        Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.6.6.3-py3-none-any.whl'
 #
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
@@ -37,8 +37,6 @@ from core.app_context import app_context
 from ui.main_window import MainWindow
 from ui.widgets import connection_form  # a dialog to validate user and database connection
 
-from version import __version__ as version
-
 if __name__ == "__main__":
     
     app = QApplication(sys.argv)    
@@ -58,7 +56,7 @@ if __name__ == "__main__":
     
     app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
     
-    main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{version}', logo=QPixmap(':/icons/app-icon.png'))
+    main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{app_context.app_version}', logo=QPixmap(':/icons/app-icon.png'))
     
     main_window.show()
 

@@ -1,11 +1,11 @@
 import os
 #import pymupdf
 from PySide6.QtCore import QSize
-from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon,QPixmap, QColor, QTextCharFormat, QTextDocument, QTextCursor)
+from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon, QTextCursor)
 
-from PySide6.QtWidgets import (QComboBox, QFileDialog, QFontComboBox, QTabWidget, QTextEdit, 
+from PySide6.QtWidgets import (QComboBox, QFontComboBox, QTabWidget, QTextEdit, 
                                QVBoxLayout, QWidget, QLabel,QApplication, QMessageBox,
-                               QPushButton, QHBoxLayout, QLineEdit, QMenu,QWidgetAction)
+                               QPushButton, QHBoxLayout, QLineEdit, QMenu)
 
                 
 from PySideAbdhUI.Notify import PopupNotifier
@@ -16,89 +16,6 @@ from processing.Imaging.SnippingTool import SnippingWindow
 from utils import helpers
 from PySideAbdhUI.document_editor import RichTextEditor
 from core.app_context import app_context
-
-"""
-# EduationalResourceEditor.py
-# ###################################################################################################
-#                                 EDUCATION RESOURCE EDITOR                                         #
-# ################################################################################################### 
-# This is an Editor for education resources like questions and other learning units, here           #
-# we able to manage education resources as Plain Text, RTF, image, PDF, html and LaTeX.             #
-# main technology to manage these contents is HTML script, However two usage of Html concept        # 
-# is applyed here, first, as an editor to write learning unit, this type is pure usage of html      #
-# script to create a learning unit, but it does not support the math formulas. second usage         #
-# is to save and restore other datatypes in the database.                                           #
-# We save all of other types in html format indexed by tag of 'meta' and name = 'qrichtext'         #
-# (the 'meta' is a tag of html). this usage is more integrated with QTextEdit object and            #
-# QTextDocument. Each script indexed by meta name='viewport' is raw script and is shown to user     #
-# as pure Html script and other scripts indexted by mata name ='qrichtext' is shown as processed    #
-# text, These scripts is ready to publish. However, it is possible to edit and it can be edited     #
-# as normal text(without direct use of HTML or LaTeX codes).                                        #
-# Supported text datatypes is listed as follow:                                                     #
-#                                                                                                   #
-# Plain Text: is directy written in QTextEdit and is converted to html by toHtml() method at        #
-#             save time and when is read from database is loaded to the QTextEdit by calling        #
-#             setHtml(...) method. this method does not support formated texts  and other           #
-#             special scripts as math formola and image. it is proper to simple resources.          #
-#                                                                                                   #
-# Rich Text : Rich Text is a document that is saved by .rtf file extension, like Plain Text         #
-#             is written directly in QTextEdit an is saved using toHtml() and is restored by        #
-#             setHtml(...) method. it supports formatted texts, image contents and tables.          #
-#             Also it able to support other more advanced properies against Plain Text.             #
-#                                                                                                   #
-# LaTeX     : The LaTeX script is written and saved as plain text. in saveing method of this        #
-#             content is not used any conversion. It is saved by calling toPlainText() method.      #
-#             Also at read time from database will been used setPlainText(...). this is row data,   #
-#             befor using it must be processed by a LaTeX engine like PDFlatex, xelatex and etc.    #                                                                              #
-#             The LaTeX raw script is recognized  at reading time by 'regular expresion processing' #
-#             techniques over \\documentclass{...}, \\begin{document}... \\end{document} and other     #
-#             keywords of LaTeX script.                                                             #
-#                                                                                                   #
-# Html      : is very similar to LaTeX, we use this script to write Html code directly. LaTex       #
-#             and Html data are raw and must be processed befor useing. to process the Html code    #
-#             it is enugh we reset content with setHtml(...). at first step we access to the        #
-#             Html script of QTextEdit by toPlainText(), next we reset using setHtml(...).          #
-#                                                                                                   #
-# Image     : Image conent is converted to base64 string at load time and is updated by setting to  #
-#             html tag <img src="data:image/png;base64,{base64_image}"/> then uses setHtml(...)     #
-#             method to upload in QTextEdit document. after this step, at save and read time it is  #
-#             considered as an Html content.                                                        #
-#                                                                                                   #
-# PDF       : In this code we supose the PDF contents has One page, we don't need more page to use  #
-#             as a learning resource. if the loaded content has been more pages we use first page   #
-#             and other pages is skipped. If we don't need to manipulation, PDF content can load as #
-#             image. becuase of editing porpose, we can load as html raw string. all actions on the #
-#             PDF content after load is like image and html.                                        #
-#                                                                                                   #
-# docx      : This file type currently is not fully supported. but It can load as  html using       #
-#             'pypandoc' package. currently word documents that loaded by this method loses many    #
-#             formating properties. however the docx files is loaded as html.                       #
-#                                                                                                   #
-# All of data is saved using HTML format with width = 6.19 inches, this value is avilable space for #
-# edu-content in the A4 paper, because there are 0.5 inches space for left and right margin and 0.54#
-# inches is used for columns 1 and 3 in the our 3-columns paper. Below is output table.             #
-#                                                                                                   #
-# │     ┌──────┬─────────────────────────────────────────────────────────────────────┬──────┐     │ #
-# │ 0.5 │POINT │                              HEADER                                 │  ROW │ 0.5 │ #
-# │     ├──────┼─────────────────────────────────────────────────────────────────────┼──────┤     │ #
-# │     │ 0.54 │                       CONTENT - 6.19 INCHES                         │ 0.54 │     │ #
-# │     ├──────┼─────────────────────────────────────────────────────────────────────┼──────┤     │ #
-# │     │      │                               CONTENT                               │      │     │ #
-# │     │      │                                                                     │      │     │ #
-# │     │──────┼─────────────────────────────────────────────────────────────────────┼──────┤     │ #
-# │     │  SUM │                               FOOTER                                │      │     │ #
-# │     └──────┴─────────────────────────────────────────────────────────────────────┴──────┘     │ #
-#                                                                                                   #
-# The 6.19 inches must be converted to pixels. this coversion is done by DPI(dots per inches), final#
-# pixels is equal to 6.19xDPI. to keep quality of images durng conversion, using of 'width=6.19dpi' #
-# property of HTML script is good choise against other methods.                                     #
-# For editable porpose the content is not saved as final version, It is save as raw data. In case   #
-# of LaTeX script if a content be ready to use or publish, it had been provided by a command 'RUN-  #
-# TEX' this command needs a latex engine to process. After processing it is saved as byte64 image   #
-# in the html body or tag of <img ... width='6.19xDPI'/>.                                           #
-#                                                                                                   #
-#####################################################################################################
-"""
 
 class EducationalResourceEditor(QWidget):
 
@@ -233,7 +150,6 @@ class EducationalResourceEditor(QWidget):
         return layout
 
 
-
     def insertMathDialog(self): self.tabs.currentWidget().insertMathDialog()
     def insertImageFile(self): self.tabs.currentWidget().insertImage()
     def insertTableDialog(self): self.tabs.currentWidget().insertTableDialog()
@@ -247,10 +163,12 @@ class EducationalResourceEditor(QWidget):
     def setPageSize(self,page_size_name): self.tabs.currentWidget().setPageSize(page_size_name)
     def showMarginDialog(self): self.tabs.currentWidget().showMarginDialog()
     
-    def exportFile(self, file_type): self.tabs.currentWidget().saveFile(file_type)
-    def exportAsImage(self): self.tabs.currentWidget().saveImage()
+    def saveFile(self, file_type): self.tabs.currentWidget().saveFile(file_type)
+    def exportAsImage(self): self.tabs.currentWidget().extractAsImages()
+    def OpenFileDialog(self): self.tabs.currentWidget().LoadFileDialog('Open File','', dialog_type='open')
+    def SaveFileDialog(self): self.tabs.currentWidget().LoadFileDialog('Save File','', dialog_type='save')
 
-    def importTextFile(self): self.tabs.currentWidget().loadTextFile()
+    def loadTextFile(self, auto_render=False): self.tabs.currentWidget().loadTextFile(auto_render)
     def loadHtmlFile(self): self.tabs.currentWidget().loadHtmlFile()
     def openDocx (self): self.tabs.currentWidget().loadDocxFile()
     def openPdf(self): self.tabs.currentWidget().loadPdfFile()
@@ -276,35 +194,37 @@ class EducationalResourceEditor(QWidget):
         layout.setSpacing(2)
 
         # Button to clear content of the document
-        btn = QPushButton('')
-        btn.setProperty('class','mini')
-        btn.setIcon(QIcon(':icons/text.svg'))
-        btn.setToolTip(app_context.ToolTips['New Content'])
-        btn.clicked.connect(self.clear_content)
-        layout.addWidget(btn)
+        #btn = QPushButton('')
+        #btn.setProperty('class','mini')
+        #btn.setIcon(QIcon(':icons/text.svg'))
+        #btn.setToolTip(app_context.ToolTips['New Content'])
+        #btn.clicked.connect(self.clear_content)
+        #layout.addWidget(btn)
 
         # INSERT MENU(Clean content and upload files as new content)
         button = QPushButton('')
         button.setProperty('class','mini')
-        button.setIcon(QIcon(':icons/folder-open-dot.svg'))
+        button.setIcon(QIcon(':icons/file-text.svg'))
         button.setToolTip('Working with files')
 
         menu = QMenu(button)
 
-        menu.addAction('Open Plain text', self.importTextFile) 
-        menu.addAction('Open Html document',self.loadHtmlFile)
-        menu.addAction('Open Word document(docx)', self.openDocx)
-        menu.addAction('Open PDF(Readonly)',self.openPdf)
+        menu.addAction('New', self.clear_content,'CTRL+N')
+        menu.addAction('Open File', self.OpenFileDialog)
+        #menu.addAction('Open plain text(auto-render)',lambda: self.loadTextFile(auto_render=True))
+        #menu.addAction('Open Html document',self.loadHtmlFile)
+        #menu.addAction('Open Word document(docx)', self.openDocx)
+        #menu.addAction('Open PDF(Readonly)',self.openPdf)
         #menu.addAction('PDF(Editable)',self.loadPDF)      # Planed
         #menu.addAction('LaTeX',lambda: self.loadLaTeX)    # Planed
         
-        menu.addSeparator()
+        #menu.addSeparator()
         
-        menu.addAction("Save as Plain text", lambda: self.exportFile('txt'))
-        menu.addAction('Save as HTML document', lambda: self.exportFile('html'))
-        menu.addAction('Save as  Word document(docx)', lambda: self.exportFile('docx'))
-        menu.addAction("Save as Image", self.exportAsImage)
-        menu.addAction("Save as PDF", lambda: self.exportFile('pdf'))
+        menu.addAction("Save File", self.SaveFileDialog)
+        #menu.addAction('Save as HTML document', lambda: self.saveFile('html'))
+        #menu.addAction('Save as  Word document(docx)', lambda: self.saveFile('docx'))
+        menu.addAction("Extract as Images", self.exportAsImage)
+        #menu.addAction("Save as PDF", lambda: self.saveFile('pdf'))
         
         button.setMenu(menu)
         
@@ -619,8 +539,14 @@ class EducationalResourceEditor(QWidget):
 
         sender.setText(latex_content)
     """
+    
     def clear_content(self):
 
+        if self.tabs.currentWidget().isModified():
+            PopupNotifier.Notify(self, 'Warning','unsaved data detected. to ignore click "DISCARD" and retry!',
+                                 ok_slot= self.doc_editor.setClean)
+            return
+        
         self.id = 0
         self.Id_label.setText('(New item)')
         self.source_input.clear()
@@ -798,8 +724,8 @@ class EducationalResourceEditor(QWidget):
             and if <b>direction</b> is <b>EMPTY STRING,</b> is fetched first record bigger than zero Id.<br>
         """
         if self.tabs.currentWidget().isModified():
-            PopupNotifier.Notify(self, 'Warning','unsaved data detected.',
-                                 timer =False,slot= self.doc_editor.setClean)
+            PopupNotifier.Notify(self, 'Warning','unsaved data detected. to ignore click "DISCARD"',
+                                 ok_slot= self.doc_editor.setClean)
             return
         try:
             order = 'ORDER BY Id DESC' if direction == '<' else ' ORDER BY Id ASC'

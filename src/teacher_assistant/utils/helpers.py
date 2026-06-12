@@ -222,6 +222,7 @@ def open_pdf_platform_specific(pdf_path):
         print(f"Error opening PDF: {e}")
         return False
 
+
 A4_width_mm = 210
 A4_height_mm = 297
 

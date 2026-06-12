@@ -62,7 +62,6 @@ class DataLoaderWorker(QRunnable):
                 # Fetch a small batch of rows (20 at a time) for internal processing
                 # This prevents loading all data at once and keeps UI responsive
                 rows = cursor.fetchmany(20)  # Small internal batches
-        
                 # Emit signal to main thread with the batch of data
                 # This allows the UI to update incrementally as data loads
                 self.signals.batch_ready.emit(rows)

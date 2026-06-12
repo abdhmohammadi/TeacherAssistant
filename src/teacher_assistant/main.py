@@ -5,8 +5,8 @@
 #   
 # HOW TO BUILD THIS PROJECT:           
 # INSTALL PySideAbdhUI:
-#        Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.6.6.3-py3-none-any.whl'
-#
+#        Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.7.9.6-py3-none-any.whl'
+# 
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
 #    1. PyInstaller:
@@ -22,7 +22,7 @@
 #        to recompile this file. the scripts/compile_qrc.py does this task and created resources_rc.py.
 #        We imported resources_rc in the src/teacher_assistant/core/app_context.py to use icons in the app scope.
 #    
-
+ 
 import os
 import sys
   
@@ -49,15 +49,14 @@ if __name__ == "__main__":
     current_font = app_context.settings_manager.find_value('font')
     
     if current_font:
-       app_context.theme_manager.update_qss_font(
-           dict(current_font)['size'],dict(current_font)['family'])
+       app_context.theme_manager.update_qss_font(dict(current_font)['size'],dict(current_font)['family'])
 
     app_context.theme_manager.load()
-    
+
     app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
     
     main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{app_context.app_version}', logo=QPixmap(':/icons/app-icon.png'))
-    
+     
     main_window.show()
 
     connection_dialog = connection_form.PostgreSqlConnectionWidget(main_window)

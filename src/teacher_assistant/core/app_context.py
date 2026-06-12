@@ -70,7 +70,7 @@ class AppContext:
         # Set the settings manager path
         self.settings_manager.set_path(self.appdata_path +'\\settings.json')
 
-        self.resource_path = app_path.replace('core','') +'\\resources' 
+        self.resource_path = app_path.replace('core','') +'resources' 
         # Set the config manager path
         tmp_file_path = self.resource_path +'\\templates\\01-Quiz-config.json'
         self.template_config.set_path(tmp_file_path)

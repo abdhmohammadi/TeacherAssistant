@@ -1,20 +1,21 @@
 import os
+import re
 #import pymupdf
 from PySide6.QtCore import QSize
 from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon, QTextCursor)
 
-from PySide6.QtWidgets import (QComboBox, QFontComboBox, QTabWidget, QTextEdit, 
+from PySide6.QtWidgets import (QComboBox, QFileDialog, QFontComboBox, QTabWidget, QTextEdit, 
                                QVBoxLayout, QWidget, QLabel,QApplication, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit, QMenu)
 
                 
 from PySideAbdhUI.Notify import PopupNotifier
 from PySideAbdhUI.Widgets import SearchBox
-
+from PySideAbdhUI.Documents.document_editor import RichTextEditor
 from processing.Imaging.Tools import pixmap_to_base64
 from processing.Imaging.SnippingTool import SnippingWindow
-from utils import helpers
-from PySideAbdhUI.document_editor import RichTextEditor
+from utils.editor_helper import extract_editor_parts
+
 from core.app_context import app_context
 
 class EducationalResourceEditor(QWidget):
@@ -210,21 +211,15 @@ class EducationalResourceEditor(QWidget):
         menu = QMenu(button)
 
         menu.addAction('New', self.clear_content,'CTRL+N')
+        menu.addAction('Open Package', self.on_open_package)
         menu.addAction('Open File', self.OpenFileDialog)
-        #menu.addAction('Open plain text(auto-render)',lambda: self.loadTextFile(auto_render=True))
-        #menu.addAction('Open Html document',self.loadHtmlFile)
-        #menu.addAction('Open Word document(docx)', self.openDocx)
-        #menu.addAction('Open PDF(Readonly)',self.openPdf)
+        menu.addSeparator()
         #menu.addAction('PDF(Editable)',self.loadPDF)      # Planed
         #menu.addAction('LaTeX',lambda: self.loadLaTeX)    # Planed
         
-        #menu.addSeparator()
-        
+        menu.addAction('Save Package', self.on_save_package)
         menu.addAction("Save File", self.SaveFileDialog)
-        #menu.addAction('Save as HTML document', lambda: self.saveFile('html'))
-        #menu.addAction('Save as  Word document(docx)', lambda: self.saveFile('docx'))
         menu.addAction("Extract as Images", self.exportAsImage)
-        #menu.addAction("Save as PDF", lambda: self.saveFile('pdf'))
         
         button.setMenu(menu)
         
@@ -432,6 +427,39 @@ class EducationalResourceEditor(QWidget):
 
         return widget
     
+    def on_save_package(self):
+        
+        full_html =  self.doc_editor.getFullHtmlAsync()
+        styles , content = extract_editor_parts(full_html)
+
+        block = f'<BLOCK>\n{styles}\n{content}</BLOCK>'
+
+        filepath, _ = QFileDialog.getSaveFileName(None, 'Save Package', '','Text(*.txt)')
+
+        with open(filepath, mode='w',encoding='utf-8') as f: f.write(block)
+
+    def on_open_package(self):
+        
+        if self.notify_unsaved_content(): return
+        
+        filepath, _ = QFileDialog.getOpenFileName(None, 'Open package','','Text(*.txt)')
+        
+        if not filepath: return
+        
+        with open(filepath, mode='r',encoding='utf-8') as f:  block = f.read()
+        
+        block = block.replace('<BLOCK>','')
+        block = block.replace('</BLOCK>','')
+
+        # Extract all style blocks from imported HTML.
+        styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
+        styles = ''.join(styles)
+        # Remove style blocks from body.
+        # They will be reinserted later after synchronization.
+        content = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
+
+        self.doc_editor.copy_content(content, styles)
+ 
     
     '''def create_answer_commands(self):
 
@@ -540,12 +568,17 @@ class EducationalResourceEditor(QWidget):
         sender.setText(latex_content)
     """
     
-    def clear_content(self):
-
-        if self.tabs.currentWidget().isModified():
+    def notify_unsaved_content(self):
+        
+        if self.doc_editor.isModified():
             PopupNotifier.Notify(self, 'Warning','unsaved data detected. to ignore click "DISCARD" and retry!',
                                  ok_slot= self.doc_editor.setClean)
-            return
+            return True
+        return False
+    
+    def clear_content(self):
+
+        if self.notify_unsaved_content(): return
         
         self.id = 0
         self.Id_label.setText('(New item)')
@@ -741,8 +774,24 @@ class EducationalResourceEditor(QWidget):
                 self.id = int(row[0])
                 self.source_input.setText(row[1])
                 self.score_input.setText(str(row[2]))
+                # row[3] is a block of question/learning material
+                block = row[3]
+                block = block.replace('<BLOCK>','')
+                block = block.replace('</BLOCK>','')
+
+                # Extract all style blocks from imported HTML.
+                styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
+                styles = ''.join(styles)
+
+                # Remove style blocks from body.
+                # They will be reinserted later after synchronization.
+                block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
+
+                block = block.replace("<CONTENT>","")
+                block = block.replace("</CONTENT>","")
                 
-                self.doc_editor.setText(row[3])
+                self.doc_editor.copy_content(block, styles)
+
                 self.answer_input.setText(row[4])
                 self.metadata_input.setText(row[5])
                 
@@ -752,8 +801,6 @@ class EducationalResourceEditor(QWidget):
             
         except Exception() as e:
             PopupNotifier.Notify(self,"Message", f"Error: {e}.")
-
-        
 
     def load_from_database(self,sender:QLineEdit):
         
@@ -787,7 +834,15 @@ class EducationalResourceEditor(QWidget):
         score = float(score) if score !='' and score.replace('.','').isnumeric() else '1'
         
         # Get the entire content of QTextEdit
-        content = self.doc_editor.getHtmlContentSync()
+        source_html = self.doc_editor.getFullHtmlAsync()
+        styles , content = extract_editor_parts(source_html)
+
+        # remove id if exist and return <style> ... </style>
+        styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
+        # clean if styles are empty.
+        if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = "<style></style>"
+        
+        content = f'<BLOCK>\n{styles}\n<CONTENT>\n{content}\n</CONTENT>\n</BLOCK>'
 
         answer = self.answer_input.getHtmlContentSync()
 

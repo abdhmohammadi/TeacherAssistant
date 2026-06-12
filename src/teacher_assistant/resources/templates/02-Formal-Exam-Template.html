@@ -1,26 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
 
-    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1.0">
-    
-    <title>School level formal exam template</title>
-    
-    <style>
-        table 
-        {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td 
-        {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: center;
-        }
-
-    </style>
-</head>
 <!--
 padding: 
     Shorthand property to set values for the thickness of the padding area. 
@@ -30,12 +8,10 @@ padding:
     The value may not be negative.
     (Edge 12, Firefox 1, Safari 1, Chrome 1, IE 4, Opera 3)
 -->
-<body style="direction:-- direction --; font-family:-- font-family --;">
-
-    <div style="text-align: center;">-- In the name of God --</div>
-<!-- Header Table -->
-
-<table>
+<div style="text-align: center;">-- In the name of God --</div>
+<div dir="-- direction --">
+<!-- Paper header  -->
+<table style="margin-bottom: -8px;">
     <tr>
         <td style="vertical-align: top; text-align:-- Text Alignment --; width:-- 2.42 Inches --; padding:5px">-- Stu-Name --<br>-- Stu-Id --</td>
         <td rowspan="2" style="border-bottom:none; width: -- 2.43 Inches --px; text-align: center;">-- Organisation Info --</td>
@@ -73,69 +49,4 @@ padding:
     </tr>
 
 </table>
-
-
-
-<script>
-    // Persian digits mapping
-    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-
-    // Check if element is RTL
-    function isRTL(element) {
-      return getComputedStyle(element).direction === 'rtl';
-    }
-
-    // Convert digits in RTL elements
-    function convertRTLDigits(node) {
-      if (node.nodeType === Node.TEXT_NODE && isRTL(node.parentElement)) {
-        node.nodeValue = node.nodeValue.replace(/\d/g, match => 
-          persianDigits[parseInt(match)]
-        );
-      }
-    }
-
-    // Process all nodes
-    function convertDigitsInRTLElements() {
-      const walker = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-      );
-
-      let node;
-      while ((node = walker.nextNode())) {
-        convertRTLDigits(node);
-      }
-    }
-
-    // Initial conversion
-    convertDigitsInRTLElements();
-
-    // Optional: MutationObserver for dynamic content
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            const walker = document.createTreeWalker(
-              node,
-              NodeFilter.SHOW_TEXT,
-              null,
-              false
-            );
-            let textNode;
-            while ((textNode = walker.nextNode())) {
-              convertRTLDigits(textNode);
-            }
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-</script>
-</body>
-</html>
+ </div>

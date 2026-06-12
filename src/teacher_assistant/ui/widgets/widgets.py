@@ -3,6 +3,7 @@ import io
 #import pypandoc
 
 from datetime import datetime
+import re
 
 from PySide6.QtGui import (QIcon, QPixmap,Qt, QIcon, QAction, QPixmap, QTextDocument,QTextCursor, QImage, QTextImageFormat)
 from PySide6.QtCore import Qt, Signal, QPoint, QBuffer
@@ -12,8 +13,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QVBoxLayout, QMenu, QWidgetAction, Q
 
 from PySideAbdhUI.Notify import PopupNotifier
 from PySideAbdhUI.Widgets import Label
-from PySideAbdhUI.document_editor import RichTextEditor
-
+from PySideAbdhUI.Documents.document_viewer import DocumentViewer
 from PIL import Image
 
 from processing.Imaging import ImageEditor
@@ -327,8 +327,7 @@ class EduItemStudentWidget(QWidget):
         content_scroll.setWidget(main_content_label)
         content_scroll.setFixedHeight(150) # adjust height as needed
 
-        if main_content == '' or main_content == None: 
-            content_scroll.setVisible(False)
+        if main_content == '' or main_content == None: content_scroll.setVisible(False)
             
         # adding to row 1, column 0
         main_layout.addWidget(content_scroll,1,0)
@@ -467,7 +466,7 @@ class EduItemWidget(QWidget):
         # source: data[3], additional_details: data[4]
         super().__init__(parent)
         
-        self.setFixedWidth(width)
+        #self.setFixedWidth(width)
         
         self._view_model = EduItemViewModel(cursor=cursor) 
         # Init UI values
@@ -483,7 +482,8 @@ class EduItemWidget(QWidget):
         main_layout = QGridLayout(self)
 
         main_layout.setContentsMargins(2, 2, 2, 2)
-        main_layout.setSpacing(0)                 
+        main_layout.setSpacing(0)
+        # ?????????????????????                 
         background_layer = QWidget()
         background_layer.setProperty('class', 'EduItem')
         background_layer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -494,20 +494,46 @@ class EduItemWidget(QWidget):
         main_layout.addWidget(self.titlebar,0,0,1,1)
 
         # Create a QLabel for the HTML content
-        self.content_label = RichTextEditor(default_size='Edu-Item') #QLabel()   # HTML content in second column
-        # Remove margins to fit with Grid card.
-        self.content_label.fit_margins() 
+        self.item_viewer = DocumentViewer(default_size='Edu-Item',margins=(1,10,1,10))
+        self.item_viewer.setPageMargins(1,10,1,10)
+        self.item_viewer.setFixedWidth(270*3-10)
+        self.item_viewer.setMaximumHeight(200)
+        self.item_viewer.loadFinished.connect(self._on_viewer_loaded)
         
-        self.content_label.setText(self._view_model.content)
+        # self._view_model.content is a block of question/learning material
+        block = self._view_model.content
+        block = block.replace('<BLOCK>','')
+        block = block.replace('</BLOCK>','')
+
+        # Extract all style blocks from imported HTML.
+        styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
+        styles = ''.join(styles)
+
+        # Remove style blocks from body.
+        # They will be reinserted later after synchronization.
+        block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
+
+        block = block.replace("<CONTENT>","")
+        block = block.replace("</CONTENT>","")
+
+        self.item_viewer.setPageMargins(1,10,1,10)
+
+        self.item_viewer.copy_content(block, styles)
+
         # Add the content label to the layout
-        main_layout.addWidget(self.content_label,1,0,1,1, Qt.AlignmentFlag.AlignTop)
+        main_layout.addWidget(self.item_viewer,1,0,1,1, Qt.AlignmentFlag.AlignTop)
+    
+    def _on_viewer_loaded(self, ok: bool):
+        if ok: self.item_viewer.toggle_scroll_visibility(False)
 
     def update_view(self):
 
         # Bind ViewModel properties to UI elements
         info = str(self._view_model.Id)
+        # Source: it is a textbook or resource address that learning item has been taken from.
         info += '<br>Source: ' + self._view_model.source +'<br><b>Score:</b>'
-        self.content_label.setText(self._view_model.content)
+        
+        #self.item_viewer.setText(self._view_model.content)
 
     def set_model_data(self,data, selected = False):
 
@@ -630,7 +656,6 @@ class EduItemWidget(QWidget):
 
 
             self.titlebar_created = True
-
 
         return cmd_widget
 
@@ -795,7 +820,7 @@ class EduItemWidget(QWidget):
 
     def get_data(self):
         
-        return {'content': text_processing.get_html_body_content(self.content_label.text()),
+        return {'content': text_processing.get_html_body_content(self.item_viewer.text()),
                 'Id': self._view_model.Id,
                 'selected': self._view_model.selected,
                 'score': self._view_model.score}

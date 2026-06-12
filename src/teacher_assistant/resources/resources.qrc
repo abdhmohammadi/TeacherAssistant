@@ -2,6 +2,8 @@
 <RCC>
 	<qresource prefix="/icons">
         <file alias="app-icon.png">icons/png/app-icon.png</file>
+		<file alias="zoom-in.svg">icons/svg/zoom-in.svg</file>
+		<file alias="zoom-out.svg">icons/svg/zoom-out.svg</file>
 		<file alias="text-initial.svg">icons/svg/text-initial.svg</file>
 		<file alias="save.svg">icons/svg/save.svg</file>
 		<file alias="folder-closed.svg">icons/svg/folder-closed.svg</file>

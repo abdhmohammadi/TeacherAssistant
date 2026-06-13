@@ -122,9 +122,7 @@ class ThemeManager:
         theme = self.get_current_theme()
 
         try:
-            with open(self.template_path, "r", encoding="utf-8") as f: 
-                qss = f.read()
-                f.close()
+            with open(self.template_path, "r", encoding="utf-8") as f: qss = f.read()
     
             # Replace placeholders using theme values
             for category, roles in theme.items():
@@ -149,9 +147,7 @@ class ThemeManager:
             property_value (str): The value of the property (e.g., "'Arial'").
         """
 
-        with open(self.template_path,'r',encoding="utf-8") as f: 
-            qss = f.read()
-            f.close()
+        with open(self.template_path,'r',encoding="utf-8") as f: qss = f.read()
 
         # Create the new property string
         new_property = f"{property_name}: {property_value};"
@@ -214,6 +210,8 @@ class ThemeManager:
             re.DOTALL
         )
 
+        font_size  =  12 if font_size<=0 else font_size
+        
         def replace_global_rule(match):
             """Inside the * { ... } block, replace font-size and font-family."""
             opening = match.group(1)

@@ -33,6 +33,7 @@ class MainWindow(Window.AbdhWindow):
         self.create_settings_panel()        
 
     def on_font_changed(self,size_combo:QComboBox,font_combo:QComboBox):
+        
         # Get the text of the selected item 
         selected_font = font_combo.itemText(font_combo.currentIndex())
 
@@ -99,9 +100,6 @@ class MainWindow(Window.AbdhWindow):
             combo3.setCurrentText('12')
         
         self.add_right_panel_item(combo3)
-        # Changes the application font, this change affects all objects in the application
-        combo2.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
-        combo3.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
         # Page direction options: It is provided Left-to-Right
         # The direction is applied on the mantent of main frame, and titlebar,
         # left panel and right panel are not affected currently.
@@ -154,6 +152,12 @@ class MainWindow(Window.AbdhWindow):
         github.setProperty('class','hyperlink')
 
         self.add_right_panel_item(github)
+
+
+        # Changes the application font, this change affects all objects in the application
+        combo2.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
+        combo3.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
+        
 
 
     def on_theme_switch(self,sender:QComboBox):

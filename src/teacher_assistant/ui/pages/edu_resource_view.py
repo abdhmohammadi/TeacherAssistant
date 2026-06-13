@@ -29,7 +29,7 @@ from PySide6.QtWidgets import ( QFileDialog, QFrame, QGridLayout, QScrollArea, Q
 from PySide6.QtWebEngineCore import QWebEngineScript
 from PySideAbdhUI.Notify import PopupNotifier
 #from PySideAbdhUI.CardGridView import CardGridView
-from utils.editor_helper import unwrap_page_divs, custom_script
+from utils.editor_helper import unpack_block, unwrap_page_divs, custom_script
 from ui.widgets.masonry_view import Card, MasonryView
 from PySideAbdhUI.Documents.document_viewer import DocumentViewer
 from PySideAbdhUI.Widgets import SearchBox
@@ -79,12 +79,7 @@ class EduResourcesView(QWidget):
         self.source_input.setPlaceholderText("Filter data using 'Source' ...")
         self.source_input.textEdited.connect(lambda text:self.load_data(filter=text) )
         header.addWidget(self.source_input,1)
-
-        btn3 = QPushButton('distribute')
-        header.addWidget(btn3)
-
-        btn3.setMenu(self.create_distribution_options())
-                
+        
         self.main_layout.addWidget(header_widget) 
         
         self.setup_tabwidgets()
@@ -100,8 +95,9 @@ class EduResourcesView(QWidget):
 
         if(index == 1):
             # Generates full question table
-            main_table  = self._generate_html_content() 
-            main_table = f'<div class="page" contenteditable="false">{main_table}</div>'
+            main_table  = self._generate_html_content()
+            # dir = "rtl" is default, user can change it.
+            main_table = f'<div class="page" contenteditable="false" dir="rtl">{main_table}</div>'
             self.doc_view.clearContent()
             
             self.doc_view.copy_content(content=main_table,custom_styles="",editable= False)
@@ -123,12 +119,14 @@ class EduResourcesView(QWidget):
 
         self.tabs.addTab(tab1, "COLLECTION")
         
+        self.doc_view = DocumentViewer()
+        
+        self.create_corner_commands()
+        
         # -- Tab 2: Ring progress & controls --
         tab2 = QWidget()
         self.setup_tab2(tab2)
         self.tabs.addTab(tab2, "Assessment Preview")       
-
-        self.create_corner_commands()
 
         self.tabs.setCurrentIndex(0)
 
@@ -146,9 +144,9 @@ class EduResourcesView(QWidget):
         
         layout = QHBoxLayout(parent)
         layout.setContentsMargins(5,5,5,5)
-        self.doc_view = DocumentViewer()
-        layout.addWidget(self.doc_view)
 
+        layout.addWidget(self.doc_view)
+        
         container = self.create_output_template_selector()
         content_scroll = QScrollArea()
         content_scroll.setWidgetResizable(True)
@@ -161,8 +159,9 @@ class EduResourcesView(QWidget):
 
         layout.setStretch(0,4)
         layout.setStretch(1,1)
-
+    
     def create_corner_commands(self):
+        
         w = QWidget()
         w.setVisible(False)
         w.setFixedHeight(38)
@@ -170,11 +169,26 @@ class EduResourcesView(QWidget):
         hlayout.setContentsMargins(0,0,0,10)
         hlayout.setSpacing(2)
 
+        self.lang_cmb = QComboBox()
+        self.lang_cmb.setPlaceholderText('-- Select a language --')
+        self.lang_cmb.addItems(['فارسی','English'])
+        self.lang_cmb.setCurrentIndex(0)
+        
+        hlayout.addWidget(self.lang_cmb)
+
         btn= QPushButton('')
         btn.setProperty('class','mini')
         btn.setToolTip('publish')
-        btn.clicked.connect(lambda: self.doc_view.LoadFileDialog(caption="Save File", dialog_type='save'))
-        btn.setIcon(QIcon(":icons/save.svg"))
+        btn.clicked.connect(lambda: self.doc_view.setParagraphDirection(False))
+        btn.setIcon(QIcon(":icons/pilcrow-right.svg"))
+        
+        hlayout.addWidget(btn)
+
+        btn= QPushButton('')
+        btn.setProperty('class','mini')
+        btn.setToolTip('publish')
+        btn.clicked.connect(lambda: self.doc_view.setParagraphDirection(True))
+        btn.setIcon(QIcon(":icons/pilcrow-left.svg"))
         
         hlayout.addWidget(btn)
 
@@ -217,6 +231,23 @@ class EduResourcesView(QWidget):
         btn.clicked.connect(lambda: self._toggle_corner_widgets(1))
             
         hlayout.addWidget(btn)
+
+        btn= QPushButton('')
+        btn.setProperty('class','mini')
+        btn.setToolTip('publish')
+        btn.clicked.connect(lambda: self.doc_view.LoadFileDialog(caption="Save File", dialog_type='save'))
+        btn.setIcon(QIcon(":icons/save.svg"))
+        
+        hlayout.addWidget(btn)
+
+
+        btn = QPushButton('')
+        btn.setProperty('class','mini')
+        btn.setIcon(QIcon(":/icons/graduation-cap.svg"))
+        hlayout.addWidget(btn)
+        btn.setMenu(self.create_distribution_options())
+        
+
         self.tabs.setCornerWidget(w,Qt.Corner.TopRightCorner)
 
     def get_deadline(self): return self.deadline_input.text()
@@ -280,48 +311,52 @@ class EduResourcesView(QWidget):
         
         # When students has not been specified, we try to publish an assessment as html file.
         if len(self.target_students) == 0:
-            self.create_output_template_selector()
-        else:
-
-            try:
-                
-                items = self.get_selected_contents()
+            PopupNotifier.Notify(self,"", "No student specified yet.")
+            return 
         
-                if len(items) == 0: 
-                    PopupNotifier.Notify(self,'SEND','No Edu-Item selected.')
-                    return
-                
-                stu_cnt = len(self.target_students)
-                msg  = f'Number of {len(items)-1} edu-item{'s' if len(items)-1>1 else ''} will be assigned to {stu_cnt} student{'s' if stu_cnt>1 else ''}\n'
-                msg += 'are you sure?'
 
-                if QMessageBox.StandardButton.Cancel == QMessageBox.question(self,'',msg,QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.Cancel): return
-                # Get current UTC time
-                utc_time = self.get_distribution_time()
-
-                future_time = self.get_deadline()
+        try:
                 
-                for stu in self.target_students: 
-                    qb_IDs = ''
-                    # List of Edu-Items: last index was included sub totlal values
-                    for item in items[:len(items)-1]: 
-                        qb_IDs += str(item['Id']) +'-'
-
-                    total_score =  items[len(items)-1]['total_score']
-                    
-                    cmd = 'INSERT INTO quests(student_id, qb_ids_, assign_date_, deadline_, total_score_, reply_date_, scores_, responses_, feedback_) '
-                    
-                    cmd += 'VALUES(%s, %s, %s,%s, %s, %s, %s, %s, %s)'
-        
-                    values = (stu['Id'], qb_IDs[:-1], str(utc_time), str(future_time),total_score, None, None, None, None)
-
-                    app_context.database.execute(cmd,values)
+            if not self.current_selection: 
+                PopupNotifier.Notify(self,'SEND','No Edu-Item selected.')
+                return
                 
-                msg  = f'Number of {len(items)-1} edu-item{'s' if len(items)-1>1 else ''} was assigned to {stu_cnt} student{'s' if stu_cnt>1 else ''} successfully'
-                
-                PopupNotifier.Notify(self,'',msg)
+            stu_cnt = len(self.target_students)
+            sel  = len(self.current_selection)
+            msg  = f'Number of {sel} edu-item{'s' if sel>1 else ''} will be assigned to {stu_cnt} student{'s' if stu_cnt>1 else ''}\n'
+            msg += 'are you sure?'
+
+            if QMessageBox.StandardButton.Cancel == QMessageBox.question(self,'',msg, 
+                                                                         QMessageBox.StandardButton.Yes, 
+                                                                         QMessageBox.StandardButton.Cancel): 
+                return
             
-            except Exception as e: PopupNotifier.Notify(self,'',f'Database error: {e}.')
+            # Get current UTC time
+            utc_time = self.get_distribution_time()
+
+            future_time = self.get_deadline()
+            total_score  =0.0
+            for stu in self.target_students: 
+                qb_IDs = ''
+                # List of Edu-Items: last index was included sub totlal values
+                for item in self.current_selection: 
+                    qb_IDs += str(item['Id']) +'-'
+                    total_score += float(item["score"])
+
+
+                cmd = 'INSERT INTO quests(student_id, qb_ids_, assign_date_, deadline_, total_score_, reply_date_, scores_, responses_, feedback_) '
+                    
+                cmd += 'VALUES(%s, %s, %s,%s, %s, %s, %s, %s, %s)'
+        
+                values = (stu['Id'], qb_IDs[:-1], str(utc_time), str(future_time),total_score, None, None, None, None)
+
+                app_context.database.execute(cmd,values)
+                
+            msg  = f'Number of {sel} edu-item{'s' if sel>1 else ''} was assigned to {stu_cnt} student{'s' if stu_cnt>1 else ''} successfully'
+                
+            PopupNotifier.Notify(self,'',msg)
+            
+        except Exception as e: PopupNotifier.Notify(self,'',f'Database error: {e}.')
 
     def create_output_template_selector(self):
 
@@ -329,14 +364,14 @@ class EduResourcesView(QWidget):
             w = QWidget()
             self.config_layout = QVBoxLayout(w)
             self.config_layout.setContentsMargins(5,0,5,0)
-            template_selector_combo = QComboBox()
-            template_selector_combo.setPlaceholderText('-- Select a template --')
-            template_selector_combo.addItems(['Classroom quiz','Formal exam'])
-            template_selector_combo.currentIndexChanged.connect(lambda _, sender= template_selector_combo: self.template_changed(sender))
+            template_cmb = QComboBox()
+            template_cmb.setPlaceholderText('-- Select a template --')
+            template_cmb.addItems(['Classroom quiz','Formal exam'])
+            template_cmb.currentIndexChanged.connect(lambda _, sender= template_cmb: self.template_changed(sender))
             
-            self.config_layout.addWidget(template_selector_combo)
+            self.config_layout.addWidget(template_cmb)
 
-            template_selector_combo.setCurrentIndex(0)
+            template_cmb.setCurrentIndex(0)
 
             return w
     
@@ -413,7 +448,6 @@ class EduResourcesView(QWidget):
             self.templates_created = True
 
 
-        
         if self.templates_created:
 
             self.stu_info_input.setVisible(False)
@@ -431,13 +465,14 @@ class EduResourcesView(QWidget):
         
         new_row_tmp = ''
 
-        language = app_context.Language
+        language = "Persian" if self.lang_cmb.currentText() != "English" else "English"
         
         self.edu_template_file = Edu_Template_Files[index]
 
         config_filepath = app_context.resource_path + f'\\templates\\{self.edu_template_file}-config.json'
         
         app_context.template_config.set_path(config_filepath)
+
         config = app_context.template_config.read()
 
         
@@ -445,7 +480,7 @@ class EduResourcesView(QWidget):
         self.stu_info_input.setPlaceholderText(config[language]['Student name'])
         self.stu_info_input.setText(config[language]['Student name'])
         self.book_grade_input.setPlaceholderText(config[language]['Book'])
-        self.book_grade_input.setText(config[language]['Book'] +' math')
+        self.book_grade_input.setText(config[language]['Book'])
         self.date_input.setPlaceholderText(config[language]['Date'])
         self.date_input.setText(config[language]['Date'] + ' ' + datetime.now().strftime("%Y-%m-%d"))
             
@@ -538,65 +573,6 @@ class EduResourcesView(QWidget):
     def on_card_removed(self, widget: QWidget):
         """Handle card removal"""
         pass
-        
-
-    def generate_edu_contents(self):
-        # Validate template selection and existence
-        if not self.___validate_template__(): return
-
-        # Get selected items and validate
-        selected_content = self.get_selected_contents()
-
-        if not selected_content:
-            PopupNotifier.Notify(self, 'Info', 'No item selected')
-            return
-
-        # Generate HTML content
-        html = self._generate_html_content()
-
-        # Show PDF preview window
-        self.___show_pdf_preview__(html)
-
-
-    def ___validate_template__(self) -> bool:
-        # Validate template file selection and existence
-        if self.edu_template_file == '':
-            PopupNotifier.Notify(self, 'Error', 'The output template has not selected.')
-            return False
-        
-        template_file = app_context.resource_path + f'\\templates\\{self.edu_template_file}-Template.html'
-        
-        if not os.path.exists(template_file):
-            PopupNotifier.Notify(self, 'Error', f'The template file not found in the specified path --> {template_file}')
-            return False
-            
-        #self.edu_template_file = template_file
-        return True
-    
-
-    def get_selected_contents(self):
-        """
-            Returns list fo dict of {row, Id, content, score}...{total_score}
-        """
-        # Get selected cards and their content
-        selected_content = []
-        # Sum of scores of all questions
-        total_points = 0
-        
-        for card in self.masonry_view.cards:
-
-            widget:LearningItemWidget = card.widget
-            data = widget.data
-
-            if widget.is_selected:
-                
-                selected_content.append(data)
-                total_points += data['score']
-        
-        if selected_content: # Sum of scores of all questions
-            selected_content.append({'total_score': total_points})
-            
-        return selected_content
 
     # the selected_content will be removed
     def _generate_html_content(self) -> str:
@@ -604,21 +580,26 @@ class EduResourcesView(QWidget):
         # Generate HTML content with template placeholders replaced
         # Read template file 01-Quiz-template.html or 02-Formal-Exam-Template.html
         template_file = app_context.resource_path + f'\\templates\\{self.edu_template_file}-Template.html'
+        
         with open(template_file, encoding="utf-8",mode='r') as f: html = f.read()
         
-        language = app_context.Language
+        language = "Persian" if self.lang_cmb.currentText() != "English" else "English" 
         
         # Replace content placeholders
         new_content_template = '<!-- NEW CONTENT -->'
         styles = ""
         total_score = 0.0
         row = 0
+        self.current_selection = []
+
         for card in self.masonry_view.cards:
             widget:LearningItemWidget = card.widget
             data = widget.data
             
             if widget.is_selected:
 
+                self.current_selection.append(data)
+                
                 total_score += data['score']
                 new_style, new_content = unpack_block(data["content"])
                 # Removes open/close of style tag.
@@ -655,11 +636,6 @@ class EduResourcesView(QWidget):
         # Adjust the table size:
         for placeholder, value in dimensions.items(): html = html.replace(placeholder, value)
 
-        # Replace style placeholders
-        #html = html.replace('-- font-family --', self.config[language]['Font family'])
-        html = html.replace('-- direction --', 'rtl')#self.config[language]['Direction'])
-        #html = html.replace('-- Text Alignment --', text_align)
-
         # Replace content placeholders
         replacements = {
             '-- In the name of God --': self.config[language]['InTheNameOfGod'], # In the formal exam template
@@ -673,8 +649,6 @@ class EduResourcesView(QWidget):
             '-- Book-Grade --': self.book_grade_input.text(), # In the both templates
             '-- Field --': self.field_input.text(),
             '-- Time-Pages --': self.time_input.text(),
-            '-- ROW --':"ردیف",
-            '-- SCORE --':"نمره",
             '-- Index --': self.config[language]['Row'],# In the both templates
             '-- Edu-Content --': self.config[language]['Header'],
             '-- Point --': self.config[language]['Score'], # In the both templates
@@ -1108,19 +1082,3 @@ class LearningItemWidget(QWidget):
 
 
  ################ html helpers ###########################
-
-def unpack_block(block:str)->tuple[str, str]:
-    block = block.replace('<BLOCK>','')
-    block = block.replace('</BLOCK>','')
-
-    # Extract all style blocks from imported HTML.
-    styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
-    styles = ''.join(styles)
-
-    # Remove style blocks from body.
-    # They will be reinserted later after synchronization.
-    block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
-
-    block = block.replace("<CONTENT>","")
-    block = block.replace("</CONTENT>","")
-    return styles, block

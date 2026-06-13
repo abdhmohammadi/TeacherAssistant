@@ -164,7 +164,7 @@ class StudentListPage(QWidget):
         # Create horizontal layout for header controls (title, search, filter, menu)
         command_layout = QHBoxLayout()
         # Set spacing between header controls
-        command_layout.setSpacing(10)
+        command_layout.setSpacing(2)
         # Add page title label to header layout
         command_layout.addWidget(page_title)
         # Add expandable empty space to push remaining items to the right

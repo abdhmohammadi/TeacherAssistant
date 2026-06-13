@@ -37,6 +37,7 @@ from core.app_context import app_context
 from ui.main_window import MainWindow
 from ui.widgets import connection_form  # a dialog to validate user and database connection
 
+
 if __name__ == "__main__":
     
     app = QApplication(sys.argv)    

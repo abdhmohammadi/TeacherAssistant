@@ -536,11 +536,16 @@ class StudentActivityTrackingPage(QWidget):
             current.setSizeHint(widget.sizeHint())
 
     # Opens answer viewer for activity
-    def open_activity_item(self, data=None):
+    def open_activity_item(self, data:dict=None):
+        #   student': To display on the output report
+        #     qb_ids: To fetch quiz content from question bank
+        #    quiz-id: To fetch and update answer data in the quests table
+        # asign-date: To display on the output report
+        # reply-date: To display on output report and modify.
 
         # Create the window – it starts loading automatically
         self.answer_window = AnswerView(data, parent=self)
-#        self.answer_window.setWindowModality(Qt.WindowModality.WindowModal)
+        # self.answer_window.setWindowModality(Qt.WindowModality.WindowModal)
         self.answer_window.exec()
    
     def __create_answer_input_dlg(self, quiz_id):

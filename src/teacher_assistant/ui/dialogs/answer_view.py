@@ -1,5 +1,3 @@
-#import pypandoc
-#import pymupdf
 
 import base64
 import re
@@ -13,18 +11,36 @@ from PySide6.QtWidgets import ( QDialog, QFileDialog, QHBoxLayout, QLineEdit, QL
                                QMessageBox, QLabel,QStackedWidget, QTextEdit, QWidget,
                                QPushButton,QVBoxLayout, QTabWidget)
 
+from PySideAbdhUI.Documents.document_viewer import DocumentViewer
 from PySideAbdhUI.Notify import PopupNotifier
 from processing.text import text_processing
 from core.app_context import app_context
+from utils.editor_helper import unwrap_page_divs, unpack_block
 
+from dateutil.parser import parse
 
+def is_valid_timestamp(s: str) -> bool:
+    try:
+        parse(s)
+        return True
+    except (ValueError, OverflowError):
+        return False
+    
 class AnswerView(QDialog):
     
     def __init__(self, data, parent=None):
         super().__init__(parent)
+        # data dictionary keys:
+        #
+        #   student': To display on the output report
+        #     qb_ids: To fetch quiz content from question bank
+        #    quiz-id: To fetch and update answer data in the quests table
+        # asign-date: To display on the output report
+        # reply-date: To display on output report and modify. 
+        #
         self.data = data
         self.need_update = False
-        self.setWindowTitle("HTML to PDF Generator")
+        self.setWindowTitle("")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         
         self.setFixedHeight(650)
@@ -65,7 +81,7 @@ class AnswerView(QDialog):
         layout.addWidget(self.tabs)
 
         # Quiz tab
-        self.preview_source = QWebEngineView()
+        self.preview_source = DocumentViewer()
         self.tabs.addTab(self.preview_source, "Quiz")
         
         # Answer tab
@@ -82,7 +98,8 @@ class AnswerView(QDialog):
         action_layout = QHBoxLayout(action_widget)
         action_layout.setContentsMargins(0,0,0,5)
         action_layout.addStretch(1)
-        
+
+        action_layout.addWidget(QLabel('Reply date:'))
         self.reply_date_edit = QLineEdit(self.data['reply-date'])
         self.reply_date_edit.textEdited.connect(self.set_need_to_update)
         action_layout.addWidget(self.reply_date_edit)
@@ -95,11 +112,11 @@ class AnswerView(QDialog):
         save_btn.clicked.connect(self._on_save_answer)
         action_layout.addWidget(save_btn)
 
-        self.generate_button = QPushButton("Generate PDF")
-        self.generate_button.clicked.connect(self.generate_pdf)
-        self.generate_button.setEnabled(False)
+        #self.generate_button = QPushButton("Generate PDF")
+        #self.generate_button.clicked.connect(self.generate_pdf)
+        #self.generate_button.setEnabled(False)
 
-        action_layout.addWidget(self.generate_button)
+        #action_layout.addWidget(self.generate_button)
 
         close_btn = QPushButton('Close')
         
@@ -139,7 +156,7 @@ class AnswerView(QDialog):
         self.worker.moveToThread(self.thread)
 
         self.thread.started.connect(self.worker.run)
-        self.worker.finished.connect(self.on_data_ready)
+        self.worker.finished.connect(self.on_data_received)
         self.worker.error.connect(self.on_worker_error)
 
         # Cleanup
@@ -153,15 +170,53 @@ class AnswerView(QDialog):
         del self.thread
         PopupNotifier.Notify(self, message='Operation done!')
 
-    def on_data_ready(self, quiz_html, answer_blocks:list):
-        
+    def on_data_received(self, quiz, answer_blocks:list):
+           
         # Save HTML for later PDF generation
-        self.quiz_html = quiz_html
-        #self.answer_html = answer_html
+        #self.quiz_html = quiz_html
+        html, total_score = quiz
+        # Replace dimension placeholders
+        dimensions = {
+            #  is palceholder,     is actual value
+            '-- 2.43 inches --': f'{2.43*app_context.DPI}px',
+            '-- 2.42 Inches --': f'{2.42*app_context.DPI}px',
+            '-- 0.54 Inches --': f'{0.54*app_context.DPI}px',
+            '-- 6.19 Inches --': f'{app_context.EDU_ITEM_PIXELS}px',
+        }
+        
+        # Adjust the table size:
+        for placeholder, value in dimensions.items(): html = html.replace(placeholder, value)
 
-        # Update the quiz view
-        self.preview_source.setHtml(quiz_html)
-       
+        # Replace content placeholders
+        replacements = {
+            '-- In the name of God --': "",#self.config[language]['InTheNameOfGod'], # In the formal exam template
+            '-- Stu-Name --':self.data["student"],#self.stu_info_input.text(), # In the both templates
+            '-- Stu-Id --': "",#self.stu_id_input.text(), # In the formal exam template
+            '-- Organisation Info --': "",#self.org_info_input.toPlainText().replace('\n','<br>'),
+            '-- Academic-Year-Term --': "",#self.term_input.toPlainText().replace('\n','<br>'),
+            '-- Date --': self.data["asign-date"],#self.date_input.text(), # In the both templates
+            '-- Teacher-Name --': "",#self.teacher_input.text(),
+            '-- Clock --': "",#self.clock_input.text(),
+            '-- Book-Grade --':"",# self.book_grade_input.text(), # In the both templates
+            '-- Field --': "",#self.field_input.text(),
+            '-- Time-Pages --': "",#self.time_input.text(),
+            '-- Index --': "ردیف",#self.config[language]['Row'],# In the both templates
+            '-- Edu-Content --': "سوالات",#self.config[language]['Header'],
+            '-- Point --': "نمره",#self.config[language]['Score'], # In the both templates
+            '-- Author: Abdh --': "",#self.author_input.text(),
+            '-- SUM --': str(total_score),#str(total_score),
+            '-- FOOTER SUM --': "",#self.config[language]['Footer sum'],
+        }
+        
+        for placeholder, value in replacements.items(): html = html.replace(placeholder, value)
+        
+        # dir = "rtl" is default, user can change it.
+        main_table = f'<div class="page" contenteditable="false" dir="rtl">{html}</div>'
+        self.preview_source.clearContent()
+           
+        self.preview_source.copy_content(content=main_table, custom_styles="",editable= False)
+
+        ################# ANSWER SECTION ########################################################     
         # If there are answers, create the answers tab and load them
         #if len(answer_blocks)>0:
 
@@ -180,7 +235,7 @@ class AnswerView(QDialog):
         
         # Switch from loading screen to the actual content
         self.content_stack.setCurrentIndex(0)
-        self.generate_button.setEnabled(True)
+        #self.generate_button.setEnabled(True)
 
     def create_answer_item(self,data):
         # Last index of answer blocks contains feedback data.
@@ -243,17 +298,19 @@ class AnswerView(QDialog):
 
         self.set_need_to_update()
 
+
     def open_file(self):
 
         filter = 'Images (*.png *.jpg *.jpeg *.bmp *.gif);;HTML (*.html *.htm);;PDF (*.pdf)'
         filepath, x = QFileDialog.getOpenFileName(self, "Find student's answer", "", filter)
-        
+        print('bockmark')
         if not filepath: return
         # file extension
         ext = filepath.split('.')[-1]
 
         if '*.png *.jpg *.jpeg *.bmp *.gif'.find(ext)>-1:
             with open(filepath, 'rb') as f: b64 = base64.b64encode(f.read()).decode()
+
             html_content = f'<img src="data:image/png;base64,{b64}" width="{app_context.A4_PIXELS}"/>'
 
         elif '*.html *.htm'.find(ext)>-1:
@@ -280,7 +337,7 @@ class AnswerView(QDialog):
         print(id,self.need_update)
         if id and self.need_update:
             
-            score_text = ''
+            score_text = []
             answer_tags = ''
             # process list items to access content data
             for row in range(self.answer_table.count()):
@@ -296,15 +353,19 @@ class AnswerView(QDialog):
                     
                     answer_tags += f'<div>{answer_tag}</div>\n'
 
-                    score_text += widget.score_edit.text().strip() + '-'
+                    score_text.append(widget.score_edit.text().strip())
 
             
             cmd = 'UPDATE quests SET reply_date_=%s, feedback_=%s, scores_=%s, responses_=%s WHERE id= %s;'
             
-            app_context.database.execute(cmd,(self.reply_date_edit.text().strip(),
+            reply_date = self.reply_date_edit.text().strip()
+            if not is_valid_timestamp(reply_date):
+                PopupNotifier.Notify(self,'',f'{reply_date} is not valid date-time format')
+                return
+
+            app_context.database.execute(cmd, (reply_date ,
                                               self.feedback_text.toPlainText().strip(),
-                                              score_text[:-1],
-                                              answer_tags, self.data['quiz-id']))
+                                              "-".join(score_text), answer_tags, self.data['quiz-id']))
             
             PopupNotifier.Notify(self, 'Save Answer','Answer updated.')
     
@@ -365,7 +426,7 @@ class AnswerView(QDialog):
 
 class HtmlGeneratorWorker(QObject):
     
-    finished = Signal(str, list)       # quiz_html, answer_html
+    finished = Signal(tuple, list)       # quiz_html, answer_html
     error = Signal(str)               # error message
 
     def __init__(self, data):
@@ -388,20 +449,17 @@ class HtmlGeneratorWorker(QObject):
             #cursor =  conn.cursor()
             #cursor = app_context.database.connection.cursor()
             # 2. Generate both HTML pieces
-            quiz_html = self._generate_quiz_html()
+            quiz = self._generate_quiz_html()
             answer_blocks = self._extract_answers()
             
             # 3. Emit success (both strings)
-            self.finished.emit(quiz_html, answer_blocks)
+            self.finished.emit(quiz, answer_blocks)
 
         except Exception as e:
             self.error.emit(str(e))
-            
-    # ================================================================
-    # HTML generation logic (adapted from your original methods)
-    # ================================================================
 
     def _generate_quiz_html(self):
+        
         """Generate quiz HTML using the given database cursor."""
         # List of questions from bank in string format  separated by '-'
         qb_ids:str = self.data['qb_ids']
@@ -424,30 +482,50 @@ class HtmlGeneratorWorker(QObject):
         
         with open(template_path, encoding='utf-8') as f: html = f.read()
 
-        # Row template
-        style = 'border-left:none;border-top:none;border-right:none'
-        new_row_tmp = (
-            '        <tr>\n'
-            f'            <td style="{style}; vertical-align:top;">{{0}})</td>\n'
-            f'            <td style="{style}; width:{app_context.EDU_ITEM_PIXELS}; text-align:{{1}}">{{2}}</td>\n'
-            f'            <td style="{style}; vertical-align:top">{{3}}</td>\n'
-            '        </tr>\n'
-        )
-
-        language = app_context.Language
-        config = app_context.template_config.read()
-        text_align = config[language]['Text align']
-        total_score = 0.0
-        rows = []
+        # Common table rows: question contents
+        new_row_tmp =  '        <tr>\n'
+        new_row_tmp += f'            <td style="text-align: center; vertical-align:top;width:-- 0.54 Inches --;">{{}}</td>\n'
+        new_row_tmp += f'            <td style="border-left:none;border-right:none; width:{app_context.EDU_ITEM_PIXELS};">{{}}</td>\n'
+        new_row_tmp += f'            <td style="text-align: center; vertical-align:top;width:-- 0.54 Inches --;">{{}}</td>\n'
+        new_row_tmp +=  '        </tr>\n'
         
+        #language = app_context.Language
+        # Replace content placeholders
+        new_content_template = '<!-- NEW CONTENT -->'
+        styles = ""
+        total_score = 0.0
+        row = 0
+        # Question blocks ffrom database
         for row, item in enumerate(records):
             total_score += item[1]
-            rows.append(new_row_tmp.format(row + 1, text_align, item[0], item[1]))
+            # unpack question blocks
+            new_style, new_content = unpack_block(item[0])
 
-        html = html.replace('<!-- NEW CONTENT -->', '\n'.join(rows), 1)
-        html = self._apply_common_replacements(html, config, language, total_score, mode='quiz')
-        
-        return html
+            # Removes open/close of style tag.
+            new_style = new_style.replace("<style>","")
+            new_style = new_style.replace("</style>","")
+            # Join all styles
+            styles = f"{styles}\n{new_style}"
+            # remove all div with class="page" apen/close part
+            # and return pure content
+            new_content = unwrap_page_divs(new_content)
+            # data cleaning
+            new_content = new_content.replace("\n","")
+            
+            # Generate new row for the table, this table is contains list of questions
+            # format matching data: row index, content, point
+            # this format is selected on template_changed event
+            new_row = new_row_tmp.format(row + 1, new_content, item[1])
+            new_row = new_row + new_content_template
+            # Inject this row to the html body
+            html = html.replace(new_content_template, new_row, count=1)
+            
+            row += 1
+            
+        # Inject styles to the <head> ...</head>
+        html = html.replace('</head>',f'\n{styles}\n</head>')
+
+        return (html, total_score)
 
     def _extract_answers(self):
         """Generate answer HTML using the given database cursor."""
@@ -475,9 +553,9 @@ class HtmlGeneratorWorker(QObject):
         div_blocks = re.findall(pattern, str(record[0]), re.DOTALL)
         result = []
         
-        for i,b in enumerate(div_blocks):
+        for i,block in enumerate(div_blocks):
 
-            result.append({'answer': b, 'score':scores[i]})
+            result.append({'answer': block, 'score':scores[i]})
 
         result.append({'feedback':record[2] if record[2] else ''})
 

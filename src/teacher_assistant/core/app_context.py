@@ -8,7 +8,7 @@ from version import __version__
 # IMPORTANT: Registers the resources automatically
 # this module embeds icon resources to the app without including main files to
 # the installable package 
-from resources import resources_rc
+from resources.icons import resources_rc
 
 class AppContext:
 
@@ -18,9 +18,9 @@ class AppContext:
         self.A4_PIXELS = 0.0
         self.EDU_CONTENT_WIDTH = 6.19 # inches
         self.PDI = 96
-        self.Language = 'English'
+        self.Language = 'English'                   # Application UI language
+        self.WritingLanguage ="Persian"             # Writing language
         self.__database__  = psycopg2_database()
-        #self.___connection_settings___ = {}
         self.resource_path =''
         self.settings_manager = JSONManager()
         self.template_config = JSONManager()
@@ -59,7 +59,7 @@ class AppContext:
         # Get the app path
         if getattr(sys, 'frozen', False):
             # If the application is run as a bundled executable (e.g., PyInstaller)
-            app_path = os.path.dirname(sys.executable) + '\\TeacherAssistant'
+            app_path = os.path.join(os.path.dirname(sys.executable) , 'TeacherAssistant')
         else:
             # If the application is run as a script(main.py)
             app_path = os.path.dirname(os.path.abspath(__file__))
@@ -68,9 +68,11 @@ class AppContext:
         self.application_path = app_path
 
         # Set the settings manager path
-        self.settings_manager.set_path(self.appdata_path +'\\settings.json')
+        self.settings_manager.set_path(os.path.join(self.appdata_path, 'settings.json'))
 
-        self.resource_path = app_path.replace('core','') +'resources' 
+        self.resource_path = app_path.replace('core','')# +'resources' 
+        self.resource_path = os.path.join(self.resource_path,"resources")
+        
         # Set the config manager path
         tmp_file_path = self.resource_path +'\\templates\\01-Quiz-config.json'
         self.template_config.set_path(tmp_file_path)

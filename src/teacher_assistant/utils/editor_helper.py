@@ -414,3 +414,19 @@ def extract_editor_parts(html_source: str) -> tuple[str, str]:
     
     return external_style, pages_content
 
+
+def unpack_block(block:str)->tuple[str, str]:
+    block = block.replace('<BLOCK>','')
+    block = block.replace('</BLOCK>','')
+
+    # Extract all style blocks from imported HTML.
+    styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
+    styles = ''.join(styles)
+
+    # Remove style blocks from body.
+    # They will be reinserted later after synchronization.
+    block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
+
+    block = block.replace("<CONTENT>","")
+    block = block.replace("</CONTENT>","")
+    return styles, block

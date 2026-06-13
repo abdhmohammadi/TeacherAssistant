@@ -1,6 +1,4 @@
-import os
 import re
-#import pymupdf
 from PySide6.QtCore import QSize
 from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon, QTextCursor)
 
@@ -194,14 +192,6 @@ class EducationalResourceEditor(QWidget):
         layout.setContentsMargins(0,0,3,0)
         layout.setSpacing(2)
 
-        # Button to clear content of the document
-        #btn = QPushButton('')
-        #btn.setProperty('class','mini')
-        #btn.setIcon(QIcon(':icons/text.svg'))
-        #btn.setToolTip(app_context.ToolTips['New Content'])
-        #btn.clicked.connect(self.clear_content)
-        #layout.addWidget(btn)
-
         # INSERT MENU(Clean content and upload files as new content)
         button = QPushButton('')
         button.setProperty('class','mini')
@@ -374,10 +364,10 @@ class EducationalResourceEditor(QWidget):
         btn_mark.setIcon(QIcon(':icons/bookmark.svg'))
         layout.addWidget(btn_mark)
 
-        btn = QPushButton('+/-')
+        btn = QPushButton('')
         btn.setProperty('class','mini')
-        btn.setToolTip('Zoom in, out and fit page')
-        #btn.setIcon(QIcon(':icons/square-dashed.svg'))
+        btn.setToolTip('Zoom in, zoom out and fit page')
+        btn.setIcon(QIcon(':icons/zoom-in.svg'))
         btn.clicked.connect(self.showMarginDialog)
 
         menu = QMenu(btn)
@@ -460,114 +450,6 @@ class EducationalResourceEditor(QWidget):
 
         self.doc_editor.copy_content(content, styles)
  
-    
-    '''def create_answer_commands(self):
-
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0,0,3,0)
-        layout.setSpacing(2)
-        layout.addWidget(QLabel('Answer'))
-        layout.addStretch(1)
-        # LaTeX
-        btn_latex = QPushButton('')
-        btn_latex.setProperty('class','mini')
-        btn_latex.setIcon(QIcon(':icons/TeX.svg'))
-        btn_latex.setToolTip(app_context.ToolTips['Generate LaTeX'])
-        menu_latex = QMenu(self)
-        btn_latex.setMenu(menu_latex)
-        menu_latex.addAction('New LaTeX script', lambda sender=self.answer_input: self.___config_latex(sender))
-        menu_latex.addAction('Run LaTeX', lambda sender= self.answer_input: self.run_latex(sender))
-                 
-        layout.addWidget(btn_latex)
-
-        # HTML
-        btn_html = QPushButton('')
-        btn_html.setProperty('class','mini')
-        btn_html.setIcon(QIcon(':icons/html-code.svg'))
-        btn_html.setToolTip(app_context.ToolTips['Generate HTML'])
-        menu_html = QMenu(self)
-        btn_html.setMenu(menu_html)
-        menu_html.addAction('New HTML Script',lambda sender=self.answer_input: self.___config_basic_html(sender))
-        menu_html.addAction('Run HTML',lambda _, sender=self.answer_input: self.run_html(sender))
-        
-        layout.addWidget(btn_html)
-        
-        # INSERT BUTTON(Upload Image and insert into current content)
-        button = QPushButton('')
-        button.setProperty('class','mini')
-        button.setIcon(QIcon(':icons/image-plus.svg'))
-        button.setToolTip(app_context.ToolTips['Insert Image'])
-        button.clicked.connect(lambda _, sender= self.answer_input, arg=app_context.SupportedFileTypes.IMAGE: self.upload_file(sender=sender,arg=arg, options='+'))
-        
-        layout.addWidget(button)
-
-        # Add Snipping tools button
-        snip_button = QPushButton("")
-        snip_button.setProperty('class','mini')
-        snip_button.setIcon(QIcon(':icons/square-bottom-dashed-scissors.svg'))
-        snip_button.setToolTip(app_context.ToolTips['Insert Image from screen'])
-        snip_button.clicked.connect(lambda _, t = self.answer_input:self.run_snipping_tool(t))
-
-        layout.addWidget(snip_button)
-
-        # INSERT MENU(Clean content and upload files as new content)
-        button = QPushButton('')
-        button.setProperty('class','mini')
-        button.setToolTip(app_context.ToolTips['Upload File'])
-        button.setIcon(QIcon(':icons/upload.svg'))
-        menu = QMenu(button)
-        menu.addAction('Plain text',lambda sender= self.answer_input, arg= app_context.SupportedFileTypes.TEXT: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('RTF',lambda sender= self.answer_input,arg= app_context.SupportedFileTypes.RTF: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('Image',lambda sender= self.answer_input, arg=app_context.SupportedFileTypes.IMAGE: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('PDF(Editable)',lambda sender= self.answer_input,arg= app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg, options='Editable'))
-        menu.addAction('PDF(Readonly)',lambda sender= self.answer_input,arg=app_context.SupportedFileTypes.PDF: self.upload_file(sender=sender,arg=arg, options='ReadOnly'))
-        menu.addAction('Word(docx)',lambda sender= self.answer_input,arg= app_context.SupportedFileTypes.DOCX: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('LaTeX',lambda sender= self.answer_input,arg= app_context.SupportedFileTypes.LaTeX: self.upload_file(sender=sender,arg=arg))
-        menu.addAction('Html',lambda sender= self.answer_input,arg=app_context.SupportedFileTypes.HTML: self.upload_file(sender=sender,arg=arg))
-        
-        button.setMenu(menu)
-        
-        layout.addWidget(button)
-        widget = QWidget()
-        widget.setLayout(layout)
-
-        return widget    
-    '''
-    """def ___config_basic_html(self,sender:RichTextEditor):
-        
-        sender.clear()
-
-        html_template  = f'''
-        &lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;<br>
-        &lt;html lang="en"&gt;<br>&lt;head&gt;<br>
-        &nbsp; &nbsp; &nbsp; &nbsp; &lt;meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1.0"&gt;<br>
-        &lt;/head&gt;<br>&lt;body style="width:{app_context.EDU_ITEM_PIXELS}px;"&gt;<br>
-        &nbsp; &nbsp; &nbsp; &nbsp; 
-        &lt;main&gt;&lt;b&gt;Add here main content.&lt;/b&gt;&lt;/main&gt;<br>
-        &lt;/body&gt;<br>&lt;/html&gt;
-        '''
-        sender.setText(html_template,False)    
-    
-    def ___config_latex(self,sender:RichTextEditor):
-
-        sender.clear()
-
-        text = '   Add here main content '
-        documentclass = 'article'
-        package = 'xepersian'
-        font='Yas'
-
-        # Generates latex template
-        latex_content = ('\\documentclass{{{}}}\n'
-                          '\\usepackage{{{}}}\n'
-                          '\\settextfont{{{}}}\n'
-                          '\\begin{{document}}\n{}\n'
-                          '\\end{{document}}'
-                         ).format(documentclass, package, font, text)
-
-        sender.setText(latex_content)
-    """
-    
     def notify_unsaved_content(self):
         
         if self.doc_editor.isModified():
@@ -588,129 +470,7 @@ class EducationalResourceEditor(QWidget):
         self.answer_input.clearContent()
         self.metadata_input.clear()
 
-
-    """def upload_PDF_as_html(self, PDF_path, sender:RichTextEditor):
-
-        try:
-
-            # Open the PDF file using PyMuPDF
-            PDF_document = pymupdf.open(PDF_path)
-
-            # Iterate through each page in the PDF
-            for page in PDF_document:
-                # Load the page
-                html = page.get_text('html')
-                #html = '<html><br><head><br><meta name="PDF" charset="utf-8"/><br></head><br>'
-                #html += f'<body style="width:{MyJobAssistant.EDU_CONTENT_WIDTH*DPI}px"><br>{html}<br></body><br></html>'
-                # Set the HTML content in the QTextEdit
-                sender.setHtml(html)
-                
-                sender.insertPlainText("\n\n")  # Add a newline after each page
-
-        except Exception() as e:
-            print(f"Error processing PDF: {e}")
-
-    
-    def upload_file(self,sender:RichTextEditor, arg:str=app_context.SupportedFileTypes.IMAGE, options=None):
-        
-        # Open a file dialog to upload an image or PDF.
-        file_dialog = QFileDialog(self)
-        filter = app_context.FileTypes[arg]
-
-        file_dialog.setNameFilter(filter)
-        
-        if file_dialog.exec():
-        
-            file_path = file_dialog.selectedFiles()[0]
-
-            # avilable widh for edu-content is 6.19 inches
-            if arg == app_context.SupportedFileTypes.IMAGE: 
-
-                pixmap = QPixmap(file_path)
-                
-                base64_image = pixmap_to_base64(pixmap)
-
-                html_content = f'<img src="data:image/png;base64,{base64_image}" width="{app_context.EDU_ITEM_PIXELS}"/>'
-                # Set the HTML content in the QTextEdit
-                if options == '+': 
-                    sender.insertHtml(html_content)
-                else: 
-                    sender.document().clear()
-                    sender.setHtml(html_content)
-
-            elif arg in [app_context.SupportedFileTypes.TEXT,
-                         app_context.SupportedFileTypes.RTF,
-                         app_context.SupportedFileTypes.LaTeX,
-                         app_context.SupportedFileTypes.PDF,
-                         app_context.SupportedFileTypes.HTML]:
-                sender.document().clear()
-                self.read_plain_text(sender, file_path)
-
-
-            #elif arg == app_context.SupportedFileTypes.DOCX:
-            #    # Loses text formatting
-            #    sender.document().clear()
-            #    html = pypandoc.convert_file(file_path,'html',extra_args=['--embed-resources'])
-            #    sender.document().setHtml(html)
-    
-    # we read Plain text, but save in HTML format as RTF data
-    def read_plain_text(self,sender:QTextEdit, file_path):
-        
-        file_name, extension = os.path.splitext(file_path)
-        
-        data = ''        
-
-        if extension == '.txt':
-
-            with open(file_path, 'r') as file: data = file.read()
-            sender.document().setHtml(data)
-
-        elif extension in ['.tex','.html']:
-
-            with open(file_path, 'r', encoding='utf-8') as file: data = file.read()
-            sender.document().setPlainText(data)
-        
-        #elif extension == '.rtf':
-            # Prerequisits of using pypandoc:
-            # 1) Install Pandoc using windows installer
-            # 2) set path to environment variable
-            #   1) Press WINDOWS LOGO + R
-            #   2) run sysdm.cpl
-            #   3) go to  advanced tab
-            #   4) click Enviorenment Variables ...
-            #   5) go to system variables section
-            #   6) scroll to and select 'Path' item
-            #   7) click Edit--> click New and add 'C:\\Program Files\\pandoc-3.6.3\\'
-            #   8) save changes
-            # 2) install pypandoc using pip install pypandoc
-            # import pypandoc
-
-            #html = pypandoc.convert_file(file_path, "html")
-        
-            #sender.document().setHtml(html)
-
-    def run_html(self, sender:QTextEdit):
-
-        html = sender.document().toPlainText()
-
-        sender.document().clear()
-
-        sender.document().setHtml(html)
-    
-    def run_latex(self,sender:RichTextEditor):
-        try:
-            html = helpers.run_latex(sender.getPlainTextSync(), compile='xepersian', output_pdf_name= 'edu-resource.PDF')
-            # Set the HTML content in the RichTextEditor
-            sender.clear()
-            sender.setHtml(html)
-
-            msg = "LaTeX operation created the output pdf successfully."
-        except Exception as e:
-            msg = f'Error: {e}.'
-        
-        PopupNotifier.Notify(self,"Message", msg)
-    """
-        
+     
     def run_snipping_tool(self,target:QTextEdit):
 
         active = QApplication.activeWindow()

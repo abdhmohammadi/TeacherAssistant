@@ -8,7 +8,7 @@ from version import __version__
 # IMPORTANT: Registers the resources automatically
 # this module embeds icon resources to the app without including main files to
 # the installable package 
-from resources.icons import resources_rc
+from resources import resources_rc
 
 class AppContext:
 

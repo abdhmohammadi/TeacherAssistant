@@ -1,5 +1,5 @@
 #teacher_assistant/version.py
-__version__ = "0.6.4.10"
+__version__ = "0.7.5.12"
 
 # HOW TO USE THIS PROJECT:
 #     ACTIVATE ENVIRONMENT: Terminal> env\Scripts\activate

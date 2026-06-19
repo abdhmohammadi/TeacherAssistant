@@ -27,7 +27,7 @@ from ui.dialogs.dialogs import CustomAssignmentDialog, GroupSelectionDialog, Gro
 # Import page class for displaying student activity tracking and learning progress
 from ui.pages.activity_tracking import StudentActivityTrackingPage
 # Import page class for displaying and assigning educational resources
-from ui.pages.edu_resource_view import EduResourcesView
+from ui.pages.resource_collection import EduResourcesView
 # Import global application context for accessing database and settings
 from core.app_context import app_context 
 
@@ -125,7 +125,7 @@ class StudentListPage(QWidget):
         
         # Call method to initialize all user interface components
         self.initUI()
-    
+
     # Method to initialize and configure all user interface elements
     def initUI(self):
 
@@ -274,7 +274,6 @@ class StudentListPage(QWidget):
         class_filter_combo.setCurrentIndex(0)
         # Load and display all students for the initial group selection
         self.load_students(class_filter_combo)
-
 
    # Method to display CSV import format requirements dialog message
     def show_csv_load_message(self):
@@ -956,9 +955,6 @@ class StudentListPage(QWidget):
         # Set photo column width to fixed pixels
         self.table.setColumnWidth(0, 150)
     
-        # Print debug message to console for confirmation
-        print("Table completely reset with new model")
-    
     # Method to load and display students from database based on group selection
     def load_students(self, sender: QComboBox):
         # Wrap database loading in try-except for error handling
@@ -1019,7 +1015,7 @@ class StudentListPage(QWidget):
             
             # Update table display with retrieved student data
             self._update_table_display(data)
-            
+                        
         # Catch any exceptions from the loading process
         except Exception as e:
             # Build error message with exception details

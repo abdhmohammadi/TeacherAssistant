@@ -219,12 +219,12 @@ class ThemeManager:
             closing = match.group(3)
 
             # Replace existing font-size / font-family declarations
-            body = re.sub(r'font-size\s*:\s*[^;]+;', f'font-size: {font_size}px;', body)
+            body = re.sub(r'font-size\s*:\s*[^;]+;', f'font-size: {font_size}pt;', body)
             body = re.sub(r'font-family\s*:\s*[^;]+;', f'font-family: "{font_family}";', body)
 
             # If they were missing, append them
             if 'font-size' not in body:
-                body += f' font-size: {font_size}px;'
+                body += f' font-size: {font_size}pt;'
             if 'font-family' not in body:
                 body += f' font-family: "{font_family}";'
 
@@ -234,7 +234,7 @@ class ThemeManager:
 
         if count == 0:
             # No global * rule found → add one at the very beginning
-            new_rule = f"* {{\n    font-size: {font_size}px;\n    font-family: \"{font_family}\";\n}}\n\n"
+            new_rule = f"* {{\n    font-size: {font_size}pt;\n    font-family: \"{font_family}\";\n}}\n\n"
             
             new_qss = new_rule + raw
       

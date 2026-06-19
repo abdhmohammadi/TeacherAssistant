@@ -149,27 +149,30 @@ class PostgreSqlConnectionWidget(QObject):
         self.dialog.setMinimumWidth(550)
         
         self.dialog.exec()
+        try:
+            # this part is executed after the dialog is closed
+            if app_context.database.connection:
+                
+                #self.connection.autocommit = True
 
-        # this part is executed after the dialog is closed
-        if app_context.database.connection:
-            
-            #self.connection.autocommit = True
-
-            host = '' if self.host is None else self.host
-            port = '' if self.port is None else self.port
-            database = '' if self.database is None else self.database
-            user = '' if self.user is None else self.user
-            password = '' if self.password is None else self.password
-            settings_list = [('host',host),('port',port),('database',database),('user',user),('password',password)]
-            # Create a dictionary with the list elements as key-value pairs under 'connection'
-            connection_settings = {"connection": dict(settings_list)}
-            
-            #app_context.register_database(self.connection)
-            
-            status = True
-        else:
-            connection_settings = None
+                host = '' if self.host is None else self.host
+                port = '' if self.port is None else self.port
+                database = '' if self.database is None else self.database
+                user = '' if self.user is None else self.user
+                password = '' if self.password is None else self.password
+                settings_list = [('host',host),('port',port),('database',database),('user',user),('password',password)]
+                # Create a dictionary with the list elements as key-value pairs under 'connection'
+                connection_settings = {"connection": dict(settings_list)}
+                
+                #app_context.register_database(self.connection)
+                
+                status = True
+            else:
+                connection_settings = None
+                status = False
+        except Exception as e:
             status = False
+            connection_settings = None
 
         return status, connection_settings
 

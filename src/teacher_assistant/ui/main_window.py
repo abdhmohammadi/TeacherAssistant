@@ -10,8 +10,8 @@ from PySide6.QtWidgets import (QApplication, QPushButton, QLabel, QComboBox, QRa
 
 from ui.pages.settings_page import SettingsPage
 from ui.pages.database_manager import DatabaseManagerPage
-from ui.pages.edu_resource_editor import EducationalResourceEditor
-from ui.pages.edu_resource_view import EduResourcesView
+from ui.pages.resource_editor import EducationalResourceEditor
+from ui.pages.resource_collection import EduResourcesView
 from ui.pages.student_list import StudentListPage
 from core.app_context import app_context
 
@@ -227,7 +227,8 @@ class MainWindow(Window.AbdhWindow):
 
     def load_students_page(self, sender:QPushButton): 
         
-        self.uncheck_items(self.left_panel_layout)        
+        self.uncheck_items(self.left_panel_layout) 
+
         self.add_page(StudentListPage(parent=self))
         
         if sender: sender.setChecked(True)

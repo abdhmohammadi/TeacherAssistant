@@ -2,7 +2,7 @@ import re
 from PySide6.QtCore import QSize
 from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon, QTextCursor)
 
-from PySide6.QtWidgets import (QComboBox, QFileDialog, QFontComboBox, QTabWidget, QTextEdit, 
+from PySide6.QtWidgets import (QComboBox, QFileDialog, QFontComboBox, QTabWidget, QPlainTextEdit,
                                QVBoxLayout, QWidget, QLabel,QApplication, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit, QMenu)
 
@@ -12,7 +12,7 @@ from PySideAbdhUI.Widgets import SearchBox
 from PySideAbdhUI.Documents.document_editor import RichTextEditor
 from processing.Imaging.Tools import pixmap_to_base64
 from processing.Imaging.SnippingTool import SnippingWindow
-from utils.editor_helper import extract_editor_parts
+from utils.assessment_helper import extract_editor_parts
 
 from core.app_context import app_context
 
@@ -31,10 +31,8 @@ class EducationalResourceEditor(QWidget):
         main_layout.addLayout(self.create_header_panel())
 
         
-        self.doc_editor = RichTextEditor()
-        self.answer_input = RichTextEditor()
-        
-        
+        self.content_editor = RichTextEditor()
+        self.answer_editor = RichTextEditor()        
 
         widget = self.create_content_commands()
         
@@ -42,14 +40,14 @@ class EducationalResourceEditor(QWidget):
 
         self.setup_tabwidgets(main_layout)
 
-        self.metadata_input = QTextEdit(self)
+        main_layout.addSpacing(10)
+        self.metadata_input = QPlainTextEdit(self)
         
-        self.metadata_input.setPlaceholderText("Additional Details")
+        self.metadata_input.setPlaceholderText("Additional analysis and comments")
         self.metadata_input.setMaximumHeight(150)
-        self.metadata_input.setAcceptRichText(True)  # Enable rich text support
         self.metadata_input.setToolTip('Add description about question, analytical notes and etc.')
         main_layout.addWidget(self.metadata_input)
-
+        
         footer = QHBoxLayout()
         main_layout.addLayout(footer)
         
@@ -81,14 +79,10 @@ class EducationalResourceEditor(QWidget):
         layout.addWidget(self.tabs)
         
         # -- Tab 1 --
-        # 10 + 10 margins of tow edges and 15 pixel for scroll bar = 35 pixels
-        #self.doc_editor.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
-        # 10 + 10 margins of tow edges and 15 pixel for scroll bar = 35 pixels
-        #self.answer_input.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)  
-        self.tabs.addTab(self.doc_editor, "Question")
+        self.tabs.addTab(self.content_editor, "Question")
         
         # -- Tab 2 --        
-        self.tabs.addTab(self.answer_input, "Answer")
+        self.tabs.addTab(self.answer_editor, "Answer")
 
         self.tabs.setCurrentIndex(0)
         w = QWidget()
@@ -152,13 +146,20 @@ class EducationalResourceEditor(QWidget):
     def insertMathDialog(self): self.tabs.currentWidget().insertMathDialog()
     def insertImageFile(self): self.tabs.currentWidget().insertImage()
     def insertTableDialog(self): self.tabs.currentWidget().insertTableDialog()
+    
     def applyTextStyle(self, command=''): self.tabs.currentWidget().applyTextStyle(command)
     def chooseTextColor(self): self.tabs.currentWidget().chooseTextColor()
     def chooseBackgroundColor(self): self.tabs.currentWidget().chooseBackgroundColor()
+    
     def setAlignment(self, command='left'): self.tabs.currentWidget().setAlignment(command)
-    def setParagraphDirection(self, rtl=False): self.tabs.currentWidget().setParagraphDirection(rtl)
+    
+    def setParagraphDirection(self, rtl=False): 
+        w = self.tabs.currentWidget()
+        w.setParagraphDirection(rtl)
+    
     def setFontFamily(self,fontFamily): self.tabs.currentWidget().setFontFamily(fontFamily)
     def setFontSize(self,size:int=12): self.tabs.currentWidget().setFontSize(size)
+    
     def setPageSize(self,page_size_name): self.tabs.currentWidget().setPageSize(page_size_name)
     def showMarginDialog(self): self.tabs.currentWidget().showMarginDialog()
     
@@ -303,8 +304,8 @@ class EducationalResourceEditor(QWidget):
 
         #menu_latex = QMenu(self)
         #btn_latex.setMenu(menu_latex)
-        #menu_latex.addAction('New LaTeX script', lambda sender=self.doc_editor: self.___config_latex(sender))
-        #menu_latex.addAction('Run LaTeX', lambda sender= self.doc_editor: self.run_latex(sender))
+        #menu_latex.addAction('New LaTeX script', )
+        #menu_latex.addAction('Run LaTeX', lambda )
                  
         #layout.addWidget(btn_latex)
 
@@ -315,8 +316,8 @@ class EducationalResourceEditor(QWidget):
         #btn_html.setToolTip(app_context.ToolTips['Generate HTML'])
         #menu_html = QMenu(self)
         #btn_html.setMenu(menu_html)
-        #menu_html.addAction('New HTML Script',lambda sender=self.doc_editor: self.___config_basic_html(sender))
-        #menu_html.addAction('Run HTML',lambda _, sender=self.doc_editor: self.run_html(sender))
+        #menu_html.addAction('New HTML Script',lambda )
+        #menu_html.addAction('Run HTML',lambda _, )
         
         #btn_html.setDisabled(True)
         #layout.addWidget(btn_html)
@@ -334,7 +335,7 @@ class EducationalResourceEditor(QWidget):
         snip_button.setProperty('class','mini')
         snip_button.setIcon(QIcon(':icons/square-bottom-dashed-scissors.svg'))
         snip_button.setToolTip(app_context.ToolTips['Insert Image from screen'])
-        #snip_button.clicked.connect(lambda _, t = self.doc_editor :self.run_snipping_tool(t))
+        #snip_button.clicked.connect(lambda _,)
         layout.addWidget(snip_button)
 
         btn = QPushButton('')
@@ -419,7 +420,7 @@ class EducationalResourceEditor(QWidget):
     
     def on_save_package(self):
         
-        full_html =  self.doc_editor.getFullHtmlAsync()
+        full_html =  self.content_editor.getFullHtmlAsync()
         styles , content = extract_editor_parts(full_html)
 
         block = f'<BLOCK>\n{styles}\n{content}</BLOCK>'
@@ -427,6 +428,8 @@ class EducationalResourceEditor(QWidget):
         filepath, _ = QFileDialog.getSaveFileName(None, 'Save Package', '','Text(*.txt)')
 
         with open(filepath, mode='w',encoding='utf-8') as f: f.write(block)
+
+        # Also, answer need to included
 
     def on_open_package(self):
         
@@ -448,14 +451,15 @@ class EducationalResourceEditor(QWidget):
         # They will be reinserted later after synchronization.
         content = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
 
-        self.doc_editor.copy_content(content, styles)
+        self.content_editor.copy_content(content, styles)
  
     def notify_unsaved_content(self):
         
-        if self.doc_editor.isModified():
+        if self.content_editor.isModified() or self.answer_editor.isModified():
             PopupNotifier.Notify(self, 'Warning','unsaved data detected. to ignore click "DISCARD" and retry!',
-                                 ok_slot= self.doc_editor.setClean)
+                                 ok_slot= lambda: (self.content_editor.setClean(), self.answer_editor.setClean()))
             return True
+        
         return False
     
     def clear_content(self):
@@ -466,13 +470,14 @@ class EducationalResourceEditor(QWidget):
         self.Id_label.setText('(New item)')
         self.source_input.clear()
         self.score_input.setText('0.0')
-        self.doc_editor.clearContent()
-        self.answer_input.clearContent()
+        self.content_editor.clearContent()
+        self.answer_editor.clearContent()
         self.metadata_input.clear()
 
-     
-    def run_snipping_tool(self,target:QTextEdit):
-
+     # need for update
+    def run_snipping_tool(self,target:QPlainTextEdit):
+        PopupNotifier.Notify(self,"","this feature currently is not available!")
+        return
         active = QApplication.activeWindow()
         active.hide()
         snipping_window = SnippingWindow(self)
@@ -518,9 +523,9 @@ class EducationalResourceEditor(QWidget):
         """
         if self.tabs.currentWidget().isModified():
             PopupNotifier.Notify(self, 'Warning','unsaved data detected. to ignore click "DISCARD"',
-                                 ok_slot= self.doc_editor.setClean)
+                                 ok_slot= self.tabs.currentWidget().setClean)
             return
-        try:
+        if True:
             order = 'ORDER BY Id DESC' if direction == '<' else ' ORDER BY Id ASC'
             where =  f'WHERE Id {direction} {self.id} {order} LIMIT 1;' if not direction == '' else f'WHERE Id>0 {order} LIMIT 1;'
 
@@ -535,6 +540,7 @@ class EducationalResourceEditor(QWidget):
                 self.source_input.setText(row[1])
                 self.score_input.setText(str(row[2]))
                 # row[3] is a block of question/learning material
+                ########## CONTENT ###################################
                 block = row[3]
                 block = block.replace('<BLOCK>','')
                 block = block.replace('</BLOCK>','')
@@ -550,17 +556,34 @@ class EducationalResourceEditor(QWidget):
                 block = block.replace("<CONTENT>","")
                 block = block.replace("</CONTENT>","")
                 
-                self.doc_editor.copy_content(block, styles)
+                self.content_editor.copy_content(block, styles)
+                ########## CONTENT END ###################################
+                ##########    ANSWER   ###################################
+                block = row[4] if row[4] else ''
+                block = block.replace('<BLOCK>','')
+                block = block.replace('</BLOCK>','')
 
-                self.answer_input.setText(row[4])
-                self.metadata_input.setText(row[5])
+                # Extract all style blocks from imported HTML.
+                styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
+                styles = ''.join(styles)
+
+                # Remove style blocks from body.
+                # They will be reinserted later after synchronization.
+                block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
+
+                block = block.replace("<CONTENT>","")
+                block = block.replace("</CONTENT>","")
+                
+                self.answer_editor.copy_content(block, styles)
+                ########## ANSWER END ###################################
+
+                self.metadata_input.setPlainText(row[5])
                 
                 self.Id_label.setText('Content editing | ' + str(self.id))
 
-            #self.doc_editor.minimumSizeHint()
             
-        except Exception() as e:
-            PopupNotifier.Notify(self,"Message", f"Error: {e}.")
+        #except Exception as e:
+        #    PopupNotifier.Notify(self,"Message", f"Error: {e}.")
 
     def load_from_database(self,sender:QLineEdit):
         
@@ -572,18 +595,7 @@ class EducationalResourceEditor(QWidget):
         
         self.id = id
         self.load_record('=')
-    ###################################################################################################
-    ##############  WARNING: this comment is not valid, it has to updated | 2026-05-27 ################
-    ###################################################################################################
-     # We save the all data as text, but to manage advanced datatypes of text like rich texts with image, 
-    # table or formulas we need advanced control on our data, becuase of this to simple managment, we save:
-    # Plaintext and RTF as HTML format, Also we write LaTeX and HTML code in the editor directly, these type
-    # of text are saved directly and without any conversion. to resore PlainText and RTF, will useing setHtml()
-    # method of QEditText widget, and  for Html and LaTeX types will use setPlainText() method.
-    # deference between RTF and HTML format in our contents is: we use HTML format with managing HTML tags, and
-    # the text without HTML tags, but containing text formating is RTF. also the RTF text without formated
-    # content, is mean PlainText.
-    ####################################################################################################
+    
     def save_to_database(self):
         
         # Edu-Item source book
@@ -593,25 +605,32 @@ class EducationalResourceEditor(QWidget):
 
         score = float(score) if score !='' and score.replace('.','').isnumeric() else '1'
         
-        # Get the entire content of QTextEdit
-        source_html = self.doc_editor.getFullHtmlAsync()
-        styles , content = extract_editor_parts(source_html)
+        # Get the entire content of the editor
+        content = self.content_editor.getFullHtmlAsync()
+        styles , content = extract_editor_parts(content)
 
         # remove id if exist and return <style> ... </style>
         styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
         # clean if styles are empty.
         if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = "<style></style>"
         
-        content = f'<BLOCK>\n{styles}\n<CONTENT>\n{content}\n</CONTENT>\n</BLOCK>'
+        content = f'<BLOCK>\n{styles}\n<CONTENT>\n{content.strip('\n')}\n</CONTENT>\n</BLOCK>'
 
-        answer = self.answer_input.getHtmlContentSync()
+        answer = self.answer_editor.getFullHtmlAsync()
+        styles, answer = extract_editor_parts(answer)
+
+        # remove id if exist and return <style> ... </style>
+        styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
+        # clean if styles are empty.
+        if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = "<style></style>"
+        
+        answer = f'<BLOCK>\n{styles}\n<CONTENT>\n{answer.strip('\n')}\n</CONTENT>\n</BLOCK>'
 
         details = self.metadata_input.toPlainText()
         
         try:
 
-            query ="INSERT INTO educational_resources "\
-                   "(source_, score_, content_, answer_, metadata_)"\
+            query ="INSERT INTO educational_resources (source_, score_, content_, answer_, metadata_)"\
                    "VALUES (%s, %s, %s, %s, %s) RETURNING id;"
                 
             variables = (source, score, content, answer, details)

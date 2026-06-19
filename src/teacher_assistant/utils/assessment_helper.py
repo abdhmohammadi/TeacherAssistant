@@ -1,64 +1,7 @@
 
 import re
 
-custom_script = """
-
-<script>
-    // Persian digits mapping
-    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-
-    // Check if element is RTL
-    function isRTL(element) 
-    {
-      return getComputedStyle(element).direction === 'rtl';
-    }
-
-    // Convert digits in RTL elements
-    function convertRTLDigits(node) 
-    {
-      if (node.nodeType === Node.TEXT_NODE && isRTL(node.parentElement)) 
-      {
-        node.nodeValue = node.nodeValue.replace(/\d/g, match => 
-          persianDigits[parseInt(match)]
-        );
-      }
-    }
-
-    // Process all nodes
-    function convertDigitsInRTLElements() 
-    {
-      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
-
-      let node;
-      while ((node = walker.nextNode())) 
-      {
-        convertRTLDigits(node);
-      }
-    }
-
-    // Initial conversion
-    convertDigitsInRTLElements();
-
-    // Optional: MutationObserver for dynamic content
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node.nodeType === Node.ELEMENT_NODE) 
-          {
-            const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT, null, false);
-            let textNode; 
-            while ((textNode = walker.nextNode())) 
-            {
-              convertRTLDigits(textNode);
-            }
-          }
-        });
-      });
-    });
-
-    observer.observe(document.body, {childList: true, subtree: true});
-</script>
-"""
+from core.app_context import app_context
 
 def unwrap_page_divs(html):
     """
@@ -295,6 +238,7 @@ def unwrap_page_divs(html):
     # ------------------------------------------------------------------
     return ''.join(parts)
 
+
 def extract_editor_parts(html_source: str) -> tuple[str, str]:
     """
     Extract editor-specific data from a complete HTML document.
@@ -416,6 +360,9 @@ def extract_editor_parts(html_source: str) -> tuple[str, str]:
 
 
 def unpack_block(block:str)->tuple[str, str]:
+    """
+    Returns (styles, content)
+    """
     block = block.replace('<BLOCK>','')
     block = block.replace('</BLOCK>','')
 
@@ -430,3 +377,57 @@ def unpack_block(block:str)->tuple[str, str]:
     block = block.replace("<CONTENT>","")
     block = block.replace("</CONTENT>","")
     return styles, block
+
+Edu_Template_Files = ['01-Quiz','02-Formal-Exam']
+
+NEW_CONTENT_PLACEHOLDER = '<!-- NEW CONTENT PLACEHOLDER -->'
+
+assessment_row_template =  '<tr>\n'
+assessment_row_template += f'  <td style="text-align: center; vertical-align:top; width:--SideColumnsInches--;">{{}}</td>\n'
+assessment_row_template += f'  <td style="border-left:none;border-right:none; width:auto;">{{}}</td>\n'
+assessment_row_template += f'  <td style="text-align: center; vertical-align:top; width:--SideColumnsInches--;">{{}}</td>\n'
+assessment_row_template +=  '</tr>\n'
+
+def replace_placeholders(html, language_setting, data) -> str:
+        
+        replacements = {
+            '-- 2.43 Inches --': f'{2.43*app_context.DPI}px',
+            '-- 2.42 Inches --': f'{2.42*app_context.DPI}px',
+            '--SideColumnsInches--': f'{0.35*app_context.DPI}px',
+            '-- 6.19 Inches --': f'{app_context.EDU_ITEM_PIXELS}px',
+
+            '--Student Name--': language_setting['Student Name'], 
+            '--StudentNameValue--': data['Student'], 
+            '--Title--': language_setting['Title'],
+            '--TitleValue--':data['Title'],
+            '--Time--': language_setting['Time'],
+            '--TimeValue--': data['Time'],
+            '--Date--':language_setting['Date'],
+            '--DateValue--': data['Date'], 
+            '--Duration--': language_setting['Duration'],
+            '--DurationValue--': data['Duration'],
+            '--Time Unit--': language_setting['Time Unit'],
+            '--Header--': language_setting['Header'],
+            '--Row--': language_setting['Row'],
+            '--Score--': language_setting['Score'],
+            '--Total Score--':language_setting['Total Score'], 
+            '--TotalScoreValue--': data['Total Score'],
+            '--Teacher--': language_setting['Teacher'],
+            '--TeacherValue--': data['Teacher']
+        }
+        
+        if str(data['Template']).lower().find('formal')>-1:
+            # Replace content placeholders
+            replacements['--In The Name Of God--']= language_setting['In The Name Of God']
+            replacements['--Student Id--']= language_setting['Student Id'] 
+            replacements['--StudentIdValue--']= data['Student Id']
+            replacements['--Organisation Info--']= data['Org-Info'].replace('\n','<br>')
+            replacements['--Academic Year--']= language_setting['Academic Year']
+            replacements['--AcademicYearValue--'] = data['Academic Year']
+            replacements['--Term--']= language_setting['Term']
+            replacements['--TermValue--']= data['Term']
+            replacements['--Field--']= data['Field']
+
+        for placeholder, value in replacements.items(): html = html.replace(placeholder, value)
+
+        return html

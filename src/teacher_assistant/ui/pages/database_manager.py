@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (QFileDialog, QInputDialog,
                                QCheckBox, QGridLayout, QWidget, QLabel, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit, QComboBox)
 
-from PySideAbdhUI.Notify import PopupNotifier
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
 
 #from data.view_models.EduItems import MaintenanceViewModel
 from core.app_context import app_context

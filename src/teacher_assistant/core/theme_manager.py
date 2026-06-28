@@ -14,7 +14,7 @@ Utility functions for PySideAbdhUI.
 # Usage Example:
 #
 #     from PySideAbdhUI import get_resource_path
-#     icon_path = get_resource_path("PySideAbdhUI.resources.icons.svg", "myicon.svg")
+#     icon_path = get_resource_path("PySideAbdhUI.Widgets.resources.icons.svg", "myicon.svg")
 #
 # Adjust the package path argument according to where your resources are
 # located inside the package.
@@ -30,8 +30,8 @@ def get_resource_path(package: str, resource: str, ext ='svg') -> Path:
     
     Args:
         package (str): The package relative to which the resource is located.
-                       For example: "PySideAbdhUI.resources.icons.svg" or
-                       "PySideAbdhUI.resources.styles".
+                       For example: "PySideAbdhUI.Widgets.resources.icons.svg" or
+                       "PySideAbdhUI.Widgets.resources.styles".
         resource (str): The filename of the resource (e.g., "icon.svg" or "style.qss").
     
     Returns:
@@ -53,15 +53,15 @@ def get_resource_path(package: str, resource: str, ext ='svg') -> Path:
     
         raise RuntimeError(f"Unable to locate the resource '{resource}' in package '{package}'.") from e
 
-def get_icon(name:str, package:str='PySideAbdhUI.resources.icons.svg', ext = 'svg'):
+def get_icon(name:str, package:str='PySideAbdhUI.Widgets.resources.icons.svg', ext = 'svg'):
     
     return get_resource_path(package, name,ext).as_posix()
 
-def get_styles_template(package:str='PySideAbdhUI.resources.styles'):
+def get_styles_template(package:str='PySideAbdhUI.Widgets.resources.styles'):
     
     return get_resource_path(package,'qss-template','qss').as_posix()
 
-def get_color_roles(package:str='PySideAbdhUI.resources.styles'):
+def get_color_roles(package:str='PySideAbdhUI.Widgets.resources.styles'):
     
     return get_resource_path(package, 'color-roles','json').as_posix()
 

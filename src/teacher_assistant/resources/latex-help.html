@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaTeX Math Typing Commands — Reference</title>
+<style>
+:root {
+    --bg: #ffffff;
+    --bg-alt: #f8fafc;
+    --text: #1a1a1a;
+    --text-muted: #64748b;
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --border: #e2e8f0;
+    --code-bg: #f1f5f9;
+    --code-text: #1e293b;
+    --mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--primary);
+}
+
+header h1 {
+    font-size: 1.85rem;
+    margin: 0 0 0.5rem;
+    color: var(--text);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.jump-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+    margin: 1.5rem 0 2rem;
+    font-size: 0.82rem;
+}
+
+.jump-bar a {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: var(--primary-dark);
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.jump-bar a:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+section {
+    margin-bottom: 2.5rem;
+}
+
+section h2 {
+    font-size: 1.25rem;
+    margin: 0 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--primary-dark);
+    font-weight: 600;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+thead {
+    background: var(--bg-alt);
+}
+
+th {
+    text-align: left;
+    padding: 0.7rem 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+td {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: rgba(37, 99, 235, 0.03);
+}
+
+td.num {
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    text-align: right;
+    width: 42px;
+    user-select: none;
+}
+
+td.render {
+    text-align: center;
+    width: 110px;
+    font-size: 1.05rem;
+}
+
+td.render .katex {
+    font-size: 1.05rem;
+}
+
+td.cmd {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--code-text);
+    background: var(--code-bg);
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    white-space: nowrap;
+    width: 200px;
+}
+
+td.desc {
+    color: var(--text);
+    font-size: 0.88rem;
+}
+
+footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+footer p { margin: 0.3rem 0; }
+
+@media (max-width: 600px) {
+    body { padding: 1rem 0.5rem; font-size: 14px; }
+    header h1 { font-size: 1.4rem; }
+    td, th { padding: 0.5rem 0.6rem; }
+    td.cmd { font-size: 0.78rem; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+    <h1>LaTeX Math Typing Commands</h1>
+    <p>Quick reference for the editor's KaTeX-powered math input. Double-click any rendered formula in the editor to edit its LaTeX source.</p>
+</header>
+
+<nav class="jump-bar">
+    <a href="#arithmetic">Arithmetic</a>
+    <a href="#fractions">Fractions &amp; Roots</a>
+    <a href="#exponents">Exponents &amp; Indices</a>
+    <a href="#relations">Relations</a>
+    <a href="#greek">Greek Letters</a>
+    <a href="#operators">Big Operators</a>
+    <a href="#limits">Limits &amp; Calculus</a>
+    <a href="#trig">Trigonometry</a>
+    <a href="#sets">Sets &amp; Logic</a>
+    <a href="#arrows">Arrows</a>
+    <a href="#accents">Accents</a>
+    <a href="#brackets">Brackets</a>
+    <a href="#matrices">Matrices</a>
+    <a href="#spacing">Spacing</a>
+    <a href="#fonts">Fonts &amp; Styles</a>
+    <a href="#dots">Dots</a>
+    <a href="#misc">Misc</a>
+</nav>
+
+<section id="arithmetic">
+<h2>Basic Arithmetic Operators</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">1</td><td class="render">\(a + b\)</td><td class="cmd">a + b</td><td class="desc">Plus sign</td></tr>
+<tr><td class="num">2</td><td class="render">\(a - b\)</td><td class="cmd">a - b</td><td class="desc">Minus sign</td></tr>
+<tr><td class="num">3</td><td class="render">\(a \times b\)</td><td class="cmd">a \times b</td><td class="desc">Multiplication (cross)</td></tr>
+<tr><td class="num">4</td><td class="render">\(a \cdot b\)</td><td class="cmd">a \cdot b</td><td class="desc">Multiplication (dot)</td></tr>
+<tr><td class="num">5</td><td class="render">\(a \div b\)</td><td class="cmd">a \div b</td><td class="desc">Division sign</td></tr>
+<tr><td class="num">6</td><td class="render">\(a \pm b\)</td><td class="cmd">a \pm b</td><td class="desc">Plus or minus</td></tr>
+<tr><td class="num">7</td><td class="render">\(a \mp b\)</td><td class="cmd">a \mp b</td><td class="desc">Minus or plus</td></tr>
+<tr><td class="num">8</td><td class="render">\(\pm a\)</td><td class="cmd">\pm a</td><td class="desc">Plus-minus prefix</td></tr>
+<tr><td class="num">9</td><td class="render">\(-a\)</td><td class="cmd">-a</td><td class="desc">Unary negation</td></tr>
+<tr><td class="num">10</td><td class="render">\(a \ast b\)</td><td class="cmd">a \ast b</td><td class="desc">Asterisk operator</td></tr>
+<tr><td class="num">11</td><td class="render">\(a \circ b\)</td><td class="cmd">a \circ b</td><td class="desc">Function composition</td></tr>
+<tr><td class="num">12</td><td class="render">\(a \bullet b\)</td><td class="cmd">a \bullet b</td><td class="desc">Bullet operator</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="fractions">
+<h2>Fractions, Roots &amp; Stacked Expressions</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">13</td><td class="render">\(\frac{a}{b}\)</td><td class="cmd">\frac{a}{b}</td><td class="desc">Fraction</td></tr>
+<tr><td class="num">14</td><td class="render">\(\dfrac{a}{b}\)</td><td class="cmd">\dfrac{a}{b}</td><td class="desc">Display-style fraction (always large)</td></tr>
+<tr><td class="num">15</td><td class="render">\(\tfrac{a}{b}\)</td><td class="cmd">\tfrac{a}{b}</td><td class="desc">Text-style fraction (always small)</td></tr>
+<tr><td class="num">16</td><td class="render">\(\sqrt{x}\)</td><td class="cmd">\sqrt{x}</td><td class="desc">Square root</td></tr>
+<tr><td class="num">17</td><td class="render">\(\sqrt[n]{x}\)</td><td class="cmd">\sqrt[n]{x}</td><td class="desc">Nth root</td></tr>
+<tr><td class="num">18</td><td class="render">\(\binom{n}{k}\)</td><td class="cmd">\binom{n}{k}</td><td class="desc">Binomial coefficient</td></tr>
+<tr><td class="num">19</td><td class="render">\(\dbinom{n}{k}\)</td><td class="cmd">\dbinom{n}{k}</td><td class="desc">Display-style binomial</td></tr>
+<tr><td class="num">20</td><td class="render">\(a^{b}\)</td><td class="cmd">a^{b}</td><td class="desc">Superscript (single char: <code>a^b</code>)</td></tr>
+<tr><td class="num">21</td><td class="render">\(a_{b}\)</td><td class="cmd">a_{b}</td><td class="desc">Subscript (single char: <code>a_b</code>)</td></tr>
+<tr><td class="num">22</td><td class="render">\(a_b^c\)</td><td class="cmd">a_b^c</td><td class="desc">Combined sub- and superscript</td></tr>
+<tr><td class="num">23</td><td class="render">\(\overline{x}\)</td><td class="cmd">\overline{x}</td><td class="desc">Overline (bar over expression)</td></tr>
+<tr><td class="num">24</td><td class="render">\(\underline{x}\)</td><td class="cmd">\underline{x}</td><td class="desc">Underline</td></tr>
+<tr><td class="num">25</td><td class="render">\(\overbrace{abc}\)</td><td class="cmd">\overbrace{abc}</td><td class="desc">Overbrace (with label: <code>\overbrace{abc}^{n}</code>)</td></tr>
+<tr><td class="num">26</td><td class="render">\(\underbrace{abc}\)</td><td class="cmd">\underbrace{abc}</td><td class="desc">Underbrace (with label: <code>\underbrace{abc}_{n}</code>)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="exponents">
+<h2>Exponents, Indices &amp; Logarithms</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">27</td><td class="render">\(x^2\)</td><td class="cmd">x^2</td><td class="desc">Squared</td></tr>
+<tr><td class="num">28</td><td class="render">\(x^3\)</td><td class="cmd">x^3</td><td class="desc">Cubed</td></tr>
+<tr><td class="num">29</td><td class="render">\(x^{n+1}\)</td><td class="cmd">x^{n+1}</td><td class="desc">Multi-char exponent (braces required)</td></tr>
+<tr><td class="num">30</td><td class="render">\(a_n\)</td><td class="cmd">a_n</td><td class="desc">Sequence index</td></tr>
+<tr><td class="num">31</td><td class="render">\(2^{10}\)</td><td class="cmd">2^{10}</td><td class="desc">Power of 2 (multi-char exponent)</td></tr>
+<tr><td class="num">32</td><td class="render">\(\log x\)</td><td class="cmd">\log x</td><td class="desc">Logarithm (base 10 implied)</td></tr>
+<tr><td class="num">33</td><td class="render">\(\ln x\)</td><td class="cmd">\ln x</td><td class="desc">Natural logarithm</td></tr>
+<tr><td class="num">34</td><td class="render">\(\log_{2} x\)</td><td class="cmd">\log_{2} x</td><td class="desc">Logarithm with explicit base</td></tr>
+<tr><td class="num">35</td><td class="render">\(\lg x\)</td><td class="cmd">\lg x</td><td class="desc">Base-2 logarithm</td></tr>
+<tr><td class="num">36</td><td class="render">\(\exp(x)\)</td><td class="cmd">\exp(x)</td><td class="desc">Exponential function</td></tr>
+<tr><td class="num">37</td><td class="render">\(e^{x}\)</td><td class="cmd">e^{x}</td><td class="desc">Euler's number raised to power</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="relations">
+<h2>Relational Operators</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">38</td><td class="render">\(a = b\)</td><td class="cmd">a = b</td><td class="desc">Equality</td></tr>
+<tr><td class="num">39</td><td class="render">\(a \neq b\)</td><td class="cmd">a \neq b</td><td class="desc">Not equal</td></tr>
+<tr><td class="num">40</td><td class="render">\(a \approx b\)</td><td class="cmd">a \approx b</td><td class="desc">Approximately equal</td></tr>
+<tr><td class="num">41</td><td class="render">\(a \equiv b\)</td><td class="cmd">a \equiv b</td><td class="desc">Identically equal / congruent</td></tr>
+<tr><td class="num">42</td><td class="render">\(a \sim b\)</td><td class="cmd">a \sim b</td><td class="desc">Similar to / tilde</td></tr>
+<tr><td class="num">43</td><td class="render">\(a \propto b\)</td><td class="cmd">a \propto b</td><td class="desc">Proportional to</td></tr>
+<tr><td class="num">44</td><td class="render">\(a &lt; b\)</td><td class="cmd">a &lt; b</td><td class="desc">Less than</td></tr>
+<tr><td class="num">45</td><td class="render">\(a &gt; b\)</td><td class="cmd">a &gt; b</td><td class="desc">Greater than</td></tr>
+<tr><td class="num">46</td><td class="render">\(a \leq b\)</td><td class="cmd">a \leq b</td><td class="desc">Less than or equal (<code>\le</code> also works)</td></tr>
+<tr><td class="num">47</td><td class="render">\(a \geq b\)</td><td class="cmd">a \geq b</td><td class="desc">Greater than or equal (<code>\ge</code> also works)</td></tr>
+<tr><td class="num">48</td><td class="render">\(a \ll b\)</td><td class="cmd">a \ll b</td><td class="desc">Much less than</td></tr>
+<tr><td class="num">49</td><td class="render">\(a \gg b\)</td><td class="cmd">a \gg b</td><td class="desc">Much greater than</td></tr>
+<tr><td class="num">50</td><td class="render">\(a \doteq b\)</td><td class="cmd">a \doteq b</td><td class="desc">Equals by definition</td></tr>
+<tr><td class="num">51</td><td class="render">\(a \doteqdot b\)</td><td class="cmd">a \doteqdot b</td><td class="desc">Approaches (limit)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="greek">
+<h2>Greek Letters</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">52</td><td class="render">\(\alpha\)</td><td class="cmd">\alpha</td><td class="desc">Lowercase alpha</td></tr>
+<tr><td class="num">53</td><td class="render">\(\beta\)</td><td class="cmd">\beta</td><td class="desc">Lowercase beta</td></tr>
+<tr><td class="num">54</td><td class="render">\(\gamma\)</td><td class="cmd">\gamma</td><td class="desc">Lowercase gamma</td></tr>
+<tr><td class="num">55</td><td class="render">\(\Gamma\)</td><td class="cmd">\Gamma</td><td class="desc">Uppercase Gamma</td></tr>
+<tr><td class="num">56</td><td class="render">\(\delta\)</td><td class="cmd">\delta</td><td class="desc">Lowercase delta</td></tr>
+<tr><td class="num">57</td><td class="render">\(\Delta\)</td><td class="cmd">\Delta</td><td class="desc">Uppercase Delta</td></tr>
+<tr><td class="num">58</td><td class="render">\(\epsilon\)</td><td class="cmd">\epsilon</td><td class="desc">Epsilon (lunate)</td></tr>
+<tr><td class="num">59</td><td class="render">\(\varepsilon\)</td><td class="cmd">\varepsilon</td><td class="desc">Epsilon (curly)</td></tr>
+<tr><td class="num">60</td><td class="render">\(\zeta\)</td><td class="cmd">\zeta</td><td class="desc">Lowercase zeta</td></tr>
+<tr><td class="num">61</td><td class="render">\(\eta\)</td><td class="cmd">\eta</td><td class="desc">Lowercase eta</td></tr>
+<tr><td class="num">62</td><td class="render">\(\theta\)</td><td class="cmd">\theta</td><td class="desc">Lowercase theta</td></tr>
+<tr><td class="num">63</td><td class="render">\(\Theta\)</td><td class="cmd">\Theta</td><td class="desc">Uppercase Theta</td></tr>
+<tr><td class="num">64</td><td class="render">\(\vartheta\)</td><td class="cmd">\vartheta</td><td class="desc">Theta variant</td></tr>
+<tr><td class="num">65</td><td class="render">\(\iota\)</td><td class="cmd">\iota</td><td class="desc">Lowercase iota</td></tr>
+<tr><td class="num">66</td><td class="render">\(\kappa\)</td><td class="cmd">\kappa</td><td class="desc">Lowercase kappa</td></tr>
+<tr><td class="num">67</td><td class="render">\(\lambda\)</td><td class="cmd">\lambda</td><td class="desc">Lowercase lambda</td></tr>
+<tr><td class="num">68</td><td class="render">\(\Lambda\)</td><td class="cmd">\Lambda</td><td class="desc">Uppercase Lambda</td></tr>
+<tr><td class="num">69</td><td class="render">\(\mu\)</td><td class="cmd">\mu</td><td class="desc">Lowercase mu (micro prefix)</td></tr>
+<tr><td class="num">70</td><td class="render">\(\nu\)</td><td class="cmd">\nu</td><td class="desc">Lowercase nu</td></tr>
+<tr><td class="num">71</td><td class="render">\(\xi\)</td><td class="cmd">\xi</td><td class="desc">Lowercase xi</td></tr>
+<tr><td class="num">72</td><td class="render">\(\Xi\)</td><td class="cmd">\Xi</td><td class="desc">Uppercase Xi</td></tr>
+<tr><td class="num">73</td><td class="render">\(\pi\)</td><td class="cmd">\pi</td><td class="desc">Lowercase pi</td></tr>
+<tr><td class="num">74</td><td class="render">\(\Pi\)</td><td class="cmd">\Pi</td><td class="desc">Uppercase Pi</td></tr>
+<tr><td class="num">75</td><td class="render">\(\varpi\)</td><td class="cmd">\varpi</td><td class="desc">Pi variant</td></tr>
+<tr><td class="num">76</td><td class="render">\(\rho\)</td><td class="cmd">\rho</td><td class="desc">Lowercase rho (density)</td></tr>
+<tr><td class="num">77</td><td class="render">\(\varrho\)</td><td class="cmd">\varrho</td><td class="desc">Rho variant (curly)</td></tr>
+<tr><td class="num">78</td><td class="render">\(\sigma\)</td><td class="cmd">\sigma</td><td class="desc">Lowercase sigma</td></tr>
+<tr><td class="num">79</td><td class="render">\(\Sigma\)</td><td class="cmd">\Sigma</td><td class="desc">Uppercase Sigma (sum)</td></tr>
+<tr><td class="num">80</td><td class="render">\(\varsigma\)</td><td class="cmd">\varsigma</td><td class="desc">Sigma variant</td></tr>
+<tr><td class="num">81</td><td class="render">\(\tau\)</td><td class="cmd">\tau</td><td class="desc">Lowercase tau</td></tr>
+<tr><td class="num">82</td><td class="render">\(\upsilon\)</td><td class="cmd">\upsilon</td><td class="desc">Lowercase upsilon</td></tr>
+<tr><td class="num">83</td><td class="render">\(\phi\)</td><td class="cmd">\phi</td><td class="desc">Lowercase phi</td></tr>
+<tr><td class="num">84</td><td class="render">\(\Phi\)</td><td class="cmd">\Phi</td><td class="desc">Uppercase Phi</td></tr>
+<tr><td class="num">85</td><td class="render">\(\varphi\)</td><td class="cmd">\varphi</td><td class="desc">Phi variant (curly)</td></tr>
+<tr><td class="num">86</td><td class="render">\(\chi\)</td><td class="cmd">\chi</td><td class="desc">Lowercase chi</td></tr>
+<tr><td class="num">87</td><td class="render">\(\psi\)</td><td class="cmd">\psi</td><td class="desc">Lowercase psi</td></tr>
+<tr><td class="num">88</td><td class="render">\(\Psi\)</td><td class="cmd">\Psi</td><td class="desc">Uppercase Psi</td></tr>
+<tr><td class="num">89</td><td class="render">\(\omega\)</td><td class="cmd">\omega</td><td class="desc">Lowercase omega</td></tr>
+<tr><td class="num">90</td><td class="render">\(\Omega\)</td><td class="cmd">\Omega</td><td class="desc">Uppercase Omega (ohm)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="operators">
+<h2>Big Operators (Sums, Products, Integrals)</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">91</td><td class="render">\(\sum_{i=1}^{n} a_i\)</td><td class="cmd">\sum_{i=1}^{n} a_i</td><td class="desc">Summation</td></tr>
+<tr><td class="num">92</td><td class="render">\(\prod_{i=1}^{n} a_i\)</td><td class="cmd">\prod_{i=1}^{n} a_i</td><td class="desc">Product</td></tr>
+<tr><td class="num">93</td><td class="render">\(\coprod_{i=1}^{n} a_i\)</td><td class="cmd">\coprod_{i=1}^{n} a_i</td><td class="desc">Coproduct</td></tr>
+<tr><td class="num">94</td><td class="render">\(\int_{a}^{b} f(x)\,dx\)</td><td class="cmd">\int_{a}^{b} f(x)\,dx</td><td class="desc">Definite integral</td></tr>
+<tr><td class="num">95</td><td class="render">\(\iint_{D} f\,dA\)</td><td class="cmd">\iint_{D} f\,dA</td><td class="desc">Double integral</td></tr>
+<tr><td class="num">96</td><td class="render">\(\iiint_{V} f\,dV\)</td><td class="cmd">\iiint_{V} f\,dV</td><td class="desc">Triple integral</td></tr>
+<tr><td class="num">97</td><td class="render">\(\oint_{C} \vec{F}\cdot d\vec{r}\)</td><td class="cmd">\oint_{C} \vec{F}\cdot d\vec{r}</td><td class="desc">Contour integral</td></tr>
+<tr><td class="num">98</td><td class="render">\(\bigcup_{i=1}^{n} A_i\)</td><td class="cmd">\bigcup_{i=1}^{n} A_i</td><td class="desc">Big union</td></tr>
+<tr><td class="num">99</td><td class="render">\(\bigcap_{i=1}^{n} A_i\)</td><td class="cmd">\bigcap_{i=1}^{n} A_i</td><td class="desc">Big intersection</td></tr>
+<tr><td class="num">100</td><td class="render">\(\bigoplus_{i} V_i\)</td><td class="cmd">\bigoplus_{i} V_i</td><td class="desc">Direct sum</td></tr>
+<tr><td class="num">101</td><td class="render">\(\bigotimes_{i} V_i\)</td><td class="cmd">\bigotimes_{i} V_i</td><td class="desc">Tensor product</td></tr>
+<tr><td class="num">102</td><td class="render">\(\bigvee_{i} P_i\)</td><td class="cmd">\bigvee_{i} P_i</td><td class="desc">Big disjunction</td></tr>
+<tr><td class="num">103</td><td class="render">\(\bigwedge_{i} P_i\)</td><td class="cmd">\bigwedge_{i} P_i</td><td class="desc">Big conjunction</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="limits">
+<h2>Limits, Calculus &amp; Asymptotics</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">104</td><td class="render">\(\lim_{x \to 0} f(x)\)</td><td class="cmd">\lim_{x \to 0} f(x)</td><td class="desc">Limit</td></tr>
+<tr><td class="num">105</td><td class="render">\(\lim_{x \to \infty} f(x)\)</td><td class="cmd">\lim_{x \to \infty} f(x)</td><td class="desc">Limit to infinity</td></tr>
+<tr><td class="num">106</td><td class="render">\(\limsup_{n \to \infty} a_n\)</td><td class="cmd">\limsup_{n \to \infty} a_n</td><td class="desc">Limit superior</td></tr>
+<tr><td class="num">107</td><td class="render">\(\liminf_{n \to \infty} a_n\)</td><td class="cmd">\liminf_{n \to \infty} a_n</td><td class="desc">Limit inferior</td></tr>
+<tr><td class="num">108</td><td class="render">\(\frac{df}{dx}\)</td><td class="cmd">\frac{df}{dx}</td><td class="desc">Derivative (Leibniz)</td></tr>
+<tr><td class="num">109</td><td class="render">\(\frac{d^2 f}{dx^2}\)</td><td class="cmd">\frac{d^2 f}{dx^2}</td><td class="desc">Second derivative</td></tr>
+<tr><td class="num">110</td><td class="render">\(\partial f / \partial x\)</td><td class="cmd">\partial f / \partial x</td><td class="desc">Partial derivative</td></tr>
+<tr><td class="num">111</td><td class="render">\(\nabla f\)</td><td class="cmd">\nabla f</td><td class="desc">Gradient (nabla)</td></tr>
+<tr><td class="num">112</td><td class="render">\(\nabla \cdot \vec{F}\)</td><td class="cmd">\nabla \cdot \vec{F}</td><td class="desc">Divergence</td></tr>
+<tr><td class="num">113</td><td class="render">\(\nabla \times \vec{F}\)</td><td class="cmd">\nabla \times \vec{F}</td><td class="desc">Curl</td></tr>
+<tr><td class="num">114</td><td class="render">\(\nabla^2 f\)</td><td class="cmd">\nabla^2 f</td><td class="desc">Laplacian</td></tr>
+<tr><td class="num">115</td><td class="render">\(f(x) \to L\)</td><td class="cmd">f(x) \to L</td><td class="desc">Approaches / tends to</td></tr>
+<tr><td class="num">116</td><td class="render">\(f(x) \sim g(x)\)</td><td class="cmd">f(x) \sim g(x)</td><td class="desc">Asymptotically equivalent</td></tr>
+<tr><td class="num">117</td><td class="render">\(f = o(g)\)</td><td class="cmd">f = o(g)</td><td class="desc">Little-o notation</td></tr>
+<tr><td class="num">118</td><td class="render">\(f = O(g)\)</td><td class="cmd">f = O(g)</td><td class="desc">Big-O notation</td></tr>
+<tr><td class="num">119</td><td class="render">\(f \asymp g\)</td><td class="cmd">f \asymp g</td><td class="desc">Asymptotic order</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="trig">
+<h2>Trigonometric &amp; Hyperbolic Functions</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">120</td><td class="render">\(\sin x\)</td><td class="cmd">\sin x</td><td class="desc">Sine</td></tr>
+<tr><td class="num">121</td><td class="render">\(\cos x\)</td><td class="cmd">\cos x</td><td class="desc">Cosine</td></tr>
+<tr><td class="num">122</td><td class="render">\(\tan x\)</td><td class="cmd">\tan x</td><td class="desc">Tangent</td></tr>
+<tr><td class="num">123</td><td class="render">\(\cot x\)</td><td class="cmd">\cot x</td><td class="desc">Cotangent</td></tr>
+<tr><td class="num">124</td><td class="render">\(\sec x\)</td><td class="cmd">\sec x</td><td class="desc">Secant</td></tr>
+<tr><td class="num">125</td><td class="render">\(\csc x\)</td><td class="cmd">\csc x</td><td class="desc">Cosecant</td></tr>
+<tr><td class="num">126</td><td class="render">\(\arcsin x\)</td><td class="cmd">\arcsin x</td><td class="desc">Inverse sine</td></tr>
+<tr><td class="num">127</td><td class="render">\(\arccos x\)</td><td class="cmd">\arccos x</td><td class="desc">Inverse cosine</td></tr>
+<tr><td class="num">128</td><td class="render">\(\arctan x\)</td><td class="cmd">\arctan x</td><td class="desc">Inverse tangent</td></tr>
+<tr><td class="num">129</td><td class="render">\(\sinh x\)</td><td class="cmd">\sinh x</td><td class="desc">Hyperbolic sine</td></tr>
+<tr><td class="num">130</td><td class="render">\(\cosh x\)</td><td class="cmd">\cosh x</td><td class="desc">Hyperbolic cosine</td></tr>
+<tr><td class="num">131</td><td class="render">\(\tanh x\)</td><td class="cmd">\tanh x</td><td class="desc">Hyperbolic tangent</td></tr>
+<tr><td class="num">132</td><td class="render">\(\sin^2 x\)</td><td class="cmd">\sin^2 x</td><td class="desc">Sine squared (common notation)</td></tr>
+<tr><td class="num">133</td><td class="render">\(\sin^{-1} x\)</td><td class="cmd">\sin^{-1} x</td><td class="desc">Inverse sine (alt. notation)</td></tr>
+<tr><td class="num">134</td><td class="render">\(\sin(\theta + \phi)\)</td><td class="cmd">\sin(\theta + \phi)</td><td class="desc">Compound argument (parens)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="sets">
+<h2>Sets, Logic &amp; Quantifiers</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">135</td><td class="render">\(x \in A\)</td><td class="cmd">x \in A</td><td class="desc">Element of</td></tr>
+<tr><td class="num">136</td><td class="render">\(x \notin A\)</td><td class="cmd">x \notin A</td><td class="desc">Not an element of</td></tr>
+<tr><td class="num">137</td><td class="render">\(A \subset B\)</td><td class="cmd">A \subset B</td><td class="desc">Proper subset</td></tr>
+<tr><td class="num">138</td><td class="render">\(A \subseteq B\)</td><td class="cmd">A \subseteq B</td><td class="desc">Subset (possibly equal)</td></tr>
+<tr><td class="num">139</td><td class="render">\(A \supset B\)</td><td class="cmd">A \supset B</td><td class="desc">Proper superset</td></tr>
+<tr><td class="num">140</td><td class="render">\(A \supseteq B\)</td><td class="cmd">A \supseteq B</td><td class="desc">Superset (possibly equal)</td></tr>
+<tr><td class="num">141</td><td class="render">\(A \cup B\)</td><td class="cmd">A \cup B</td><td class="desc">Union</td></tr>
+<tr><td class="num">142</td><td class="render">\(A \cap B\)</td><td class="cmd">A \cap B</td><td class="desc">Intersection</td></tr>
+<tr><td class="num">143</td><td class="render">\(A \setminus B\)</td><td class="cmd">A \setminus B</td><td class="desc">Set difference</td></tr>
+<tr><td class="num">144</td><td class="render">\(A^c\)</td><td class="cmd">A^c</td><td class="desc">Complement</td></tr>
+<tr><td class="num">145</td><td class="render">\(\emptyset\)</td><td class="cmd">\emptyset</td><td class="desc">Empty set (<code>\varnothing</code> also works)</td></tr>
+<tr><td class="num">146</td><td class="render">\(\mathbb{N}\)</td><td class="cmd">\mathbb{N}</td><td class="desc">Natural numbers (blackboard bold)</td></tr>
+<tr><td class="num">147</td><td class="render">\(\mathbb{Z}\)</td><td class="cmd">\mathbb{Z}</td><td class="desc">Integers</td></tr>
+<tr><td class="num">148</td><td class="render">\(\mathbb{Q}\)</td><td class="cmd">\mathbb{Q}</td><td class="desc">Rational numbers</td></tr>
+<tr><td class="num">149</td><td class="render">\(\mathbb{R}\)</td><td class="cmd">\mathbb{R}</td><td class="desc">Real numbers</td></tr>
+<tr><td class="num">150</td><td class="render">\(\mathbb{C}\)</td><td class="cmd">\mathbb{C}</td><td class="desc">Complex numbers</td></tr>
+<tr><td class="num">151</td><td class="render">\(P \land Q\)</td><td class="cmd">P \land Q</td><td class="desc">Logical AND</td></tr>
+<tr><td class="num">152</td><td class="render">\(P \lor Q\)</td><td class="cmd">P \lor Q</td><td class="desc">Logical OR</td></tr>
+<tr><td class="num">153</td><td class="render">\(\neg P\)</td><td class="cmd">\neg P</td><td class="desc">Logical NOT</td></tr>
+<tr><td class="num">154</td><td class="render">\(P \implies Q\)</td><td class="cmd">P \implies Q</td><td class="desc">Implies</td></tr>
+<tr><td class="num">155</td><td class="render">\(P \iff Q\)</td><td class="cmd">P \iff Q</td><td class="desc">If and only if</td></tr>
+<tr><td class="num">156</td><td class="render">\(\forall x\)</td><td class="cmd">\forall x</td><td class="desc">For all</td></tr>
+<tr><td class="num">157</td><td class="render">\(\exists x\)</td><td class="cmd">\exists x</td><td class="desc">There exists</td></tr>
+<tr><td class="num">158</td><td class="render">\(\nexists x\)</td><td class="cmd">\nexists x</td><td class="desc">There does not exist</td></tr>
+<tr><td class="num">159</td><td class="render">\(\therefore\)</td><td class="cmd">\therefore</td><td class="desc">Therefore</td></tr>
+<tr><td class="num">160</td><td class="render">\(\because\)</td><td class="cmd">\because</td><td class="desc">Because</td></tr>
+<tr><td class="num">161</td><td class="render">\(\vdash\)</td><td class="cmd">\vdash</td><td class="desc">Provable / turnstile</td></tr>
+<tr><td class="num">162</td><td class="render">\(\models\)</td><td class="cmd">\models</td><td class="desc">Models / double turnstile</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="arrows">
+<h2>Arrows</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">163</td><td class="render">\(\to\)</td><td class="cmd">\to</td><td class="desc">Right arrow (<code>\rightarrow</code> also works)</td></tr>
+<tr><td class="num">164</td><td class="render">\(\rightarrow\)</td><td class="cmd">\rightarrow</td><td class="desc">Right arrow (explicit)</td></tr>
+<tr><td class="num">165</td><td class="render">\(\leftarrow\)</td><td class="cmd">\leftarrow</td><td class="desc">Left arrow</td></tr>
+<tr><td class="num">166</td><td class="render">\(\leftrightarrow\)</td><td class="cmd">\leftrightarrow</td><td class="desc">Left-right arrow</td></tr>
+<tr><td class="num">167</td><td class="render">\(\Rightarrow\)</td><td class="cmd">\Rightarrow</td><td class="desc">Right double arrow (implies)</td></tr>
+<tr><td class="num">168</td><td class="render">\(\Leftarrow\)</td><td class="cmd">\Leftarrow</td><td class="desc">Left double arrow</td></tr>
+<tr><td class="num">169</td><td class="render">\(\Leftrightarrow\)</td><td class="cmd">\Leftrightarrow</td><td class="desc">Left-right double arrow (iff)</td></tr>
+<tr><td class="num">170</td><td class="render">\(\mapsto\)</td><td class="cmd">\mapsto</td><td class="desc">Maps to</td></tr>
+<tr><td class="num">171</td><td class="render">\(\hookrightarrow\)</td><td class="cmd">\hookrightarrow</td><td class="desc">Hook arrow (injection)</td></tr>
+<tr><td class="num">172</td><td class="render">\(\hookleftarrow\)</td><td class="cmd">\hookleftarrow</td><td class="desc">Hook left arrow</td></tr>
+<tr><td class="num">173</td><td class="render">\(\uparrow\)</td><td class="cmd">\uparrow</td><td class="desc">Up arrow</td></tr>
+<tr><td class="num">174</td><td class="render">\(\downarrow\)</td><td class="cmd">\downarrow</td><td class="desc">Down arrow</td></tr>
+<tr><td class="num">175</td><td class="render">\(\Uparrow\)</td><td class="cmd">\Uparrow</td><td class="desc">Up double arrow</td></tr>
+<tr><td class="num">176</td><td class="render">\(\Downarrow\)</td><td class="cmd">\Downarrow</td><td class="desc">Down double arrow</td></tr>
+<tr><td class="num">177</td><td class="render">\(\rightharpoonup\)</td><td class="cmd">\rightharpoonup</td><td class="desc">Right harpoon up</td></tr>
+<tr><td class="num">178</td><td class="render">\(\rightharpoondown\)</td><td class="cmd">\rightharpoondown</td><td class="desc">Right harpoon down</td></tr>
+<tr><td class="num">179</td><td class="render">\(\leftharpoonup\)</td><td class="cmd">\leftharpoonup</td><td class="desc">Left harpoon up</td></tr>
+<tr><td class="num">180</td><td class="render">\(\rightleftharpoons\)</td><td class="cmd">\rightleftharpoons</td><td class="desc">Equilibrium arrows</td></tr>
+<tr><td class="num">181</td><td class="render">\(\xrightarrow{f}\)</td><td class="cmd">\xrightarrow{f}</td><td class="desc">Extensible right arrow with label</td></tr>
+<tr><td class="num">182</td><td class="render">\(\xleftarrow{f}\)</td><td class="cmd">\xleftarrow{f}</td><td class="desc">Extensible left arrow with label</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="accents">
+<h2>Accents &amp; Decorations</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">183</td><td class="render">\(\hat{x}\)</td><td class="cmd">\hat{x}</td><td class="desc">Hat (circumflex) — single char</td></tr>
+<tr><td class="num">184</td><td class="render">\(\widehat{xy}\)</td><td class="cmd">\widehat{xy}</td><td class="desc">Wide hat — multi char</td></tr>
+<tr><td class="num">185</td><td class="render">\(\bar{x}\)</td><td class="cmd">\bar{x}</td><td class="desc">Bar — single char (mean value)</td></tr>
+<tr><td class="num">186</td><td class="render">\(\overline{AB}\)</td><td class="cmd">\overline{AB}</td><td class="desc">Overline — multi char</td></tr>
+<tr><td class="num">187</td><td class="render">\(\tilde{x}\)</td><td class="cmd">\tilde{x}</td><td class="desc">Tilde — single char</td></tr>
+<tr><td class="num">188</td><td class="render">\(\widetilde{xy}\)</td><td class="cmd">\widetilde{xy}</td><td class="desc">Wide tilde — multi char</td></tr>
+<tr><td class="num">189</td><td class="render">\(\vec{x}\)</td><td class="cmd">\vec{x}</td><td class="desc">Vector arrow — single char</td></tr>
+<tr><td class="num">190</td><td class="render">\(\overrightarrow{AB}\)</td><td class="cmd">\overrightarrow{AB}</td><td class="desc">Right vector arrow — multi char</td></tr>
+<tr><td class="num">191</td><td class="render">\(\overleftarrow{AB}\)</td><td class="cmd">\overleftarrow{AB}</td><td class="desc">Left vector arrow — multi char</td></tr>
+<tr><td class="num">192</td><td class="render">\(\dot{x}\)</td><td class="cmd">\dot{x}</td><td class="desc">Dot (time derivative)</td></tr>
+<tr><td class="num">193</td><td class="render">\(\ddot{x}\)</td><td class="cmd">\ddot{x}</td><td class="desc">Double dot (second derivative)</td></tr>
+<tr><td class="num">194</td><td class="render">\(\dddot{x}\)</td><td class="cmd">\dddot{x}</td><td class="desc">Triple dot</td></tr>
+<tr><td class="num">195</td><td class="render">\(\check{x}\)</td><td class="cmd">\check{x}</td><td class="desc">Caron / háček</td></tr>
+<tr><td class="num">196</td><td class="render">\(\acute{x}\)</td><td class="cmd">\acute{x}</td><td class="desc">Acute accent</td></tr>
+<tr><td class="num">197</td><td class="render">\(\grave{x}\)</td><td class="cmd">\grave{x}</td><td class="desc">Grave accent</td></tr>
+<tr><td class="num">198</td><td class="render">\(\breve{x}\)</td><td class="cmd">\breve{x}</td><td class="desc">Breve</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="brackets">
+<h2>Brackets, Parentheses &amp; Delimiters</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">199</td><td class="render">\((x)\)</td><td class="cmd">(x)</td><td class="desc">Parentheses</td></tr>
+<tr><td class="num">200</td><td class="render">\([x]\)</td><td class="cmd">[x]</td><td class="desc">Square brackets</td></tr>
+<tr><td class="num">201</td><td class="render">\(\{x\}\)</td><td class="cmd">\{x\}</td><td class="desc">Curly braces (escaped)</td></tr>
+<tr><td class="num">202</td><td class="render">\(\langle x \rangle\)</td><td class="cmd">\langle x \rangle</td><td class="desc">Angle brackets</td></tr>
+<tr><td class="num">203</td><td class="render">\(|x|\)</td><td class="cmd">|x|</td><td class="desc">Vertical bars (absolute value)</td></tr>
+<tr><td class="num">204</td><td class="render">\(\|x\|\)</td><td class="cmd">\|x\|</td><td class="desc">Double bars (norm)</td></tr>
+<tr><td class="num">205</td><td class="render">\(\lfloor x \rfloor\)</td><td class="cmd">\lfloor x \rfloor</td><td class="desc">Floor function</td></tr>
+<tr><td class="num">206</td><td class="render">\(\lceil x \rceil\)</td><td class="cmd">\lceil x \rceil</td><td class="desc">Ceiling function</td></tr>
+<tr><td class="num">207</td><td class="render">\(\left( \frac{a}{b} \right)\)</td><td class="cmd">\left( \frac{a}{b} \right)</td><td class="desc">Auto-sized parentheses</td></tr>
+<tr><td class="num">208</td><td class="render">\(\left[ \frac{a}{b} \right]\)</td><td class="cmd">\left[ \frac{a}{b} \right]</td><td class="desc">Auto-sized square brackets</td></tr>
+<tr><td class="num">209</td><td class="render">\(\left\{ x : x &gt; 0 \right\}\)</td><td class="cmd">\left\{ x : x &gt; 0 \right\}</td><td class="desc">Auto-sized curly braces (set builder)</td></tr>
+<tr><td class="num">210</td><td class="render">\(\left| x \right|\)</td><td class="cmd">\left| x \right|</td><td class="desc">Auto-sized vertical bars</td></tr>
+<tr><td class="num">211</td><td class="render">\(\left\langle v, w \right\rangle\)</td><td class="cmd">\left\langle v, w \right\rangle</td><td class="desc">Auto-sized angle brackets (inner product)</td></tr>
+<tr><td class="num">212</td><td class="render">\(\left. \frac{dy}{dx} \right|_{x=0}\)</td><td class="cmd">\left. \frac{dy}{dx} \right|_{x=0}</td><td class="desc">Invisible left delimiter (evaluated at)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="matrices">
+<h2>Matrices &amp; Arrays</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">213</td><td class="render">\(\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}\)</td><td class="cmd">\begin{pmatrix} a &amp; b \\ c &amp; d \end{pmatrix}</td><td class="desc">Matrix with parentheses</td></tr>
+<tr><td class="num">214</td><td class="render">\(\begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix}\)</td><td class="cmd">\begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix}</td><td class="desc">Matrix with square brackets</td></tr>
+<tr><td class="num">215</td><td class="render">\(\begin{Bmatrix} a &amp; b \\ c &amp; d \end{Bmatrix}\)</td><td class="cmd">\begin{Bmatrix} a &amp; b \\ c &amp; d \end{Bmatrix}</td><td class="desc">Matrix with curly braces</td></tr>
+<tr><td class="num">216</td><td class="render">\(\begin{vmatrix} a &amp; b \\ c &amp; d \end{vmatrix}\)</td><td class="cmd">\begin{vmatrix} a &amp; b \\ c &amp; d \end{vmatrix}</td><td class="desc">Matrix with vertical bars (determinant)</td></tr>
+<tr><td class="num">217</td><td class="render">\(\begin{Vmatrix} a &amp; b \\ c &amp; d \end{Vmatrix}\)</td><td class="cmd">\begin{Vmatrix} a &amp; b \\ c &amp; d \end{Vmatrix}</td><td class="desc">Matrix with double bars (norm)</td></tr>
+<tr><td class="num">218</td><td class="render">\(\begin{matrix} a &amp; b \\ c &amp; d \end{matrix}\)</td><td class="cmd">\begin{matrix} a &amp; b \\ c &amp; d \end{matrix}</td><td class="desc">Matrix with no delimiters</td></tr>
+<tr><td class="num">219</td><td class="render">\(\begin{cases} x &amp; \text{if } x &gt; 0 \\ -x &amp; \text{otherwise} \end{cases}\)</td><td class="cmd">\begin{cases} x &amp; \text{if } x &gt; 0 \\ -x &amp; \text{otherwise} \end{cases}</td><td class="desc">Piecewise function (cases)</td></tr>
+<tr><td class="num">220</td><td class="render">\(\begin{aligned} a &amp;= b + c \\ &amp;= d + e \end{aligned}\)</td><td class="cmd">\begin{aligned} a &amp;= b + c \\ &amp;= d + e \end{aligned}</td><td class="desc">Aligned multi-line equation (<code>&amp;</code> marks alignment)</td></tr>
+<tr><td class="num">221</td><td class="render">\(\begin{array}{lcr} a &amp; b &amp; c \\ 1 &amp; 2 &amp; 3 \end{array}\)</td><td class="cmd">\begin{array}{lcr} a &amp; b &amp; c \\ 1 &amp; 2 &amp; 3 \end{array}</td><td class="desc">Custom array with column alignment (l/c/r)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="spacing">
+<h2>Spacing &amp; Thin Spaces</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">222</td><td class="render">\(a \, b\)</td><td class="cmd">a \, b</td><td class="desc">Thin space (3/18 em) — used before <code>dx</code> in integrals</td></tr>
+<tr><td class="num">223</td><td class="render">\(a \: b\)</td><td class="cmd">a \: b</td><td class="desc">Medium space (4/18 em)</td></tr>
+<tr><td class="num">224</td><td class="render">\(a \; b\)</td><td class="cmd">a \; b</td><td class="desc">Thick space (5/18 em)</td></tr>
+<tr><td class="num">225</td><td class="render">\(a \quad b\)</td><td class="cmd">a \quad b</td><td class="desc">Quad space (1 em)</td></tr>
+<tr><td class="num">226</td><td class="render">\(a \qquad b\)</td><td class="cmd">a \qquad b</td><td class="desc">Double quad space (2 em)</td></tr>
+<tr><td class="num">227</td><td class="render">\(a \! b\)</td><td class="cmd">a \! b</td><td class="desc">Negative thin space (tighten)</td></tr>
+<tr><td class="num">228</td><td class="render">\(\int_a^b f(x)\,dx\)</td><td class="cmd">\int_a^b f(x)\,dx</td><td class="desc">Common pattern: thin space before <code>dx</code></td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="fonts">
+<h2>Fonts &amp; Text Styles</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">229</td><td class="render">\(\mathrm{ABC}\)</td><td class="cmd">\mathrm{ABC}</td><td class="desc">Roman (upright) font</td></tr>
+<tr><td class="num">230</td><td class="render">\(\mathit{ABC}\)</td><td class="cmd">\mathit{ABC}</td><td class="desc">Italic math font</td></tr>
+<tr><td class="num">231</td><td class="render">\(\mathbf{ABC}\)</td><td class="cmd">\mathbf{ABC}</td><td class="desc">Bold (upright)</td></tr>
+<tr><td class="num">232</td><td class="render">\(\boldsymbol{\alpha}\)</td><td class="cmd">\boldsymbol{\alpha}</td><td class="desc">Bold Greek / symbols (keeps italic)</td></tr>
+<tr><td class="num">233</td><td class="render">\(\mathbb{ABC}\)</td><td class="cmd">\mathbb{ABC}</td><td class="desc">Blackboard bold (number sets)</td></tr>
+<tr><td class="num">234</td><td class="render">\(\mathcal{ABC}\)</td><td class="cmd">\mathcal{ABC}</td><td class="desc">Calligraphic (script) — uppercase only</td></tr>
+<tr><td class="num">235</td><td class="render">\(\mathfrak{ABC}\)</td><td class="cmd">\mathfrak{ABC}</td><td class="desc">Fraktur (Gothic)</td></tr>
+<tr><td class="num">236</td><td class="render">\(\mathscr{ABC}\)</td><td class="cmd">\mathscr{ABC}</td><td class="desc">Script (requires <code>\mathscr</code> support)</td></tr>
+<tr><td class="num">237</td><td class="render">\(\text{if } x &gt; 0\)</td><td class="cmd">\text{if } x &gt; 0</td><td class="desc">Inline text inside math (uses surrounding font)</td></tr>
+<tr><td class="num">238</td><td class="render">\(\textrm{if } x &gt; 0\)</td><td class="cmd">\textrm{if } x &gt; 0</td><td class="desc">Roman text inside math</td></tr>
+<tr><td class="num">239</td><td class="render">\(\textit{if } x &gt; 0\)</td><td class="cmd">\textit{if } x &gt; 0</td><td class="desc">Italic text inside math</td></tr>
+<tr><td class="num">240</td><td class="render">\(\textbf{if } x &gt; 0\)</td><td class="cmd">\textbf{if } x &gt; 0</td><td class="desc">Bold text inside math</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="dots">
+<h2>Dots (Ellipses)</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">241</td><td class="render">\(a \cdots b\)</td><td class="cmd">a \cdots b</td><td class="desc">Centered dots (horizontal, with operators)</td></tr>
+<tr><td class="num">242</td><td class="render">\(a, b, \ldots, c\)</td><td class="cmd">a, b, \ldots, c</td><td class="desc">Low dots (baseline, in lists)</td></tr>
+<tr><td class="num">243</td><td class="render">\(a \dots b\)</td><td class="cmd">a \dots b</td><td class="desc">Context-sensitive dots (KaTeX picks <code>\cdots</code> or <code>\ldots</code>)</td></tr>
+<tr><td class="num">244</td><td class="render">\(a \vdots b\)</td><td class="cmd">a \vdots b</td><td class="desc">Vertical dots (in matrices)</td></tr>
+<tr><td class="num">245</td><td class="render">\(a \ddots b\)</td><td class="cmd">a \ddots b</td><td class="desc">Diagonal dots (in matrices)</td></tr>
+<tr><td class="num">246</td><td class="render">\(x_1 + x_2 + \cdots + x_n\)</td><td class="cmd">x_1 + x_2 + \cdots + x_n</td><td class="desc">Common pattern: <code>\cdots</code> with <code>+</code></td></tr>
+<tr><td class="num">247</td><td class="render">\(x_1, x_2, \ldots, x_n\)</td><td class="cmd">x_1, x_2, \ldots, x_n</td><td class="desc">Common pattern: <code>\ldots</code> with commas</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="misc">
+<h2>Miscellaneous Symbols</h2>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>Rendered</th><th>LaTeX Command</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td class="num">248</td><td class="render">\(\infty\)</td><td class="cmd">\infty</td><td class="desc">Infinity</td></tr>
+<tr><td class="num">249</td><td class="render">\(\partial\)</td><td class="cmd">\partial</td><td class="desc">Partial derivative symbol</td></tr>
+<tr><td class="num">250</td><td class="render">\(\nabla\)</td><td class="cmd">\nabla</td><td class="desc">Nabla (gradient operator)</td></tr>
+<tr><td class="num">251</td><td class="render">\(\hbar\)</td><td class="cmd">\hbar</td><td class="desc">Reduced Planck constant</td></tr>
+<tr><td class="num">252</td><td class="render">\(\Re\)</td><td class="cmd">\Re</td><td class="desc">Real part</td></tr>
+<tr><td class="num">253</td><td class="render">\(\Im\)</td><td class="cmd">\Im</td><td class="desc">Imaginary part</td></tr>
+<tr><td class="num">254</td><td class="render">\(\angle\)</td><td class="cmd">\angle</td><td class="desc">Angle</td></tr>
+<tr><td class="num">255</td><td class="render">\(\measuredangle\)</td><td class="cmd">\measuredangle</td><td class="desc">Measured angle</td></tr>
+<tr><td class="num">256</td><td class="render">\(\perp\)</td><td class="cmd">\perp</td><td class="desc">Perpendicular</td></tr>
+<tr><td class="num">257</td><td class="render">\(\parallel\)</td><td class="cmd">\parallel</td><td class="desc">Parallel</td></tr>
+<tr><td class="num">258</td><td class="render">\(\degree\)</td><td class="cmd">\degree</td><td class="desc">Degree symbol (requires <code>\degree</code> from gensymb)</td></tr>
+<tr><td class="num">259</td><td class="render">\(45^\circ\)</td><td class="cmd">45^\circ</td><td class="desc">Degree (common pattern: <code>^\circ</code>)</td></tr>
+<tr><td class="num">260</td><td class="render">\(\prime\)</td><td class="cmd">\prime</td><td class="desc">Prime (or use <code>f'</code> directly)</td></tr>
+<tr><td class="num">261</td><td class="render">\(f'(x)\)</td><td class="cmd">f'(x)</td><td class="desc">Prime (derivative) — single quote</td></tr>
+<tr><td class="num">262</td><td class="render">\(f''(x)\)</td><td class="cmd">f''(x)</td><td class="desc">Double prime (second derivative)</td></tr>
+<tr><td class="num">263</td><td class="render">\(\forall\)</td><td class="cmd">\forall</td><td class="desc">For all (universal quantifier)</td></tr>
+<tr><td class="num">264</td><td class="render">\(\exists\)</td><td class="cmd">\exists</td><td class="desc">There exists</td></tr>
+<tr><td class="num">265</td><td class="render">\(\neg\)</td><td class="cmd">\neg</td><td class="desc">Negation (logical NOT)</td></tr>
+<tr><td class="num">266</td><td class="render">\(\aleph\)</td><td class="cmd">\aleph</td><td class="desc">Aleph (cardinality of infinite sets)</td></tr>
+<tr><td class="num">267</td><td class="render">\(\beth\)</td><td class="cmd">\beth</td><td class="desc">Beth number</td></tr>
+<tr><td class="num">268</td><td class="render">\(\imath\)</td><td class="cmd">\imath</td><td class="desc">Imaginary unit (dotless i)</td></tr>
+<tr><td class="num">269</td><td class="render">\(\jmath\)</td><td class="cmd">\jmath</td><td class="desc">Dotless j</td></tr>
+<tr><td class="num">270</td><td class="render">\(\ell\)</td><td class="cmd">\ell</td><td class="desc">Ell (script l, e.g. <code>\ell^p</code> spaces)</td></tr>
+<tr><td class="num">271</td><td class="render">\(\det A\)</td><td class="cmd">\det A</td><td class="desc">Determinant</td></tr>
+<tr><td class="num">272</td><td class="render">\(\dim V\)</td><td class="cmd">\dim V</td><td class="desc">Dimension</td></tr>
+<tr><td class="num">273</td><td class="render">\(\ker T\)</td><td class="cmd">\ker T</td><td class="desc">Kernel</td></tr>
+<tr><td class="num">274</td><td class="render">\(\hom(A,B)\)</td><td class="cmd">\hom(A,B)</td><td class="desc">Homomorphism set</td></tr>
+<tr><td class="num">275</td><td class="render">\(\arg \max_{x} f(x)\)</td><td class="cmd">\arg \max_{x} f(x)</td><td class="desc">Argmax</td></tr>
+<tr><td class="num">276</td><td class="render">\(\arg \min_{x} f(x)\)</td><td class="cmd">\arg \min_{x} f(x)</td><td class="desc">Argmin</td></tr>
+<tr><td class="num">277</td><td class="render">\(\sup A\)</td><td class="cmd">\sup A</td><td class="desc">Supremum</td></tr>
+<tr><td class="num">278</td><td class="render">\(\inf A\)</td><td class="cmd">\inf A</td><td class="desc">Infimum</td></tr>
+<tr><td class="num">279</td><td class="render">\(\max A\)</td><td class="cmd">\max A</td><td class="desc">Maximum</td></tr>
+<tr><td class="num">280</td><td class="render">\(\min A\)</td><td class="cmd">\min A</td><td class="desc">Minimum</td></tr>
+<tr><td class="num">281</td><td class="render">\(\Pr(A)\)</td><td class="cmd">\Pr(A)</td><td class="desc">Probability</td></tr>
+<tr><td class="num">282</td><td class="render">\(\bmod n\)</td><td class="cmd">\bmod n</td><td class="desc">Modulo (binary, no space)</td></tr>
+<tr><td class="num">283</td><td class="render">\(a \pmod n\)</td><td class="cmd">a \pmod n</td><td class="desc">Modulo (parenthesized, with space)</td></tr>
+<tr><td class="num">284</td><td class="render">\(a \gcd b\)</td><td class="cmd">a \gcd b</td><td class="desc">Greatest common divisor</td></tr>
+<tr><td class="num">285</td><td class="render">\(\Diamond\)</td><td class="cmd">\Diamond</td><td class="desc">Diamond operator</td></tr>
+<tr><td class="num">286</td><td class="render">\(\Box\)</td><td class="cmd">\Box</td><td class="desc">Box (d'Alembertian)</td></tr>
+<tr><td class="num">287</td><td class="render">\(\checkmark\)</td><td class="cmd">\checkmark</td><td class="desc">Checkmark</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<footer>
+    <p>LaTeX Math Reference · 287 commands · Compatible with the PySideAbdhUI Documents Editor</p>
+    <p>Double-click any rendered formula in the editor to edit its LaTeX source.</p>
+</footer>
+
+</div>
+
+</body>
+</html>

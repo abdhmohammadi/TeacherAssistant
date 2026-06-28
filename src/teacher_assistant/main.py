@@ -3,7 +3,7 @@
 #     ACTIVATE ENVIRONMENT: Terminal> env\Scripts\activate
 #     RUN THE APP         : USE Run option from the vscode menu or run from Terminal-> python main.py
 #         
-# INSTALL PySideAbdhUI: Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI-1.7.9.6-py3-none-any.whl'
+# INSTALL PySideAbdhUI: Terminal> pip install 'F:\Projects\Python\PySideAbdhUI\dist\PySideAbdhUI.Widgets-1.8.14.17-py3-none-any.whl'
 # 
 # HOW TO INSTALL THE APP:
 # 1. Create executable package for Windows OS:
@@ -34,26 +34,18 @@ from core.app_context import app_context
 
 from ui.main_window import MainWindow
 from ui.widgets import connection_form  # a dialog to validate user and database connection
-
 if __name__ == "__main__":
      
     app = QApplication(sys.argv)    
 
     # Setup the app directories
     app_context.setup_app_directories()
+
     # computes dpi to display edu-item size
     app_context.display_calulation(QApplication.primaryScreen().logicalDotsPerInch())
-    current_font = app_context.settings_manager.find_value('font')
     
-    if current_font:
-       app_context.theme_manager.update_qss_font(dict(current_font)['size'],dict(current_font)['family'])
-
-    app_context.theme_manager.load()
-
-    app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
-
     main_window = MainWindow(window_title=f'TEACHER ASSISTANT | v{app_context.app_version}', logo=QPixmap(':/icons/app-icon.png'))
-     
+    
     main_window.show()
 
     connection_dialog = connection_form.PostgreSqlConnectionWidget(main_window)

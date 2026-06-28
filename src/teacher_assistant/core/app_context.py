@@ -2,7 +2,6 @@ import enum
 import os
 import sys
 from utils.Json_manager import JSONManager
-from core.theme_manager import ThemeManager
 from data.database import psycopg2_database
 from version import __version__
 # IMPORTANT: Registers the resources automatically
@@ -24,7 +23,6 @@ class AppContext:
         self.resource_path =''
         self.settings_manager = JSONManager()
         self.template_config = JSONManager()
-        self.theme_manager = ThemeManager()
     
     
     @property 

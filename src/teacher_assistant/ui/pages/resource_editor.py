@@ -1,3 +1,4 @@
+import os
 import re
 from PySide6.QtCore import QSize
 from PySide6.QtGui import (QFont, QFontDatabase, Qt, QIcon, QTextCursor)
@@ -6,13 +7,15 @@ from PySide6.QtWidgets import (QComboBox, QFileDialog, QFontComboBox, QTabWidget
                                QVBoxLayout, QWidget, QLabel,QApplication, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit, QMenu)
 
-                
-from PySideAbdhUI.Notify import PopupNotifier
-from PySideAbdhUI.Widgets import SearchBox
-from PySideAbdhUI.Documents.document_editor import RichTextEditor
+
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
+from PySideAbdhUI.Widgets.Widgets import SearchBox
+from PySideAbdhUI.Editor.document_editor import TextEditor
+from PySideAbdhUI.Editor.helper import get_innermost_div_with_children
 from processing.Imaging.Tools import pixmap_to_base64
 from processing.Imaging.SnippingTool import SnippingWindow
-from utils.assessment_helper import extract_editor_parts
+from utils.assessment_helper import (add_attr_to_root_div, extract_editor_parts, has_clean_style, 
+                                     remove_specific_attrs, unpack_block)
 
 from core.app_context import app_context
 
@@ -31,8 +34,8 @@ class EducationalResourceEditor(QWidget):
         main_layout.addLayout(self.create_header_panel())
 
         
-        self.content_editor = RichTextEditor()
-        self.answer_editor = RichTextEditor()        
+        self.content_editor = TextEditor()
+        self.answer_editor = TextEditor()        
 
         widget = self.create_content_commands()
         
@@ -153,9 +156,7 @@ class EducationalResourceEditor(QWidget):
     
     def setAlignment(self, command='left'): self.tabs.currentWidget().setAlignment(command)
     
-    def setParagraphDirection(self, rtl=False): 
-        w = self.tabs.currentWidget()
-        w.setParagraphDirection(rtl)
+    def setParagraphDirection(self, rtl=False): self.tabs.currentWidget().setParagraphDirection(rtl)
     
     def setFontFamily(self,fontFamily): self.tabs.currentWidget().setFontFamily(fontFamily)
     def setFontSize(self,size:int=12): self.tabs.currentWidget().setFontSize(size)
@@ -210,6 +211,7 @@ class EducationalResourceEditor(QWidget):
         
         menu.addAction('Save Package', self.on_save_package)
         menu.addAction("Save File", self.SaveFileDialog)
+        #menu.addAction("Save as Portable", self.self.content_editor.save)
         menu.addAction("Extract as Images", self.exportAsImage)
         
         button.setMenu(menu)
@@ -411,13 +413,45 @@ class EducationalResourceEditor(QWidget):
         layout.addWidget(pageCombo)
         
         layout.addStretch(1)
-        
+        btn = QPushButton("?")
+        btn.setProperty('class', 'mini')
+        btn.setToolTip('LaTeX typing help')
+        btn.clicked.connect(lambda _, sender=btn: self.open_LaTeX_helpe_popup(sender))
+        layout.addWidget(btn)
         widget = QWidget()
         #widget.setFixedWidth(app_context.EDU_ITEM_PIXELS + 35)
         widget.setLayout(layout)
 
         return widget
     
+    def open_LaTeX_helpe_popup(self, sender:QPushButton):
+
+        hlp = os.path.join(app_context.resource_path, 'LaTeX-Help.html')
+        
+        if  not os.path.exists(hlp):
+            PopupNotifier.Notify(self,'', "LaTeX typeing help has not installed.")
+            return
+
+        #with open(hlp, 'r',encoding='utf-8') as f: html = f.read()
+        widget = QWidget(sender)
+        vl = QVBoxLayout(widget)
+        vl.setContentsMargins(1,1,1,1)
+        widget.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        
+        view = TextEditor()
+        view.setMaximumWidth(800)
+        view.load_file(hlp)
+
+        vl.addWidget(view)
+
+        r = sender.rect()
+        p = r.bottomLeft()
+        p.setX(p.x() - view.width())
+        point = sender.mapToGlobal(p)
+        widget.move(point)
+        widget.show()
+
+
     def on_save_package(self):
         
         full_html =  self.content_editor.getFullHtmlAsync()
@@ -542,38 +576,26 @@ class EducationalResourceEditor(QWidget):
                 # row[3] is a block of question/learning material
                 ########## CONTENT ###################################
                 block = row[3]
-                block = block.replace('<BLOCK>','')
-                block = block.replace('</BLOCK>','')
+                styles, block = unpack_block(block)
 
-                # Extract all style blocks from imported HTML.
-                styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
-                styles = ''.join(styles)
+                block = add_attr_to_root_div(block, 'class="page"')
+                block = add_attr_to_root_div(block, 'contenteditable="true"')
+ 
+                if not has_clean_style(styles): styles = ""
 
-                # Remove style blocks from body.
-                # They will be reinserted later after synchronization.
-                block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
-
-                block = block.replace("<CONTENT>","")
-                block = block.replace("</CONTENT>","")
-                
                 self.content_editor.copy_content(block, styles)
                 ########## CONTENT END ###################################
+
                 ##########    ANSWER   ###################################
                 block = row[4] if row[4] else ''
-                block = block.replace('<BLOCK>','')
-                block = block.replace('</BLOCK>','')
-
-                # Extract all style blocks from imported HTML.
-                styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
-                styles = ''.join(styles)
-
-                # Remove style blocks from body.
-                # They will be reinserted later after synchronization.
-                block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
-
-                block = block.replace("<CONTENT>","")
-                block = block.replace("</CONTENT>","")
                 
+                styles, block = unpack_block(block)
+                
+                block = add_attr_to_root_div(block, 'class="page"')
+                block = add_attr_to_root_div(block, 'contenteditable="true"')
+                
+                if not has_clean_style(styles): styles = ""
+
                 self.answer_editor.copy_content(block, styles)
                 ########## ANSWER END ###################################
 
@@ -607,24 +629,46 @@ class EducationalResourceEditor(QWidget):
         
         # Get the entire content of the editor
         content = self.content_editor.getFullHtmlAsync()
-        styles , content = extract_editor_parts(content)
+        # Returns styles specified by id="custom-styles"
+        # and first level child of 'pages-wrapper' tag.
+        # in our purpose this returns div of class="page" and <style id="custom-styles" ...
+        custom_styles , content = extract_editor_parts(content)
 
-        # remove id if exist and return <style> ... </style>
-        styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
-        # clean if styles are empty.
-        if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = "<style></style>"
+        # removes all attributes of the page we defined in the function, in this case
+        # it removes class="page", contenteditable="[^"]*", 
+        # page-number="[^"]*", data-page-observed="[^"]*"
+        # We have the pair of this function "add_attr_to_root_div"
+        content = remove_specific_attrs(content) 
+
+        # This function prevents nested divs from being generated as a result of a query 
+        # going back and forth between the editor and the database. The main input to 
+        # this function is a div with class="page".
+        content = get_innermost_div_with_children(content)
+
+        # Finally, we get the div of class="page" without any extra widgets. 
+        # Here, the four features mentioned above are removed from the page div, 
+        # preventing the creation of nested divs. When submitting to the editor, 
+        # if we need the class="page", we can add it to the div with the "add_attr_to_root_div" function.
         
-        content = f'<BLOCK>\n{styles}\n<CONTENT>\n{content.strip('\n')}\n</CONTENT>\n</BLOCK>'
+        # remove id if exist and return <style> ... </style>
+        # styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
+        # clean if styles are empty.
+        # if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = '<style></style>'
+        
+        content = f'<BLOCK>{custom_styles}<CONTENT>{content.strip('\n')}</CONTENT></BLOCK>'
 
         answer = self.answer_editor.getFullHtmlAsync()
-        styles, answer = extract_editor_parts(answer)
+        custom_styles, answer = extract_editor_parts(answer)
+
+        answer = remove_specific_attrs(answer)
+        answer = get_innermost_div_with_children(answer)
 
         # remove id if exist and return <style> ... </style>
-        styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
+        #styles =  re.sub(r'[^>]*<style[^>]*>', "<style>", styles, flags=re.I | re.S)
         # clean if styles are empty.
-        if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = "<style></style>"
+        #if styles.replace('\n','').replace(' ','') == '<style></style>' : styles = "<style></style>"
         
-        answer = f'<BLOCK>\n{styles}\n<CONTENT>\n{answer.strip('\n')}\n</CONTENT>\n</BLOCK>'
+        answer = f'<BLOCK>{custom_styles}\n<CONTENT>{answer.strip('\n')}</CONTENT></BLOCK>'
 
         details = self.metadata_input.toPlainText()
         

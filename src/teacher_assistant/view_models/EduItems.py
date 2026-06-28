@@ -3,7 +3,7 @@ from PySide6.QtCore import Property, Signal
 
 #import TeacherAssistant
 #from TeacherAssistant.models import EduItems
-from PySideAbdhUI.Notify  import NotifyPropertyChanged
+from PySideAbdhUI.Widgets.Notify  import NotifyPropertyChanged
 
 from services.edu_item_services import ClassroomGroupService, EduItemStudentService
 

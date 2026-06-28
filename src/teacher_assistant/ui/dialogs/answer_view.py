@@ -11,11 +11,11 @@ from PySide6.QtWidgets import ( QDialog, QFileDialog, QHBoxLayout, QLineEdit, QL
                                QMessageBox, QLabel, QTextEdit, QWidget, QListWidgetItem, 
                                QPushButton,QVBoxLayout, QTabWidget)
 
-from PySideAbdhUI.Documents.document_editor import RichTextEditor   
-from PySideAbdhUI.Notify import PopupNotifier
+from PySideAbdhUI.Editor.document_editor import TextEditor   
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
 from processing.text import text_processing
 from core.app_context import app_context
-from utils.assessment_helper import (replace_placeholders, unwrap_page_divs, unpack_block,
+from utils.assessment_helper import (has_clean_style, replace_placeholders, unwrap_page_divs, unpack_block,
                                      assessment_row_template, NEW_CONTENT_PLACEHOLDER)
 
 from dateutil.parser import parse
@@ -71,7 +71,7 @@ class AnswerView(QDialog):
         layout.addWidget(self.tabs)
 
         # Quiz tab
-        self.preview_source = RichTextEditor()
+        self.preview_source = TextEditor()
         self.preview_source.loadFinished.connect(self.on_page_loaded)
         self.tabs.addTab(self.preview_source, "Quiz")
         
@@ -172,9 +172,13 @@ class AnswerView(QDialog):
         # dir = "rtl" is default, user can change it.
         main_table = f'<div class="page" contenteditable="false">{html}</div>'
         
+        styles = f'<styles id="custom-styles">{styles}</style>'
+        
+        if not has_clean_style(styles): styles = ""
+
         self.preview_source.clearContent()
            
-        self.preview_source.copy_content(content=main_table, custom_styles=styles,editable= False)
+        self.preview_source.copy_content(content=main_table, custom_styles=styles)
 
         ################# ANSWER SECTION ########################################################     
         # If there are answers, create the answers tab and load them
@@ -342,6 +346,7 @@ class HtmlGeneratorWorker(QObject):
         try:
             # Generate both HTML pieces
             quiz = self._generate_quiz_html()
+
             answer_blocks = self._extract_answers()
             
             # 3. Emit success (both strings)

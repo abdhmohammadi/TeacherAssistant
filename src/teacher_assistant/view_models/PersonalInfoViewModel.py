@@ -2,7 +2,7 @@ from PySide6.QtCore import Signal, Property
 from PySide6.QtWidgets import QApplication
 from typing import overload, Optional
 
-from PySideAbdhUI.Notify import NotifyPropertyChanged, PopupNotifier
+from PySideAbdhUI.Widgets.Notify import NotifyPropertyChanged, PopupNotifier
 
 from services.personal_info_service import PersonalInfoService
 #from services.personal_info_service import PersonalInfoService

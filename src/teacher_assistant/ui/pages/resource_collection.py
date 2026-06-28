@@ -15,26 +15,27 @@
 """
 import os
 
-from datetime import datetime, timedelta
+from datetime import timedelta
+import dateutil
+
 import re
 #import pypandoc
 from PySide6.QtCore import Signal, QPoint
 
 from PySide6.QtGui import (QFont, QIcon, QPixmap, Qt,QStandardItemModel, QStandardItem)
 
-from PySide6.QtWidgets import ( QFileDialog, QFontComboBox, QFrame, QGridLayout, QScrollArea, QSizePolicy, QTabWidget, QVBoxLayout, 
+from PySide6.QtWidgets import ( QFontComboBox, QFrame, QGridLayout, QScrollArea, QSizePolicy, QTabWidget, QVBoxLayout, 
                                QWidget, QLabel,QApplication,QDialog, QListView, QMessageBox,
                                QPushButton, QHBoxLayout, QLineEdit,QAbstractItemView,
                                QPlainTextEdit, QComboBox, QAbstractScrollArea,QMenu,QWidgetAction,)
 
-from PySideAbdhUI.Notify import PopupNotifier
-import dateutil
-from ui.widgets.masonry_view import Card, MasonryView
-from PySideAbdhUI.Documents.document_editor import RichTextEditor
-from PySideAbdhUI.Widgets import SearchBox, Separator
+from PySideAbdhUI.Editor.document_editor import TextEditor
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
+from PySideAbdhUI.Widgets.Widgets import SearchBox, Separator
 
+from ui.widgets.masonry_view import Card, MasonryView
 from core.app_context import app_context
-from utils.assessment_helper import (replace_placeholders, unpack_block, unwrap_page_divs,
+from utils.assessment_helper import (add_attr_to_root_div, has_clean_style, replace_placeholders, unpack_block, unwrap_page_divs,
                                      Edu_Template_Files, assessment_row_template, NEW_CONTENT_PLACEHOLDER)
 
 ###################################################################
@@ -130,7 +131,7 @@ class EduResourcesView(QWidget):
         layout = QHBoxLayout(parent)
         layout.setContentsMargins(5,5,5,5)
 
-        self.doc_view = RichTextEditor()
+        self.doc_view = TextEditor()
         layout.addWidget(self.doc_view)
         
         container = QWidget()
@@ -194,10 +195,10 @@ class EduResourcesView(QWidget):
         self.config_layout.addStretch()
     
     def applyFont(self, font):
-        self.doc_view.applyGlobalValue('font-family',font)
+        self.doc_view.applyGlobalValue('font-family',font, important=True)
         self.font_family = font
        
-    def applyDirection(self, dir):
+    def apply_direction(self, dir):
         self.doc_view.applyGlobalValue('dir',dir,is_property=False)
         self.page_direction = dir
         
@@ -231,7 +232,7 @@ class EduResourcesView(QWidget):
         btn= QPushButton('')
         btn.setProperty('class','mini')
         btn.setToolTip('Left to Right direction')
-        btn.clicked.connect(lambda: self.applyDirection('ltr'))
+        btn.clicked.connect(lambda: self.apply_direction('ltr'))
         btn.setIcon(QIcon(":icons/pilcrow-right.svg"))
         
         hlayout.addWidget(btn)
@@ -239,7 +240,7 @@ class EduResourcesView(QWidget):
         btn= QPushButton('')
         btn.setProperty('class','mini')
         btn.setToolTip('Right to Left direction')
-        btn.clicked.connect(lambda: self.applyDirection('rtl'))
+        btn.clicked.connect(lambda: self.apply_direction('rtl'))
         btn.setIcon(QIcon(":icons/pilcrow-left.svg"))
         
         hlayout.addWidget(btn)
@@ -433,8 +434,8 @@ class EduResourcesView(QWidget):
         if self.lang_cmb.currentIndex()<0: return
 
         # index 0: فارسی, index 1: English
-        self.page_language =  'Persian' if self.lang_cmb.currentIndex() == 0 else 'English'
-
+        self.page_language, default_dir =  ('Persian', 'rtl') if self.lang_cmb.currentIndex() == 0 else ('English', 'ltr')
+         
         if self.template_cmb.currentIndex()<0: return
 
         index = self.template_cmb.currentIndex()
@@ -472,15 +473,18 @@ class EduResourcesView(QWidget):
         
         # Store configs to use  in the table generation process
         self.config = config
-
-        #if(index == 1):
+        # last steps of assessment paper creation
         # Generates full question table
         main_table, styles = self._generate_html_content()
         # dir = "rtl" is default, user can change it.
-        main_table = f'<div class="page" contenteditable="false" dir="rtl">{main_table}</div>'
+        main_table = f'<div class="page" contenteditable="false" dir="{default_dir}">{main_table}</div>'
+        styles = f'<styles id="custom-styles">{styles}</style>'
+        
+        if not has_clean_style(styles): styles = ""
+
         self.doc_view.clearContent()
             
-        self.doc_view.copy_content(content= main_table, custom_styles= styles,editable= False)
+        self.doc_view.copy_content(content= main_table, custom_styles= styles)
 
     
     # the selected_content will be removed
@@ -514,7 +518,7 @@ class EduResourcesView(QWidget):
                 styles.append(new_style)
                 # remove all div with class="page" apen/close part
                 # and return pure content
-                new_content = unwrap_page_divs(new_content)
+                #new_content = unwrap_page_divs(new_content)
                 # data cleaning
                 new_content = new_content.replace("\n","")
                 
@@ -563,7 +567,8 @@ class EduResourcesView(QWidget):
         point = self.mapToGlobal(p + QPoint(px,py))
         
         if sender.info_panel:
-           sender.info_panel.exec(point)
+           sender.info_panel.move(point)
+           sender.info_panel.show()
            return
 
         Id = sender.data['Id']
@@ -578,7 +583,7 @@ class EduResourcesView(QWidget):
             
             sender.data['answer'] = data[0]
             sender.data['metadata'] = data[1]
-
+            
             info_panel = QVBoxLayout()
             header_info = QLabel(f"{sender.data["Id"]} | {sender.data["source"]} | {sender.data["score"]}")
 
@@ -586,12 +591,17 @@ class EduResourcesView(QWidget):
 
             info_panel.addWidget(header_info, alignment=Qt.AlignmentFlag.AlignLeft)
                
-            ans_view = RichTextEditor(default_size="Edu-Item")
+            ans_view = TextEditor(default_size="Edu-Item")
             ans_view.setFixedWidth(app_context.A4_PIXELS + 50)
             ans_view.setFixedHeight(280)
-            styles, content = unpack_block(sender.data['answer'])
+
+            styles, block = unpack_block(sender.data['answer'])
             
-            ans_view.copy_content(content, styles)
+            block = add_attr_to_root_div(block, 'class="page"')
+            block = add_attr_to_root_div(block, 'contenteditable="false"')
+            if not has_clean_style(styles): styles = ""
+            
+            ans_view.copy_content(block, styles)
             
             info_panel.addWidget(ans_view)
             info_panel.addSpacing(5)
@@ -600,7 +610,7 @@ class EduResourcesView(QWidget):
             details_input.setPlaceholderText("add here comment or analytical points")
             details_input.setMaximumHeight(80)
             details_input.setPlainText(sender.data["metadata"])
-            
+            details_input.source_Id = Id
             info_panel.addWidget(details_input)
             
             footer_widget = QWidget()
@@ -612,36 +622,33 @@ class EduResourcesView(QWidget):
             footer_layout.addWidget(btn_menu_close)
 
             update_details_btn = QPushButton('Update')
-            update_details_btn.setToolTip("Only update comment or analytical points")
-            
+            update_details_btn.setToolTip("can update only comment or analytical points")
+            update_details_btn.clicked.connect(lambda _, meta = details_input :self._update_metadata(meta))
+
             footer_layout.addWidget(update_details_btn,alignment=Qt.AlignmentFlag.AlignRight)
 
             info_panel.addWidget(footer_widget)
 
-            info_widget = QWidget()
+            info_widget = QWidget(sender)
             info_widget.setLayout(info_panel)
+            info_widget.setWindowFlags(Qt.WindowType.Popup | Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+            btn_menu_close.clicked.connect(info_widget.close)
+            info_widget.move(point)
+            info_widget.show()
 
-            # Create a QMenu: this menu must be bind to 'More Info button on the header of Edu-Item'
-            info_panel_menu = QMenu(sender.titlebar)
-            # Create a QWidgetAction to hold custom widgets
-            widget_action = QWidgetAction(sender.titlebar)
-            # Set the widget to the QWidgetAction
-            widget_action.setDefaultWidget(info_widget)
-            # Add the QWidgetAction to the menu
-            info_panel_menu.addAction(widget_action)
-            
-            info_panel_menu.setFixedHeight(500)
+            sender.info_panel = info_widget
 
-            btn_menu_close.clicked.connect(info_panel_menu.close)
 
-            sender.info_panel = info_panel_menu
+        except Exception as e: print('Error:',e)
 
-            sender.info_panel.exec(point)
+    def _update_metadata(self, meta):
 
-        except Exception as e:
-            print('Error:',e)
+        text = meta.toPlainText()
+        id = meta.source_Id
+        app_context.database.execute(f"UPDATE educational_resources SET metadata_ = '{text}' WHERE Id = {id};")
+        #self.data["metadata"] = text
+        PopupNotifier.Notify(self, "", "Metadata updated.")
 
-    
     def load_data(self, filter: str = ''):
         
         self.masonry_view.clear()
@@ -672,31 +679,24 @@ class EduResourcesView(QWidget):
             for record in rows:
                 data_dict = self._create_data_dict(record[0], record[1], record[2],'', record[4], record[3] )
                 # Create a custom widget for the item
-                viewer = RichTextEditor(default_size="Edu-Item")
+                viewer = TextEditor(default_size="Edu-Item")
                 
                 viewer.setFixedWidth(app_context.A4_PIXELS)
-                viewer.setPageMargins(5,10,5,10)
+                viewer.setPageMargins(2,8,2,8)
 
                 # self._view_model.content is a block of question/learning material
                 block = record[2]
-                block = block.replace('<BLOCK>','')
-                block = block.replace('</BLOCK>','')
+                styles, block = unpack_block(block)
 
-                # Extract all style blocks from imported HTML.
-                styles = re.findall( r"<style[^>]*>.*?</style>", block, flags=re.I | re.S)
-                styles = ''.join(styles)
-
-                # Remove style blocks from body.
-                # They will be reinserted later after synchronization.
-                block = re.sub(r"<style[^>]*>.*?</style>", "", block, flags=re.I | re.S)
-
-                block = block.replace("<CONTENT>","")
-                block = block.replace("</CONTENT>","")
-
+                block = add_attr_to_root_div(block, 'class="page"')
+                block = add_attr_to_root_div(block, 'contenteditable="false"')
+                
+                if not has_clean_style(styles): styles = ""
+                
                 viewer.copy_content(block, styles)
 
                 w = LearningItemWidget(data=data_dict)
-
+                
                 w.initUI(viewer)
                 w.on_answer_requested.connect(lambda arg: self._on_answer_requested(arg))
                 
@@ -704,16 +704,16 @@ class EduResourcesView(QWidget):
                 viewer.loadFinished.connect(lambda ok,c=card, sender=viewer: self._on_viewer_loaded(ok,c, sender))
                 self.masonry_view.add_card(card)
 
-    def _on_viewer_loaded(self, ok: bool,card:Card, sender:RichTextEditor):
+    def _on_viewer_loaded(self, ok: bool,card:Card, sender:TextEditor):
         
         if ok:
             sender.toggle_scroll_visibility(False)
-        
+            sender.remove_background()
             szF = sender.getComputedSizeAsync()
 
             sender.setFixedHeight(szF.height())
             
-            card.setFixedSize(int(szF.width())+5, int(szF.height()+42))
+            card.setFixedSize(int(szF.width())+4, int(szF.height()+42))
 
             self.loaded_count+=1
 
@@ -824,13 +824,6 @@ class LearningItemWidget(QWidget):
             self.titlebar_created = True
 
         return cmd_widget
-    
-
-    def _update_metadata(self,Id, value):
-
-        app_context.database.execute(f"UPDATE educational_resources SET metadata_ = '{value}' WHERE Id = {Id};")
-        self.data["metadata"] = value
-        PopupNotifier.Notify(self, "", "Metadata updated.")
        
     def create_bookmark_menu(self):
         # Create a QMenu

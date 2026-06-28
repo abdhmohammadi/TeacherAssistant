@@ -1,14 +1,15 @@
 
 from datetime import datetime
 #import dateutil as du
-from PySideAbdhUI.Notify import PopupNotifier
 from PySide6.QtGui import (Qt, QTextOption, QIcon, QAction, QPixmap, QImage)
 
 from PySide6.QtWidgets import (QFileDialog, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QProgressBar,
                                QTextEdit, QDialogButtonBox,
                                QGridLayout, QWidget, QLabel,QApplication,QDialog, QMessageBox,
                                QPushButton, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QMenu)
-from PySideAbdhUI.Widgets import StackedWidget, Separator
+
+from PySideAbdhUI.Widgets.Widgets import StackedWidget, Separator
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
 
 from processing.Imaging.Tools import bytea_to_pixmap
 from processing.text.text_processing import local_culture_digits

@@ -11,10 +11,9 @@ from PySide6.QtWidgets import (QHBoxLayout, QVBoxLayout, QMenu, QWidgetAction, Q
                                QFrame, QWidget, QMessageBox,QTextEdit, QPlainTextEdit, QApplication,
                                QGridLayout, QLabel, QLineEdit, QPushButton, QFileDialog, QScrollArea) 
 
-from PySideAbdhUI.Notify import PopupNotifier
-from PySideAbdhUI.Widgets import Label
-from PySideAbdhUI.Documents.document_viewer import DocumentViewer
-from PIL import Image
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
+from PySideAbdhUI.Widgets.Widgets import Label
+from PySideAbdhUI.Editor.document_editor import TextEditor
 
 from processing.Imaging import ImageEditor
 from processing.Imaging.Tools import bytea_to_pixmap, pixmap_to_base64
@@ -405,7 +404,7 @@ class EduItemWidget(QWidget):
         main_layout.addWidget(self.titlebar,0,0,1,1)
 
         # Create a QLabel for the HTML content
-        self.item_viewer = DocumentViewer(default_size='Edu-Item',margins=(1,10,1,10))
+        self.item_viewer = TextEditor(default_size='Edu-Item',margins=(1,10,1,10))
         self.item_viewer.setPageMargins(1,10,1,10)
         self.item_viewer.setFixedWidth(270*3-10)
         self.item_viewer.setMaximumHeight(200)

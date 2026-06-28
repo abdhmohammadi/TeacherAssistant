@@ -1,5 +1,6 @@
 
-from PySideAbdhUI import Window, __version__ as ui_version
+from PySideAbdhUI.Widgets import Window, __version__ as ui_version
+from PySideAbdhUI.Editor import __version__ as editor_version
 
 # PySide6 modules
 from PySide6.QtCore import Qt
@@ -32,21 +33,6 @@ class MainWindow(Window.AbdhWindow):
 
         self.create_settings_panel()        
 
-    def on_font_changed(self,size_combo:QComboBox,font_combo:QComboBox):
-        
-        # Get the text of the selected item 
-        selected_font = font_combo.itemText(font_combo.currentIndex())
-
-        sz = 10 + 2*size_combo.currentIndex()
-        
-        app_context.theme_manager.update_qss_font(sz,selected_font)
-        
-        app_context.theme_manager.apply_theme(QApplication.instance(), app_context.theme_manager.get_current_theme_name())
-
-        settings_list = [('family',selected_font),('size',sz)]
-        settings = {"font": dict(settings_list)}
-        app_context.settings_manager.write(settings)
-
     # Creates a vertical panel on the right edge of the mian window, This panel is used to settings porpose.
     # - 'settings_manager' object used to manage application settings, 
     # - This object has been initalized in the __init__.py
@@ -76,68 +62,11 @@ class MainWindow(Window.AbdhWindow):
         else:
             combo1.setCurrentIndex(0)
         
-        self.add_right_panel_item(QLabel('FONT'))
-        # Global Font in the application domain 
-        fonts = QFontDatabase.families()
-
-        combo2 = QComboBox()
-        combo2.setPlaceholderText("Select a font")
-        combo2.addItems(fonts)
-        
-        self.add_right_panel_item(combo2)
-
-        combo3 = QComboBox()
-        combo3.setPlaceholderText("Select font size")
-        combo3.addItems(['10','12', '14', '16', '18', '20', '22', '24'])
-
-        current_font = app_context.settings_manager.find_value('font')
-    
-        if current_font:
-            combo2.setCurrentText(dict(current_font)['family'])
-            combo3.setCurrentText(str(dict(current_font)['size']))
-        else:
-            combo2.setCurrentText('Times New Roman')
-            combo3.setCurrentText('12')
-        
-        self.add_right_panel_item(combo3)
-        # Page direction options: It is provided Left-to-Right
-        # The direction is applied on the mantent of main frame, and titlebar,
-        # left panel and right panel are not affected currently.
-        hlayout = QHBoxLayout()
-        direction = app_context.settings_manager.find_value('direction')
-        radio1 = QRadioButton('Right to Left')
-        radio1.clicked.connect(lambda _, d= Qt.LayoutDirection.RightToLeft: self.toggle_direction(d))
-        radio1.setChecked(direction == 'RightToLeft')
-        hlayout.addWidget(radio1)
-
-        radio2 = QRadioButton('Left to Right')
-        radio2.setChecked(direction == 'LeftToRight')
-        radio2.clicked.connect(lambda _, d= Qt.LayoutDirection.LeftToRight: self.toggle_direction(d))
-
-        radio2.setChecked(direction == 'LeftToRight')
-
-        hlayout.addWidget(radio2)
-        self.set_direction(Qt.LayoutDirection.RightToLeft if direction == 'RightToLeft' else Qt.LayoutDirection.LeftToRight)
-        w = QWidget()
-        w.setToolTip(app_context.ToolTips['Direction'])
-        w.setLayout(hlayout)
-        self.add_right_panel_item(w)
-
-        # There are a number of custom styles can be applied to the UI.
-        # Changing it will affects all UI objects of the application.
-        self.add_right_panel_item(QLabel('THEME'))
-        theme_selector = QComboBox()
-        theme_selector.addItems(app_context.theme_manager.get_all_themes())
-        theme_selector.setCurrentText(app_context.theme_manager.get_current_theme_name())
-        theme_selector.currentTextChanged.connect(lambda _, sender= theme_selector:self.on_theme_switch(sender=sender))
-        self.add_right_panel_item(theme_selector)
-        
-
         self.right_panel_layout.addStretch(1)
-
         
         self.add_right_panel_item(QLabel(f'App Version: {app_context.app_version}'))
-        self.add_right_panel_item(QLabel(f' UI Version: {ui_version}'))
+        self.add_right_panel_item(QLabel(f'UI Version: {ui_version}'))
+        self.add_right_panel_item(QLabel(f'Editor Version: {editor_version}'))
 
         github_repo = 'https://github.com/abdhmohammadi/teacherassisstance'
         gitgub_page = 'https://abdhmohammadi.github.io'
@@ -153,19 +82,6 @@ class MainWindow(Window.AbdhWindow):
 
         self.add_right_panel_item(github)
 
-
-        # Changes the application font, this change affects all objects in the application
-        combo2.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
-        combo3.currentIndexChanged.connect(lambda _, size_combo= combo3,font_combo=combo2:self.on_font_changed(size_combo,font_combo))
-        
-
-
-    def on_theme_switch(self,sender:QComboBox):
-
-        theme_name = sender.currentText()
-
-        app_context.theme_manager.apply_theme(QApplication.instance(),theme_name)
-        # Apply theme immediately
 
     # defined to create menu-like items placed in the left panel
     def create_panel_button(self, icon_path=None, text='',checkable=True, checked = False, class_name ='')->QPushButton:
@@ -213,12 +129,8 @@ class MainWindow(Window.AbdhWindow):
             if type(item.widget()) is QPushButton:
                 item.widget().setChecked(False)
 
-    def toggle_direction(self, direction:Qt.LayoutDirection):
+    def toggle_direction(self, direction:Qt.LayoutDirection): self.set_direction(direction)
         
-        self.set_direction(direction)
-        
-        #settings_manager.write({'direction': 'RightToLeft' if direction == Qt.LayoutDirection.RightToLeft else 'LeftToRight'})
-
     def load_EduResourceEditor(self, sender:QPushButton): 
         
         self.uncheck_items(self.left_panel_layout)
@@ -253,9 +165,9 @@ class MainWindow(Window.AbdhWindow):
 
         page = DatabaseManagerPage(db_name=database, host= host, port= port, user= user, password=password,
                                          postgresql_tools_path= postgresql_path, backup_path=backup_dir, 
-                                         restore_path= restore_dir, style_path= app_context.theme_manager.get_current_theme_name(),
+                                         restore_path= restore_dir,style_path=self.theme['path'],
                                          settings_path= app_context.settings_manager.file_path)
-
+        
         self.add_page(page)
 
         sender.setChecked(True)

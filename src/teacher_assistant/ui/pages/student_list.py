@@ -11,9 +11,9 @@ from PySide6.QtCore import QSize
 # Import GUI utility classes from PySide6.QtGui for icons, actions, models, and display roles
 from PySide6.QtGui import (Qt, QAction, QIcon, QStandardItemModel, QStandardItem)
 
-from PySideAbdhUI.Widgets import SearchBox
+from PySideAbdhUI.Widgets.Widgets import SearchBox
 # Import custom PopupNotifier for displaying notification messages to users
-from PySideAbdhUI.Notify import PopupNotifier
+from PySideAbdhUI.Widgets.Notify import PopupNotifier
 # Import utility function to convert database bytea photo data to QPixmap for display
 from processing.Imaging.Tools import bytea_to_pixmap
 # Import text processing utility to detect right-to-left language text direction
